@@ -22,8 +22,6 @@
 
     Provides a menu driven interface for analysing memory
 
-    Requires access to the INSTRUCTION Z80 callback.
-
 */
 
 #ifndef ESPEC_MEMMENU_H
@@ -34,12 +32,17 @@
 
 /* Memory menu
 */
-void	MemoryMenu(Z80 *z80);
+void		MemoryMenu(Z80 *z80);
 
 
 /* Display the state of the SPEC at the bottom of the screen
 */
-void	DisplayState(Z80 *z80);
+void		DisplayState(Z80 *z80);
+
+
+/* Non-NULL (the breakpoint hit) if a breakpoint has been hit
+*/
+const char	*Break(void);
 
 
 #endif

@@ -50,9 +50,6 @@ static const char ident_fh[]=ESPEC_FONT_H;
 #define FALSE 0
 #endif
 
-#define SCR_W	320
-#define SCR_H	300
-
 #define LOCK	do							\
 		{							\
 		    if (SDL_MUSTLOCK(surface))				\
@@ -179,8 +176,8 @@ void GFXInit(void)
 	    Exit("Failed to init SDL: %s\n",SDL_GetError());
     }
 
-    if (!(surface=SDL_SetVideoMode(SCR_W*scale,
-				   SCR_H*scale,
+    if (!(surface=SDL_SetVideoMode(GFX_WIDTH*scale,
+				   GFX_HEIGHT*scale,
 				   0,
 				   IConfig(CONF_FULLSCREEN) ?
 				   		SDL_FULLSCREEN : 0)))
@@ -362,11 +359,11 @@ void GFXPrint(int x, int y, Uint32 col, const char *format, ...)
     {
 	for(sy=0;sy<8;sy++)
 	{
-	    if (y+sy<SCR_H && x<SCR_W)
+	    if (y+sy<GFX_HEIGHT && x<GFX_WIDTH)
 	    {
 		for(sx=0;sx<8;sx++)
 		{
-		    if (font[(int)*p][sx+sy*8] && x+sx<SCR_W)
+		    if (font[(int)*p][sx+sy*8] && x+sx<GFX_WIDTH)
 			putpixel(x+sx,y+sy,col);
 		}
 	    }
@@ -400,11 +397,11 @@ void GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
     {
 	for(sy=0;sy<8;sy++)
 	{
-	    if (y+sy<SCR_H && x<SCR_W)
+	    if (y+sy<GFX_HEIGHT && x<GFX_WIDTH)
 	    {
 		for(sx=0;sx<8;sx++)
 		{
-		    if (font[(int)*p][sx+sy*8] && x+sx<SCR_W)
+		    if (font[(int)*p][sx+sy*8] && x+sx<GFX_WIDTH)
 			putpixel(x+sx,y+sy,col);
 		    else
 			putpixel(x+sx,y+sy,paper);

@@ -41,6 +41,11 @@
 #define FONT_CURSOR		'\007'
 #define FONT_COPYRIGHT		'\010'
 
+/* The size of the display
+*/
+#define GFX_WIDTH		320
+#define GFX_HEIGHT		300
+
 
 /* ---------------------------------------- INTERFACES
 */
@@ -48,6 +53,12 @@
 /* Initialise
 */
 void		GFXInit(void);
+
+
+/* Size of the screen
+*/
+int		GFXHeight(void);
+int		GFXWidth(void);
 
 
 /* Get the SDL_Surface for the screen
@@ -87,7 +98,7 @@ void		GFXKeyRepeat(int repeat);
 SDL_Event	*GFXGetKey(void);
 
 
-/* Wait for a keypress (key up event)
+/* Wait for a keypress.  Note that key up events are returned.
 */
 SDL_Event	*GFXWaitKey(void);
 

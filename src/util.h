@@ -37,6 +37,11 @@
 void		*Malloc(size_t size);
 
 
+/* Returns result from realloc(p,size), calling Exit() if it fails.
+*/
+void		*Realloc(void *p, size_t size);
+
+
 /* Copies a string.  The result must be freed.
 */
 char		*StrCopy(const char *source);

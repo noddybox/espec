@@ -21,8 +21,6 @@
     -------------------------------------------------------------------------
 
     Provides the emulation for the SPEC
-
-    Requires access to the HOOK and FETCH Z80 callbacks
 */
 
 #ifndef ESPEC_SPECH
@@ -48,6 +46,8 @@ void		SPECKeyEvent(SDL_Event *e);
 */
 Z80Byte		SPECReadMem(Z80 *z80, Z80Word addr);
 void		SPECWriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
+Z80Word		SPECReadWord(Z80 *z80, Z80Word addr);
+void		SPECWriteWord(Z80 *z80, Z80Word addr, Z80Word val);
 Z80Byte		SPECReadPort(Z80 *z80, Z80Word port);
 void		SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val);
 Z80Byte		SPECReadForDisassem(Z80 *z80, Z80Word addr);

@@ -63,8 +63,6 @@ static FILE		*tape_out;
 
 /* The SPEC screen
 */
-#define			GFX_W	320
-#define			GFX_H	300
 #define			SCR_W	256
 #define			SCR_H	192
 #define			TXT_W	32
@@ -75,8 +73,8 @@ static FILE		*tape_out;
 #define			ATTR_AT(x,y)		\
 				mem[ATTR+(x)+((y)/8)*32]
 
-static const int	OFF_X=(GFX_W-SCR_W)/2;
-static const int	OFF_Y=(GFX_H-SCR_H)/2;
+static const int	OFF_X=(GFX_WIDTH-SCR_W)/2;
+static const int	OFF_Y=(GFX_HEIGHT-SCR_H)/2;
 
 static Z80Byte		mem[0x10000];
 
@@ -256,7 +254,7 @@ void DrawScanline(int y)
 
     aline=scanline-TOPL;
 
-    GFXHLine(0,GFX_W-1,y,coltable[border].col);
+    GFXHLine(0,GFX_WIDTH-1,y,coltable[border].col);
 
     if (aline>=0 && aline<SCRL)
     {
@@ -335,17 +333,17 @@ static int EDCallback(Z80 *z80, Z80Val data)
     	case SAVE_PATCH:
 	    if (!tape_out)
 	    {
-		state.AF|=Z80_F_Carry;
+		state.AF|=eZ80_Carry;
 	    }
 	    else
 	    {
 	    	if (TAPSave(tape_out,HIBYTE(state.AF),&state.IX,&state.DE,mem))
 		{
-		    state.AF&=~Z80_F_Carry;
+		    state.AF&=~eZ80_Carry;
 		}
 		else
 		{
-		    state.AF|=Z80_F_Carry;
+		    state.AF|=eZ80_Carry;
 		}
 	    }
 	    break;
@@ -353,17 +351,17 @@ static int EDCallback(Z80 *z80, Z80Val data)
     	case LOAD_PATCH:
 	    if (!tape_in)
 	    {
-		state.AF|=Z80_F_Carry;
+		state.AF|=eZ80_Carry;
 	    }
 	    else
 	    {
 	    	if (TAPLoad(tape_in,HIBYTE(state.AF),&state.IX,&state.DE,mem))
 		{
-		    state.AF&=~Z80_F_Carry;
+		    state.AF&=~eZ80_Carry;
 		}
 		else
 		{
-		    state.AF|=Z80_F_Carry;
+		    state.AF|=eZ80_Carry;
 		}
 	    }
 	    break;
@@ -412,7 +410,7 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 	*/
 	y=scanline-TOPL+OFF_Y;
 
-	if (y>=0 && y<GFX_H)
+	if (y>=0 && y<GFX_HEIGHT)
 	    DrawScanline(y);
 
 	/* TODO: Process sound emulation */
@@ -433,23 +431,28 @@ void SPECInit(Z80 *z80)
 
     if (!(fp=fopen(SConfig(CONF_ROMFILE),"rb")))
     {
-	GUIMessage("ERROR","Failed to open Spectrum ROM\n%s",
-						SConfig(CONF_ROMFILE));
+	GUIMessage(eMessageBox,
+		   "ERROR",
+		   "Failed to open Spectrum ROM\n%s",
+		   SConfig(CONF_ROMFILE));
 	Exit("");
     }
 
     if (fread(mem,1,ROMLEN,fp)!=ROMLEN)
     {
     	fclose(fp);
-	GUIMessage("ERROR","ROM file must be %d bytes long\n",ROMLEN);
+	GUIMessage(eMessageBox,
+		   "ERROR",
+		   "ROM file must be %d bytes long\n",
+		   ROMLEN);
 	Exit("");
     }
 
     /* Patch the ROM
     */
     RomPatch();
-    Z80LodgeCallback(z80,Z80_EDHook,EDCallback);
-    Z80LodgeCallback(z80,Z80_Fetch,CheckTimers);
+    Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
+    Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
 
     /* Set up the keyboard
     */
@@ -530,6 +533,25 @@ void SPECWriteMem(Z80 *z80, Z80Word addr, Z80Byte val)
 {
     if (addr>=ROMLEN)
 	mem[addr]=val;
+}
+
+
+Z80Word SPECReadWord(Z80 *z80, Z80Word addr)
+{
+    /* TODO: Emulation of contention */
+    return (Z80Word)mem[addr]|(Z80Word)mem[addr+1]<<8;
+}
+
+
+void SPECWriteWord(Z80 *z80, Z80Word addr, Z80Word val)
+{
+    if (addr>=ROMLEN)
+	mem[addr]=val&0xff;
+
+    addr++;
+
+    if (addr>=ROMLEN)
+	mem[addr]=val>>8;
 }
 
 

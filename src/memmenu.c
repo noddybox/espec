@@ -34,6 +34,7 @@ static const char ident[]="$Id$";
 #include "spec.h"
 #include "gfx.h"
 #include "gui.h"
+#include "util.h"
 
 #include <SDL.h>
 
@@ -56,13 +57,43 @@ static const char ident_h[]=ESPEC_MEMMENU_H;
 #define TRACE	"trace"
 
 
+/* ---------------------------------------- TYPES
+*/
+typedef struct
+{
+    int		no;
+    char	**expr;
+} Breakpoint;
+
+
 /* ---------------------------------------- STATIC DATA
 */
-FILE	*trace=NULL;
+static FILE		*trace=NULL;
+static Breakpoint	bpoint={NULL,0};
+static const char	*brk=NULL;
+
+
+/* ---------------------------------------- PROTOS
+*/
+static int		Instruction(Z80 *z80, Z80Val data);
 
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static void SetCallback(Z80 *z80)
+{
+    if (trace || bpoint.no)
+	Z80LodgeCallback(z80,eZ80_Instruction,Instruction);
+}
+
+
+static void ClearCallback(Z80 *z80)
+{
+    if (!trace && !bpoint.no)
+	Z80RemoveCallback(z80,eZ80_Instruction,Instruction);
+}
+
+
 static void Centre(const char *p, int y, Uint32 col)
 {
     GFXPrint((320-strlen(p)*8)/2,y,col,"%s",p);
@@ -73,11 +104,15 @@ static void DisplayMenu(void)
 {
     static const char *menu[]=
     {
-    	"1. Disassemble/Hex dump",
-    	"2. Disassemble to file ",
-	"3. Start/Stop trace log",
-	"4. Playback trace log  ",
-    	"5. Return              ",
+    	"1. Disassemble/Hex dump ",
+    	"2. Disassemble to file  ",
+	"3. Start/Stop trace log ",
+	"4. Playback trace log   ",
+	"5. Add a new breakpoint ",
+	"6. Clear a breakpoint   ",
+	"7. Display breakpoints  ",
+	"8. Clear all breakpoints",
+    	"9. Return               ",
 	NULL
     };
 
@@ -138,66 +173,26 @@ void DisplayZ80State(Z80State *s, int y, Uint32 col)
 }
 
 
-static int StrEq(const char *a, const char *b)
-{
-    while(*a && *b && tolower(*a)==tolower(*b))
-    {
-    	a++;
-	b++;
-    }
-
-    if (*a || *b)
-	return FALSE;
-    else
-	return TRUE;
-}
-
-
-static Z80Word Address(Z80 *z80, const char *p)
-{
-    Z80State s;
-
-    Z80GetState(z80,&s);
-
-    if (StrEq(p,"AF"))
-    	return s.AF;
-    else if (StrEq(p,"BC"))
-    	return s.BC;
-    else if (StrEq(p,"DE"))
-    	return s.DE;
-    else if (StrEq(p,"HL"))
-    	return s.HL;
-    else if (StrEq(p,"IX"))
-    	return s.IX;
-    else if (StrEq(p,"IY"))
-    	return s.IY;
-    else if (StrEq(p,"SP"))
-    	return s.SP;
-    else if (StrEq(p,"PC"))
-    	return s.PC;
-
-    return (Z80Word)strtoul(p,NULL,0);
-}
-
-
 static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
 {
-    unsigned long ul;
     const char *p;
+    char *error;
+    long l;
 
     p=GUIInputString(prompt ? prompt : "Address?","");
 
     if (*p)
     {
-	ul=Address(z80,p);
-
-	if (ul>0xffff)
+	if (!Z80Expression(z80,p,&l,&error))
 	{
-	    GUIMessage("ERROR","Bad address");
+	    GUIMessage(eMessageBox,
+		       "ERROR","%s",error ? error:"Invalid expression");
+
+	    free(error);
 	}
 	else
 	{
-	    *w=(Z80Word)ul;
+	    *w=(Z80Word)l;
 	    return TRUE;
 	}
     }
@@ -237,7 +232,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 
 	curr=pc;
 
-	for(f=0;f<21;f++)
+	for(f=0;f<GFX_HEIGHT/8-8;f++)
 	{
 	    char s[80];
 	    char *p;
@@ -250,14 +245,27 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 	    if (hexmode)
 	    {
 		int n;
+		char asc[9];
 
 	    	for(n=0;n<8;n++)
 		{
-		    GFXPrint(40+n*24,y,WHITE,"%2.2x",
-		    		(int)SPECReadForDisassem(z80,curr));
+		    Z80Byte b;
+
+		    b=SPECReadForDisassem(z80,curr);
+
+		    GFXPrint(40+n*24,y,WHITE,"%2.2x",(int)b);
 
 		    curr++;
+
+		    if (isprint(b))
+		    	asc[n]=b;
+		    else
+		    	asc[n]='.';
 		}
+
+		asc[8]=0;
+
+		GFXPrint(40+8*24,y,RED,"%s",asc);
 	    }
 	    else
 	    {
@@ -279,7 +287,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 	{
 	    case SDLK_F1:
 		GUIMessage
-		    ("DISASSEMBLY HELP","%s",
+		    (eMessageBox, "DISASSEMBLY HELP","%s",
 		       "ESC         - Exit              \n"
 		       "H           - Disassembly/hex   \n"
 		       "Enter       - Enter address     \n"
@@ -362,7 +370,7 @@ static void DoDisassemFile(Z80 *z80, const Z80State *s)
 
     if (!(fp=fopen(fname,"w")))
     {
-    	GUIMessage("ERROR","Couldn't create file:\n%s",fname);
+    	GUIMessage(eMessageBox,"ERROR","Couldn't create file:\n%s",fname);
 	return;
     }
 
@@ -383,10 +391,27 @@ static void DoDisassemFile(Z80 *z80, const Z80State *s)
 
 static int Instruction(Z80 *z80, Z80Val data)
 {
-    Z80State s;
+    int f;
 
-    Z80GetState(z80,&s);
-    fwrite(&s,sizeof s,1,trace);
+    if (trace)
+    {
+	Z80State s;
+
+	Z80GetState(z80,&s);
+
+	fwrite(&s,sizeof s,1,trace);
+    }
+
+    for(f=0;f<bpoint.no;f++)
+    {
+    	long l;
+
+	if (Z80Expression(z80,bpoint.expr[f],&l,NULL))
+	{
+	    if (l)
+		brk=bpoint.expr[f];
+	}
+    }
 
     return TRUE;
 }
@@ -400,12 +425,12 @@ static void EnableTrace(Z80 *z80, Z80State *s)
 
 	if (trace)
 	{
-	    GUIMessage("NOTICE","Created trace log");
-	    Z80LodgeCallback(z80,Z80_Instruction,Instruction);
+	    GUIMessage(eMessageBox,"NOTICE","Created trace log");
+	    SetCallback(z80);
 	}
 	else
 	{
-	    GUIMessage("ERROR","Failed to create trace log");
+	    GUIMessage(eMessageBox,"ERROR","Failed to create trace log");
 	}
     }
 }
@@ -415,10 +440,10 @@ static void DisableTrace(Z80 *z80)
 {
     if (trace)
     {
-	GUIMessage("NOTICE","Closing current trace log");
+	GUIMessage(eMessageBox,"NOTICE","Closing current trace log");
     	fclose(trace);
 	trace=NULL;
-	Z80LodgeCallback(z80,Z80_Instruction,NULL);
+	ClearCallback(z80);
     }
 }
 
@@ -437,7 +462,7 @@ static void PlaybackTrace(Z80 *z80)
 
     if (!fp)
     {
-	GUIMessage("ERROR","Couldn't open trace file");
+	GUIMessage(eMessageBox,"ERROR","Couldn't open trace file");
 	return;
     }
 
@@ -447,7 +472,7 @@ static void PlaybackTrace(Z80 *z80)
 
     if (max_pos==0)
     {
-	GUIMessage("ERROR","Empty trace file");
+	GUIMessage(eMessageBox,"ERROR","Empty trace file");
 	fclose(fp);
 	return;
     }
@@ -507,7 +532,7 @@ static void PlaybackTrace(Z80 *z80)
 	{
 	    case SDLK_F1:
 		GUIMessage
-		    ("PLAYBACK HELP","%s",
+		    (eMessageBox,"PLAYBACK HELP","%s",
 		       "ESC       - Exit                     \n"
 		       "Enter     - Step number              \n"
 		       "P         - Search for PC            \n"
@@ -542,7 +567,7 @@ static void PlaybackTrace(Z80 *z80)
 
 		    if (rd!=1)
 		    {
-		    	GUIMessage("NOTICE","Address not found");
+		    	GUIMessage(eMessageBox,"NOTICE","Address not found");
 			pos=prev_pos;
 		    }
 		}
@@ -589,6 +614,110 @@ static void PlaybackTrace(Z80 *z80)
 }
 
 
+static void DoAddBreakpoint(Z80 *z80)
+{
+    const char *expr;
+    char *error;
+    long l;
+
+    expr=GUIInputString("Expression?","");
+
+    if (!*expr)
+    	return;
+
+    if (!Z80Expression(z80,expr,&l,&error))
+    {
+	if (error)
+	{
+	    GUIMessage(eMessageBox,"INVALID EXPRESSION","%s",error);
+	    free(error);
+	}
+	else
+	{
+	    GUIMessage(eMessageBox,"ERROR","Expression is invalid");
+	    free(error);
+	}
+    }
+    else
+    {
+	bpoint.no++;
+	bpoint.expr=Realloc(bpoint.expr,bpoint.no * sizeof(*bpoint.expr));
+
+	bpoint.expr[bpoint.no-1]=StrCopy(expr);
+
+	SetCallback(z80);
+    }
+}
+
+
+static void DoRemoveBreakpoint(Z80 *z80, int delete)
+{
+    if (bpoint.no==0)
+    {
+    	if (delete)
+	    GUIMessage(eMessageBox,"NOTICE","No breakpoints to delete");
+	else
+	    GUIMessage(eMessageBox,"NOTICE","No breakpoints to display");
+
+	return;
+    }
+
+    GFXClear(BLACK);
+
+    if (delete)
+    {
+	int sel;
+
+    	sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
+
+	while (sel!=-1)
+	{
+	    int f;
+
+	    free(bpoint.expr[sel]);
+
+	    for(f=sel;f<bpoint.no-1;f++)
+	    	bpoint.expr[f]=bpoint.expr[f+1];
+
+	    bpoint.no--;
+
+	    if (bpoint.no==0)
+	    {
+	    	free(bpoint.expr);
+		bpoint.expr=NULL;
+	    }
+	    else
+		bpoint.expr=Realloc(bpoint.expr,
+				    bpoint.no * sizeof(*bpoint.expr));
+
+	    ClearCallback(z80);
+
+	    sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
+	}
+    }
+    else
+    	GUIListSelect("CURRENT BREAKPOINTS",bpoint.no,bpoint.expr);
+}
+
+
+static void DoClearBreakpoint(Z80 *z80)
+{
+    if (GUIMessage(eYesNoBox,"BREAKPOINTS","Clear all breakpoints"))
+    {
+	int f;
+
+	for(f=0;f<bpoint.no;f++)
+	    free(bpoint.expr[f]);
+
+	free(bpoint.expr);
+	bpoint.expr=NULL;
+	bpoint.no=0;
+
+	ClearCallback(z80);
+    }
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 void MemoryMenu(Z80 *z80)
@@ -631,8 +760,24 @@ void MemoryMenu(Z80 *z80)
 	    	PlaybackTrace(z80);
 		break;
 
-	    case SDLK_ESCAPE:
 	    case SDLK_5:
+		DoAddBreakpoint(z80);
+	    	break;
+
+	    case SDLK_6:
+		DoRemoveBreakpoint(z80,TRUE);
+	    	break;
+
+	    case SDLK_7:
+		DoRemoveBreakpoint(z80,FALSE);
+	    	break;
+
+	    case SDLK_8:
+		DoClearBreakpoint(z80);
+	    	break;
+
+	    case SDLK_ESCAPE:
+	    case SDLK_9:
 	    	quit=TRUE;
 		break;
 
@@ -651,6 +796,17 @@ void DisplayState(Z80 *z80)
 
     Z80GetState(z80,&s);
     DisplayZ80State(&s,136,RED);
+}
+
+
+const char *Break(void)
+{
+    const char *ret;
+
+    ret=brk;
+    brk=NULL;
+
+    return ret;
 }
 
 

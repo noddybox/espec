@@ -80,6 +80,8 @@ int main(int argc, char *argv[])
 
     z80=Z80Init(SPECWriteMem,
     		SPECReadMem,
+		SPECWriteWord,
+		SPECReadWord,
 		SPECWritePort,
 		SPECReadPort,
 		SPECReadForDisassem,
@@ -103,6 +105,8 @@ int main(int argc, char *argv[])
 
     while(!quit)
     {
+	const char *brk;
+
 	Z80State s1,s2;
 
 	Z80GetState(z80,&s1);
@@ -121,6 +125,12 @@ int main(int argc, char *argv[])
 	    GFXEndFrame(FALSE);
 	}
 
+	if ((brk=Break()))
+	{
+	    GUIMessage(eMessageBox,"BREAKPOINT","%s",brk);
+	    MemoryMenu(z80);
+	}
+
 	while((e=GFXGetKey()))
 	{
 	    switch (e->key.keysym.sym)
@@ -132,7 +142,8 @@ int main(int argc, char *argv[])
 
 		case SDLK_F1:
 		    if (e->key.state==SDL_PRESSED)
-			GUIMessage("HELP",
+			GUIMessage(eMessageBox,
+				   "HELP",
 				   "ESC - Quit                        \n"
 				   "F1  - Help                        \n"
 				   "F8  - Select tape file for loading\n"

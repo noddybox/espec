@@ -42,12 +42,23 @@ static const char ident_h[]=ESPEC_UTIL_H;
 */
 void *Malloc(size_t size)
 {
-    void *p=malloc(size);
+    void *new=malloc(size);
 
-    if (!p)
+    if (!new)
     	Exit("malloc failed for %lu bytes\n",(unsigned long)size);
 
-    return p;
+    return new;
+}
+
+
+void *Realloc(void *p, size_t size)
+{
+    void *new=realloc(p,size);
+
+    if (!new)
+    	Exit("realloc failed for %lu bytes\n",(unsigned long)size);
+
+    return new;
 }
 
 

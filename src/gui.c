@@ -98,6 +98,133 @@ static void Box(const char *title, int x, int y, int width, int height)
 }
 
 
+static int DoList(const char *title, int no, char * const list[], int *option)
+{
+    static const int max=GFX_HEIGHT/8-8;
+    SDL_Event *e;
+    int top;
+    int cur;
+    int done;
+    int f;
+
+    if (no==0)
+    	return -1;
+
+    top=0;
+    cur=0;
+
+    done=FALSE;
+
+    while(!done)
+    {
+	Box(title,7,7,GFX_WIDTH-14,GFX_HEIGHT-14);
+
+	if (option)
+	{
+	    Centre("Cursors to move, RETURN to accept",
+	    		GFX_HEIGHT-44,WHITE);
+	    Centre("SPACE toggles, I inverts all",
+	    		GFX_HEIGHT-36,WHITE);
+	    Centre("S select all, C clear all",
+	    		GFX_HEIGHT-28,WHITE);
+	}
+	else
+	    Centre("Cursors and RETURN to select",GFX_HEIGHT-28,WHITE);
+
+	Centre("ESCAPE to cancel",GFX_HEIGHT-20,WHITE);
+
+	for(f=0;f<max;f++)
+	{
+	    if (f+top<no)
+	    {
+		Uint32 pen,paper;
+
+		if (f+top==cur)
+		{
+		    pen=WHITE;
+		    paper=RED;
+		}
+		else
+		{
+		    pen=GREY;
+		    paper=BLACK;
+		}
+
+		if (option)
+		    GFXPrintPaper(16,20+f*8,pen,paper,"%c %-34.34s",
+				  option[f+top] ? FONT_TICK:' ',list[f+top]);
+		else
+		    GFXPrintPaper(16,20+f*8,pen,paper,"%-36.36s",list[f+top]);
+	    }
+	}
+
+	GFXEndFrame(FALSE);
+
+	e=GFXWaitKey();
+
+	switch(e->key.keysym.sym)
+	{
+	    case SDLK_RETURN:
+	    	done=TRUE;
+		break;
+
+	    case SDLK_SPACE:
+	    	if (option)
+		    option[cur]=!option[cur];
+		break;
+
+	    case SDLK_i:
+	    	if (option)
+		    for(f=0;f<no;f++)
+			option[f]=!option[f];
+		break;
+
+	    case SDLK_s:
+	    	if (option)
+		    for(f=0;f<no;f++)
+			option[f]=TRUE;
+		break;
+
+	    case SDLK_c:
+	    	if (option)
+		    for(f=0;f<no;f++)
+			option[f]=FALSE;
+		break;
+
+	    case SDLK_ESCAPE:
+		cur=-1;
+	    	done=TRUE;
+	    	break;
+
+	    case SDLK_UP:
+		if (cur>0)
+		{
+		    cur--;
+
+		    if (cur<top)
+		    	top=cur;
+		}
+	    	break;
+
+	    case SDLK_DOWN:
+		if (cur<no-1)
+		{
+		    cur++;
+
+		    if (cur>top+max-2)
+		    	top=cur-max+2;
+		}
+		break;
+
+	    default:
+		break;
+	}
+    }
+
+    return cur;
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 int GUIMessage(GUIBoxType type, const char *title, const char *format,...)
@@ -265,90 +392,33 @@ const char *GUIInputString(const char *prompt, const char *orig)
 
 int GUIListSelect(const char *title, int no, char * const list[])
 {
-    static const int max=GFX_HEIGHT/8-8;
-    SDL_Event *e;
-    int top;
-    int cur;
-    int done;
+    return DoList(title,no,list,NULL);
+}
+
+
+int GUIListOption(const char *title, int no, char * const list[], int option[])
+{
+    int *o;
+    int sel;
     int f;
 
     if (no==0)
-    	return -1;
+    	return FALSE;
 
-    top=0;
-    cur=0;
+    o=Malloc(no * sizeof *o);
 
-    done=FALSE;
+    for(f=0;f<no;f++)
+    	o[f]=option[f];
 
-    while(!done)
-    {
-	Box(title,7,7,GFX_WIDTH-14,GFX_HEIGHT-14);
+    sel=DoList(title,no,list,o);
 
-	Centre("Cursors and RETURN to select",GFX_HEIGHT-40,WHITE);
-	Centre("ESCAPE to cancel",GFX_HEIGHT-32,WHITE);
+    if (sel!=-1)
+    	for(f=0;f<no;f++)
+	    option[f]=o[f];
 
-	for(f=0;f<max;f++)
-	{
-	    if (f+top<no)
-	    {
-		Uint32 pen,paper;
+    free(o);
 
-		if (f+top==cur)
-		{
-		    pen=WHITE;
-		    paper=RED;
-		}
-		else
-		{
-		    pen=GREY;
-		    paper=BLACK;
-		}
-
-		GFXPrintPaper(16,20+f*8,pen,paper,"%-36.36s",list[f+top]);
-	    }
-	}
-
-	GFXEndFrame(FALSE);
-
-	e=GFXWaitKey();
-
-	switch(e->key.keysym.sym)
-	{
-	    case SDLK_RETURN:
-	    	done=TRUE;
-		break;
-
-	    case SDLK_ESCAPE:
-		cur=-1;
-	    	done=TRUE;
-	    	break;
-
-	    case SDLK_UP:
-		if (cur>0)
-		{
-		    cur--;
-
-		    if (cur<top)
-		    	top=cur;
-		}
-	    	break;
-
-	    case SDLK_DOWN:
-		if (cur<no-1)
-		{
-		    cur++;
-
-		    if (cur>top+max-2)
-		    	top=cur-max+2;
-		}
-		break;
-
-	    default:
-		break;
-	}
-    }
-
-    return cur;
+    return sel!=-1;
 }
 
 

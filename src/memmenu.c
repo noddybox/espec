@@ -63,6 +63,7 @@ static const char ident_h[]=ESPEC_MEMMENU_H;
 typedef struct
 {
     int		no;
+    int		*active;
     char	**expr;
 } Breakpoint;
 
@@ -86,7 +87,7 @@ typedef struct
 /* ---------------------------------------- STATIC DATA
 */
 static FILE		*trace=NULL;
-static Breakpoint	bpoint={0,NULL};
+static Breakpoint	bpoint={0,NULL,NULL};
 static const char	*brk=NULL;
 static int		lodged=FALSE;
 
@@ -98,9 +99,21 @@ static int		Instruction(Z80 *z80, Z80Val data);
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static int BreaksActive(void)
+{
+    int f;
+    int ret=FALSE;
+
+    for(f=0;f<bpoint.no;f++)
+    	ret|=bpoint.active[f];
+
+    return ret;
+}
+
+
 static void SetCallback(Z80 *z80)
 {
-    if ((trace || bpoint.no) && !lodged)
+    if ((trace || BreaksActive()) && !lodged)
     {
 	Z80LodgeCallback(z80,eZ80_Instruction,Instruction);
 	lodged=TRUE;
@@ -110,7 +123,7 @@ static void SetCallback(Z80 *z80)
 
 static void ClearCallback(Z80 *z80)
 {
-    if (!trace && !bpoint.no && lodged)
+    if (!trace && !BreaksActive() && lodged)
     {
 	Z80RemoveCallback(z80,eZ80_Instruction,Instruction);
 	lodged=FALSE;
@@ -120,7 +133,7 @@ static void ClearCallback(Z80 *z80)
 
 static void Centre(const char *p, int y, Uint32 col)
 {
-    GFXPrint((320-strlen(p)*8)/2,y,col,"%s",p);
+    GFXPrint((GFX_WIDTH-strlen(p)*8)/2,y,col,"%s",p);
 }
 
 
@@ -128,16 +141,17 @@ static void DisplayMenu(void)
 {
     static const char *menu[]=
     {
-    	"1   - Disassemble/Hex dump ",
-    	"2   - Disassemble to file  ",
-	"3   - Start/Stop trace log ",
-	"4   - Playback trace log   ",
-	"5   - Add a new breakpoint ",
-	"6    -Clear a breakpoint   ",
-	"7   - Display breakpoints  ",
-	"8   - Clear all breakpoints",
-	"R   - Reset                ",
-    	"ESC - Return               ",
+    	"1   - Disassemble/Hex dump  ",
+    	"2   - Disassemble to file   ",
+	"3   - Start/Stop trace log  ",
+	"4   - Playback trace log    ",
+	"5   - Add a new breakpoint  ",
+	"6   - Set active breakpoints",
+	"7   - Remove a breakpoint   ",
+	"8   - Clear all breakpoints ",
+	"R   - Reset                 ",
+	"X   - Exit (without confirm)",
+    	"ESC - Return                ",
 	NULL
     };
 
@@ -458,15 +472,16 @@ static int Instruction(Z80 *z80, Z80Val data)
     }
 
     for(f=0;f<bpoint.no;f++)
-    {
-    	long l;
-
-	if (Z80Expression(z80,bpoint.expr[f],&l,NULL))
+	if (bpoint.active[f])
 	{
-	    if (l)
-		brk=bpoint.expr[f];
+	    long l;
+
+	    if (Z80Expression(z80,bpoint.expr[f],&l,NULL))
+	    {
+		if (l)
+		    brk=bpoint.expr[f];
+	    }
 	}
-    }
 
     return TRUE;
 }
@@ -720,63 +735,84 @@ static void DoAddBreakpoint(Z80 *z80)
     }
     else
     {
+	int f;
+
+	for(f=0;f<50;f++)
+	{
 	bpoint.no++;
 	bpoint.expr=Realloc(bpoint.expr,bpoint.no * sizeof(*bpoint.expr));
+	bpoint.active=Realloc(bpoint.active,bpoint.no * sizeof(*bpoint.active));
 
 	bpoint.expr[bpoint.no-1]=StrCopy(expr);
+	bpoint.active[bpoint.no-1]=TRUE;
+	}
 
 	SetCallback(z80);
     }
 }
 
 
-static void DoRemoveBreakpoint(Z80 *z80, int delete)
+static void DoActiveBreakpoint(Z80 *z80)
 {
     if (bpoint.no==0)
     {
-    	if (delete)
-	    GUIMessage(eMessageBox,"NOTICE","No breakpoints to delete");
-	else
-	    GUIMessage(eMessageBox,"NOTICE","No breakpoints to display");
-
+	GUIMessage(eMessageBox,"NOTICE","No breakpoints to set");
 	return;
     }
 
     GFXClear(BLACK);
 
-    if (delete)
+    GUIListOption("SELECT ACTIVE BREAKPOINTS",
+		  bpoint.no,bpoint.expr,bpoint.active);
+}
+
+
+static void DoRemoveBreakpoint(Z80 *z80)
+{
+    int sel;
+
+    if (bpoint.no==0)
     {
-	int sel;
-
-    	sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
-
-	while (sel!=-1)
-	{
-	    int f;
-
-	    free(bpoint.expr[sel]);
-
-	    for(f=sel;f<bpoint.no-1;f++)
-	    	bpoint.expr[f]=bpoint.expr[f+1];
-
-	    bpoint.no--;
-
-	    if (bpoint.no==0)
-	    {
-	    	free(bpoint.expr);
-		bpoint.expr=NULL;
-	    }
-	    else
-		bpoint.expr=Realloc(bpoint.expr,
-				    bpoint.no * sizeof(*bpoint.expr));
-
-	    ClearCallback(z80);
-
-	    sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
-	}
+	GUIMessage(eMessageBox,"NOTICE","No breakpoints to delete");
+	return;
     }
-    else
-    	GUIListSelect("CURRENT BREAKPOINTS",bpoint.no,bpoint.expr);
+
+    GFXClear(BLACK);
+
+    sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
+
+    while (sel!=-1)
+    {
+	int f;
+
+	free(bpoint.expr[sel]);
+
+	for(f=sel;f<bpoint.no-1;f++)
+	{
+	    bpoint.expr[f]=bpoint.expr[f+1];
+	    bpoint.active[f]=bpoint.active[f+1];
+	}
+
+	bpoint.no--;
+
+	if (bpoint.no==0)
+	{
+	    free(bpoint.expr);
+	    bpoint.expr=NULL;
+	    bpoint.active=NULL;
+	}
+	else
+	{
+	    bpoint.expr=Realloc(bpoint.expr,
+				bpoint.no * sizeof(*bpoint.expr));
+	    bpoint.active=Realloc(bpoint.active,
+				  bpoint.no * sizeof(*bpoint.active));
+	}
+
+	ClearCallback(z80);
+
+	sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
+    }
 }
 
 
@@ -800,9 +836,10 @@ static void DoClearBreakpoint(Z80 *z80)
 
 /* ---------------------------------------- EXPORTED INTERFACES
 */
-void MemoryMenu(Z80 *z80)
+int MemoryMenu(Z80 *z80)
 {
     SDL_Event *e;
+    int done=FALSE;
     int quit=FALSE;
     Z80State s;
 
@@ -810,10 +847,10 @@ void MemoryMenu(Z80 *z80)
 
     GFXKeyRepeat(TRUE);
 
-    while(!quit)
+    while(!done)
     {
 	DisplayMenu();
-	DisplayState(z80);
+	DisplayZ80State(&s,GFX_HEIGHT-70,RED);
 	GFXEndFrame(FALSE);
 
 	e=GFXWaitKey();
@@ -845,11 +882,11 @@ void MemoryMenu(Z80 *z80)
 	    	break;
 
 	    case SDLK_6:
-		DoRemoveBreakpoint(z80,TRUE);
+		DoActiveBreakpoint(z80);
 	    	break;
 
 	    case SDLK_7:
-		DoRemoveBreakpoint(z80,FALSE);
+		DoRemoveBreakpoint(z80);
 	    	break;
 
 	    case SDLK_8:
@@ -864,8 +901,13 @@ void MemoryMenu(Z80 *z80)
 		}
 		break;
 
-	    case SDLK_ESCAPE:
+	    case SDLK_x:
+	    	done=TRUE;
 	    	quit=TRUE;
+		break;
+
+	    case SDLK_ESCAPE:
+	    	done=TRUE;
 		break;
 
 	    default:
@@ -874,6 +916,8 @@ void MemoryMenu(Z80 *z80)
     }
 
     GFXKeyRepeat(FALSE);
+
+    return quit;
 }
 
 
@@ -882,7 +926,7 @@ void DisplayState(Z80 *z80)
     Z80State s;
 
     Z80GetState(z80,&s);
-    DisplayZ80State(&s,136,RED);
+    DisplayZ80State(&s,GFX_HEIGHT/2,RED);
 }
 
 

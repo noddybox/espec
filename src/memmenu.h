@@ -30,9 +30,9 @@
 #include "z80.h"
 
 
-/* Memory menu
+/* Memory menu.  Returns TRUE if exit (from program) selected.
 */
-void		MemoryMenu(Z80 *z80);
+int		MemoryMenu(Z80 *z80);
 
 
 /* Display the state of the SPEC at the bottom of the screen

@@ -36,6 +36,7 @@ static const char id[]="$Id$";
 #include "memmenu.h"
 #include "config.h"
 #include "exit.h"
+#include "util.h"
 
 
 /* ---------------------------------------- MACROS
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
        TODO: Proper switch handling
     */
     if (argc>1 && strcmp(argv[1],"-m")==0)
-    	MemoryMenu(z80);
+    	quit=MemoryMenu(z80);
 
     while(!quit)
     {
@@ -129,16 +130,16 @@ int main(int argc, char *argv[])
 	if ((brk=Break()))
 	{
 	    GUIMessage(eMessageBox,"BREAKPOINT","%s",brk);
-	    MemoryMenu(z80);
+	    quit=MemoryMenu(z80);
 	}
 
-	while((e=GFXGetKey()))
+	while(!quit && (e=GFXGetKey()))
 	{
 	    switch (e->key.keysym.sym)
 	    {
 	    	case SDLK_ESCAPE:
 		    if (e->key.state==SDL_PRESSED)
-			quit=TRUE;
+			quit=GUIMessage(eYesNoBox,"QUIT","Sure?");
 		    break;
 
 		case SDLK_F1:
@@ -214,7 +215,8 @@ int main(int argc, char *argv[])
 
 		case SDLK_F11:
 		    if (e->key.state==SDL_PRESSED)
-		    	MemoryMenu(z80);
+		    	quit=MemoryMenu(z80);
+		    Debug("quit=%d\n");
 		    break;
 
 		case SDLK_F12:

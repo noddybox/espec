@@ -55,12 +55,6 @@
 void		GFXInit(void);
 
 
-/* Size of the screen
-*/
-int		GFXHeight(void);
-int		GFXWidth(void);
-
-
 /* Get the SDL_Surface for the screen
 */
 SDL_Surface	*GFXGetSurface(void);

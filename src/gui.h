@@ -58,6 +58,14 @@ const char	*GUIInputString(const char *prompt, const char *orig);
 int		GUIListSelect(const char *title, int no, char * const list[]);
 
 
+/* Allows options to be toggled in a list.  Returns FALSE for cancelled (in
+   which case option will be as it was.  TRUE if accepted, and option will be
+   updated.
+*/
+int		GUIListOption(const char *title,
+			      int no, char * const list[], int option[]);
+
+
 /* Select a file from the given directory.
 
    If load is TRUE then a new name cannot be entered.

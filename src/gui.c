@@ -431,7 +431,7 @@ int GUIFileSelect(const char *prompt, int load,
     else
 	strcpy(path,"/files/emu/spectrum/testespec.tap");
 
-    strcpy(path,"/files/emu/spectrum/testespec.tap");
+    /* strcpy(path,"/files/emu/spectrum/testespec.tap"); */
     return TRUE;
 }
 

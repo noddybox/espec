@@ -431,9 +431,6 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 void SPECInit(Z80 *z80)
 {
     FILE *fp;
-    int f;
-    int c;
-    int r;
 
     if (!(fp=fopen(SConfig(CONF_ROMFILE),"rb")))
     {
@@ -460,40 +457,7 @@ void SPECInit(Z80 *z80)
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
 
-    /* Set up the keyboard
-    */
-    for(f=0;f<8;f++)
-    	matrix[f]=0x1f;
-
-    /* Set up the colours
-    */
-    for(f=0;f<16;f++)
-    	coltable[f].col=GFXRGB(coltable[f].r,coltable[f].g,coltable[f].b);
-
-    scanline=0;
-    flash=0;
-    flashctr=0;
-
-    /* Set up screen
-    */
-    c=0;
-    r=0;
-    for(f=0;f<SCRL;f++)
-    {
-    	line[f]=mem+SCRDATA+(c*8*TXT_W)+(r*TXT_W);
-
-	c++;
-
-	if ((c%8)==0)
-	{
-	    if (++r==8)
-	    	r=0;
-	    else
-	    	c-=8;
-	}
-    }
-
-    GFXStartFrame();
+    SPECReset(z80);
 }
 
 
@@ -851,6 +815,44 @@ void SPECShowScreen(void)
 
 void SPECReset(Z80 *z80)
 {
+    int f;
+    int c;
+    int r;
+
+    /* Set up the keyboard
+    */
+    for(f=0;f<8;f++)
+    	matrix[f]=0x1f;
+
+    /* Set up the colours
+    */
+    for(f=0;f<16;f++)
+    	coltable[f].col=GFXRGB(coltable[f].r,coltable[f].g,coltable[f].b);
+
+    scanline=0;
+    flash=0;
+    flashctr=0;
+
+    /* Set up screen
+    */
+    c=0;
+    r=0;
+    for(f=0;f<SCRL;f++)
+    {
+    	line[f]=mem+SCRDATA+(c*8*TXT_W)+(r*TXT_W);
+
+	c++;
+
+	if ((c%8)==0)
+	{
+	    if (++r==8)
+	    	r=0;
+	    else
+	    	c-=8;
+	}
+    }
+
+    GFXStartFrame();
 }
 
 

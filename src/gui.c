@@ -150,7 +150,7 @@ int GUIMessage(GUIBoxType type, const char *title, const char *format,...)
     }
 
     width=(width*8)+18;
-    height=(no+3)*12;
+    height=(no+5)*10;
 
     if (width>(GFX_WIDTH-10))
     	width=GFX_WIDTH-10;

@@ -84,8 +84,9 @@ int main(int argc, char *argv[])
 		SPECReadWord,
 		SPECWritePort,
 		SPECReadPort,
-		SPECReadForDisassem,
-		SPECGetLabel);
+		SPECReadForDisassem);
+
+    Z80SetLabels(z80,SPECGetLabel());
 
     GFXInit();
 
@@ -146,11 +147,39 @@ int main(int argc, char *argv[])
 				   "HELP",
 				   "ESC - Quit                        \n"
 				   "F1  - Help                        \n"
+				   "F2  - About                       \n"
+				   "F3  - View Spectrum keyboad       \n"
 				   "F8  - Select tape file for loading\n"
 				   "F9  - Select tape file for saving \n"
 				   "F10 - Close all open tape files   \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
+		    break;
+
+		case SDLK_F2:
+		    if (e->key.state==SDL_PRESSED)
+			GUIMessage(eMessageBox,
+				   "espec - ZX Spectrum Emulator",
+				   "(c) 2004 Ian Cowburn\n"
+				   " \n"
+				   "This software comes with ABSOLUTELY \n"
+				   "NO WARRANTY, and you are free to    \n"
+				   "to redistribute it under certain    \n"
+				   "conditions.  See the supplied GNU   \n"
+				   "General Public License in LICENSE   \n"
+				   "for details.                        \n"
+				   " \n"
+				   "If you did not recieve a license,   \n"
+				   "vist www.gnu.org or wrote to:       \n"
+				   " \n"
+				   "Free Software Foundation, Inc.,     \n"
+				   "59 Temple Place, Suite 330,         \n"
+				   "Boston, MA 02111-1307 USA           ");
+		    break;
+
+		case SDLK_F3:
+		    if (e->key.state==SDL_PRESSED)
+			GUIMessage(eMessageBox,"TODO","Sorry, not done yet");
 		    break;
 
 		case SDLK_F8:

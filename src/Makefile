@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.5 2004-01-06 02:06:36 ianc Exp $
+# $Id: Makefile,v 1.6 2004-01-14 01:50:20 ianc Exp $
 # 
 
 
@@ -61,7 +61,7 @@ $(TARGET): $(OBJECTS) $(Z80LIB)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 $(Z80LIB): z80/*.[ch]
-	cd z80; make ; cd ..
+	cd z80; make "EXTERNAL_CFLAGS=`sdl-config --cflags`" ; cd ..
 
 clean:
 	rm -f $(TARGET) $(OBJECTS) core

@@ -622,15 +622,9 @@ Z80Byte SPECReadForDisassem(Z80 *z80, Z80Word addr)
 }
 
 
-/* TODO: Implement this as a binary search
-*/
-const char *SPECGetLabel(Z80 *z80, Z80Word addr)
+const Z80Label *SPECGetLabel(void)
 {
-    static const struct
-    {
-    	Z80Word		addr;
-	const char	*txt;
-    } label[]=
+    static const Z80Label label[]=
     	{
 	    {0x5c00,	"KSTATE"},
 	    {0x5c01,	"KSTATE+1"},
@@ -811,16 +805,12 @@ const char *SPECGetLabel(Z80 *z80, Z80Word addr)
 	    {0x5cb3,	"RAMTOP+1"},
 	    {0x5cb4,	"P_RAMT"},
 	    {0x5cb5,	"P_RAMT+1"},
+
+	    {0x0c0a,	"PRINT_STRING"},
 	    {0,		NULL}
 	};
 
-    int f;
-
-    for(f=0;label[f].txt;f++)
-    	if (addr==label[f].addr)
-	    return label[f].txt;
-
-    return NULL;
+    return label;
 }
 
 

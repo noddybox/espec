@@ -51,7 +51,7 @@ void		SPECWriteWord(Z80 *z80, Z80Word addr, Z80Word val);
 Z80Byte		SPECReadPort(Z80 *z80, Z80Word port);
 void		SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val);
 Z80Byte		SPECReadForDisassem(Z80 *z80, Z80Word addr);
-const char	*SPECGetLabel(Z80 *z80, Z80Word addr);
+const Z80Label	*SPECGetLabel(void);
 
 /* Interfaces for memory menu
 */

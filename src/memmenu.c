@@ -71,6 +71,7 @@ typedef struct
 static FILE		*trace=NULL;
 static Breakpoint	bpoint={NULL,0};
 static const char	*brk=NULL;
+static int		lodged=FALSE;
 
 
 /* ---------------------------------------- PROTOS
@@ -82,15 +83,21 @@ static int		Instruction(Z80 *z80, Z80Val data);
 */
 static void SetCallback(Z80 *z80)
 {
-    if (trace || bpoint.no)
+    if ((trace || bpoint.no) && !lodged)
+    {
 	Z80LodgeCallback(z80,eZ80_Instruction,Instruction);
+	lodged=TRUE;
+    }
 }
 
 
 static void ClearCallback(Z80 *z80)
 {
-    if (!trace && !bpoint.no)
+    if (!trace && !bpoint.no && lodged)
+    {
 	Z80RemoveCallback(z80,eZ80_Instruction,Instruction);
+	lodged=FALSE;
+    }
 }
 
 

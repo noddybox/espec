@@ -31,6 +31,10 @@
 #include "z80.h"
 #include "SDL.h"
 
+/* Types for Mount and Unmount
+*/
+typedef enum {SPEC_TAPE_IN,SPEC_TAPE_OUT} SPECMountType;
+
 
 /* Initialise the SPEC
 */
@@ -53,6 +57,11 @@ const char	*SPECGetLabel(Z80 *z80, Z80Word addr);
 */
 const char	*SPECInfo(Z80 *z80);
 
+
+/* Interfaces for snapshot and device control
+*/
+void		SPECMount(SPECMountType type, const char *path);
+void		SPECUnmount(SPECMountType type);
 
 #endif
 

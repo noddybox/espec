@@ -280,15 +280,15 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 	    case SDLK_F1:
 		GUIMessage
 		    ("DISASSEMBLY HELP","%s",
-		       "ESC - Exit\n"
-		       "H - Switch between disassembly/hex\n"
-		       "Enter - Enter address to display\n"
-		       "Cursor Up - Prev op\n"
-		       "Cursor Down - Next op\n"
-		       "Page Up - Move back a page\n"
-		       "Page Down - Move forward a page\n"
-		       "Cursor Left - Move PC by -1024\n"
-		       "Cursor Right - Move PC by 1024");
+		       "ESC         - Exit              \n"
+		       "H           - Disassembly/hex   \n"
+		       "Enter       - Enter address     \n"
+		       "Up          - Prev byte         \n"
+		       "Down        - Next op           \n"
+		       "Page Up     - Back 1 page       \n"
+		       "Page Down   - Forward 1 page    \n"
+		       "Left        - Forward 1024 bytes\n"
+		       "Right       - Back 1024 bytes   ");
 		break;
 
 	    case SDLK_ESCAPE:
@@ -437,7 +437,7 @@ static void PlaybackTrace(Z80 *z80)
 
     if (!fp)
     {
-	GUIMessage("ERROR","Couldn't open tracefile: " TRACE);
+	GUIMessage("ERROR","Couldn't open trace file");
 	return;
     }
 
@@ -447,7 +447,7 @@ static void PlaybackTrace(Z80 *z80)
 
     if (max_pos==0)
     {
-	GUIMessage("ERROR","Empty tracefile: " TRACE);
+	GUIMessage("ERROR","Empty trace file");
 	fclose(fp);
 	return;
     }
@@ -508,15 +508,15 @@ static void PlaybackTrace(Z80 *z80)
 	    case SDLK_F1:
 		GUIMessage
 		    ("PLAYBACK HELP","%s",
-		       "ESC - Exit\n"
-		       "Enter - Step number to display\n"
-		       "P - Search for PC\n"
-		       "Cursor Up - Prev step\n"
-		       "Cursor Down - Next step\n"
-		       "Page Up - Back 50 steps\n"
-		       "Page Down - Forward 50 steps\n"
-		       "Cursor Left - Back 1000 steps\n"
-		       "Cursor Right - Forward 1000 steps\n \n"
+		       "ESC       - Exit                     \n"
+		       "Enter     - Step number              \n"
+		       "P         - Search for PC            \n"
+		       "Up        - Prev step                \n"
+		       "Down      - Next step                \n"
+		       "Page Up   - Back 50 steps            \n"
+		       "Page Down - Forward 50 steps         \n"
+		       "Left      - Back 1000 steps          \n"
+		       "Right     - Forward 1000 steps       \n \n"
 		       "NOTE: Disassembly is as memory is NOW");
 		break;
 

@@ -207,4 +207,18 @@ const char *GUIInputString(const char *prompt, const char *orig)
 }
 
 
+int GUIFileSelect(const char *prompt, int load,
+		  const char *start_dir, char path[])
+{
+    /* TODO */
+    if (load)
+	strcpy(path,"/files/emu/spectrum/thrust1.tap");
+    else
+	strcpy(path,"/files/emu/spectrum/testespec.tap");
+
+    strcpy(path,"/files/emu/spectrum/testespec.tap");
+    return TRUE;
+}
+
+
 /* END OF FILE */

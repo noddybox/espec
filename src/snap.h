@@ -20,51 +20,51 @@
 
     -------------------------------------------------------------------------
 
-    Basic GUI routines
+    Utilities for handling snapshots
 
 */
 
-#ifndef ESPEC_GUI_H
-#define ESPEC_GUI_H "$Id$"
+#ifndef ESPEC_SNAP_H
+#define ESPEC_SNAP_H "$Id$"
 
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "z80.h"
 
 /* ---------------------------------------- INTERFACES
 */
 
-/* Display a simple message box.  A message of longer than 1024 bytes causes
-   undefined behaviour.  Newlines cause a line break.
+/* Loads a block from a TAP file.  Returns FALSE for failure.
+   Won't write below location 0x4000 in mem.
 */
-void		GUIMessage(const char *title, const char *format,...);
+int	TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr,
+		Z80Word *len, Z80Byte *mem);
 
 
-/* Enter a string, max 40 characters
+/* Saves a block to a TAP file.  Returns FALSE for failure
+   (which it never does as long as fp is not NULL).
 */
-const char	*GUIInputString(const char *prompt, const char *orig);
+int	TAPSave(FILE *fp, Z80Byte id, Z80Word *addr,
+		Z80Word *len, Z80Byte *mem);
 
 
-/* Select a file from the given directory.
-
-   If load is TRUE then a new name cannot be entered.
-
-   Returns TRUE for selected, FALSE for cancelled.
-
-   path holds the new file entered.  Note that start_dir can be a path to a
-   file - if chdir(start_dir) would not work, then it is tried with the
-   dirname(1) of start_dir.
-
-   Also start_dir and path can be the same pointer:
-
-	char file[FILENAME_MAX]="/home/foobar/dir/file.tap";
-
-	if (GUI_Fsel("Select tape",TRUE,file,file))
-	    ....
-
-   Will work fine.
+/* Copies a string.  The result must be freed.
 */
-int		GUIFileSelect(const char *prompt,
-			      int load,
-			      const char *start_dir,
-			      char path[]);
+char		*StrCopy(const char *source);
+
+
+/* Returns the filename portion of path.  Note returned pointer is pointing
+   inside of path.
+*/
+const char	*Basename(const char *path);
+
+
+/* Returns the directory portion of path.  Note returned pointer is internal
+   static storage.  If there are no directory seperators in path, "." is
+   returned.
+*/
+const char	*Dirname(const char *path);
 
 
 #endif

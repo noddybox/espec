@@ -29,6 +29,7 @@ static const char ident[]="$Id$";
 #include <stdio.h>
 #include <string.h>
 #include "spec.h"
+#include "snap.h"
 #include "gfx.h"
 #include "gui.h"
 #include "config.h"
@@ -44,12 +45,18 @@ static const char ident_h[]=ESPEC_SPECH;
 #define FALSE 0
 #endif
 
+#define HIBYTE(w)	((w)>>8)
+#define LOBYTE(w)	((w)&0xff)
+
 
 /* ---------------------------------------- STATICS
 */
 static const int	ROMLEN=0x4000;
 static const int	ROM_SAVE=0x4c6;
 static const int	ROM_LOAD=0x562;
+
+static FILE		*tape_in;
+static FILE		*tape_out;
 
 #define LOAD_PATCH	0xf0
 #define SAVE_PATCH	0xf1
@@ -317,18 +324,6 @@ static void RomPatch(void)
 
 
 
-static void LoadTape(Z80State *state)
-{
-    state->AF|=Z80_F_Carry;
-}
-
-
-static void SaveTape(Z80State *state)
-{
-    state->AF|=Z80_F_Carry;
-}
-
-
 static int EDCallback(Z80 *z80, Z80Val data)
 {
     Z80State state;
@@ -338,13 +333,39 @@ static int EDCallback(Z80 *z80, Z80Val data)
     switch((Z80Byte)data)
     {
     	case SAVE_PATCH:
-	    puts("Called tape save");
-	    SaveTape(&state);
+	    if (!tape_out)
+	    {
+		state.AF|=Z80_F_Carry;
+	    }
+	    else
+	    {
+	    	if (TAPSave(tape_out,HIBYTE(state.AF),&state.IX,&state.DE,mem))
+		{
+		    state.AF&=~Z80_F_Carry;
+		}
+		else
+		{
+		    state.AF|=Z80_F_Carry;
+		}
+	    }
 	    break;
 
     	case LOAD_PATCH:
-	    puts("Called tape load");
-	    LoadTape(&state);
+	    if (!tape_in)
+	    {
+		state.AF|=Z80_F_Carry;
+	    }
+	    else
+	    {
+	    	if (TAPLoad(tape_in,HIBYTE(state.AF),&state.IX,&state.DE,mem))
+		{
+		    state.AF&=~Z80_F_Carry;
+		}
+		else
+		{
+		    state.AF|=Z80_F_Carry;
+		}
+	    }
 	    break;
 
 	default:
@@ -533,7 +554,6 @@ Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 	default:	/* ULA */
 	    if (!(lo&1))
 	    {
-		border=(border+1)%16; /* TODO: Remove debug code */
 		/* Key matrix
 		*/
 		b=0xff;
@@ -580,6 +600,8 @@ Z80Byte SPECReadForDisassem(Z80 *z80, Z80Word addr)
 }
 
 
+/* TODO: Implement this as a binary search
+*/
 const char *SPECGetLabel(Z80 *z80, Z80Word addr)
 {
     static const struct
@@ -785,6 +807,50 @@ const char *SPECInfo(Z80 *z80)
     static char buff[80]={0};
 
     return buff;
+}
+
+
+void SPECMount(SPECMountType type, const char *path)
+{
+    switch(type)
+    {
+    	case SPEC_TAPE_IN:
+	    if (tape_in)
+	    	fclose(tape_in);
+
+	    tape_in=fopen(path,"rb");
+	    break;
+
+    	case SPEC_TAPE_OUT:
+	    if (tape_out)
+	    	fclose(tape_out);
+
+	    tape_out=fopen(path,"wb");
+	    break;
+    }
+}
+
+
+void SPECUnmount(SPECMountType type)
+{
+    switch(type)
+    {
+    	case SPEC_TAPE_IN:
+	    if (tape_in)
+	    {
+	    	fclose(tape_in);
+		tape_in=NULL;
+	    }
+	    break;
+
+    	case SPEC_TAPE_OUT:
+	    if (tape_out)
+	    {
+	    	fclose(tape_out);
+		tape_out=NULL;
+	    }
+	    break;
+    }
 }
 
 

@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.4 2004-01-05 01:07:07 ianc Exp $
+# $Id: Makefile,v 1.5 2004-01-06 02:06:36 ianc Exp $
 # 
 
 
@@ -34,18 +34,22 @@ Z80LIB	=	z80/z80.a
 
 SOURCE	=	main.c		\
 		spec.c		\
+		snap.c		\
 		config.c	\
 		gfx.c		\
 		gui.c		\
 		memmenu.c	\
+		util.c		\
 		exit.c
 
 OBJECTS	=	main.o		\
 		spec.o		\
+		snap.o		\
 		config.o	\
 		gfx.o		\
 		gui.o		\
 		memmenu.o	\
+		util.o		\
 		exit.o
 
 CFLAGS +=	-Iz80 `sdl-config --cflags`
@@ -72,8 +76,9 @@ depend:
 
 main.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 main.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-main.o: /usr/include/stdio.h /usr/local/include/SDL/SDL.h
-main.o: /usr/local/include/SDL/SDL_main.h /usr/local/include/SDL/SDL_types.h
+main.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
+main.o: /usr/local/include/SDL/SDL.h /usr/local/include/SDL/SDL_main.h
+main.o: /usr/local/include/SDL/SDL_types.h
 main.o: /usr/local/include/SDL/SDL_getenv.h
 main.o: /usr/local/include/SDL/SDL_error.h
 main.o: /usr/local/include/SDL/begin_code.h
@@ -111,7 +116,11 @@ spec.o: /usr/local/include/SDL/SDL_keyboard.h
 spec.o: /usr/local/include/SDL/SDL_keysym.h
 spec.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
 spec.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
-spec.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h config.h exit.h
+spec.o: /usr/local/include/SDL/SDL_version.h snap.h gfx.h gui.h config.h
+spec.o: exit.h
+snap.o: snap.h /usr/include/stdlib.h /usr/include/sys/cdefs.h
+snap.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
+snap.o: /usr/include/stdio.h z80/z80.h
 config.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 config.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 config.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
@@ -139,9 +148,10 @@ gui.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 gui.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 gui.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
 gui.o: /usr/include/stdarg.h /usr/include/ctype.h /usr/include/runetype.h
-gui.o: gui.h /usr/local/include/SDL/SDL.h /usr/local/include/SDL/SDL_main.h
-gui.o: /usr/local/include/SDL/SDL_types.h /usr/local/include/SDL/SDL_getenv.h
-gui.o: /usr/local/include/SDL/SDL_error.h /usr/local/include/SDL/begin_code.h
+gui.o: gui.h gfx.h /usr/local/include/SDL/SDL.h
+gui.o: /usr/local/include/SDL/SDL_main.h /usr/local/include/SDL/SDL_types.h
+gui.o: /usr/local/include/SDL/SDL_getenv.h /usr/local/include/SDL/SDL_error.h
+gui.o: /usr/local/include/SDL/begin_code.h
 gui.o: /usr/local/include/SDL/close_code.h /usr/local/include/SDL/SDL_rwops.h
 gui.o: /usr/local/include/SDL/SDL_timer.h /usr/local/include/SDL/SDL_audio.h
 gui.o: /usr/local/include/SDL/SDL_byteorder.h
@@ -153,7 +163,7 @@ gui.o: /usr/local/include/SDL/SDL_keyboard.h
 gui.o: /usr/local/include/SDL/SDL_keysym.h /usr/local/include/SDL/SDL_mouse.h
 gui.o: /usr/local/include/SDL/SDL_video.h /usr/local/include/SDL/SDL_mutex.h
 gui.o: /usr/local/include/SDL/SDL_quit.h /usr/local/include/SDL/SDL_version.h
-gui.o: gfx.h exit.h
+gui.o: exit.h
 memmenu.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 memmenu.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 memmenu.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
@@ -180,6 +190,10 @@ memmenu.o: /usr/local/include/SDL/SDL_video.h
 memmenu.o: /usr/local/include/SDL/SDL_mutex.h
 memmenu.o: /usr/local/include/SDL/SDL_quit.h
 memmenu.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h
+util.o: /usr/include/stdio.h /usr/include/sys/cdefs.h
+util.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
+util.o: /usr/include/string.h /usr/include/strings.h util.h
+util.o: /usr/include/stdlib.h exit.h
 exit.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 exit.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 exit.o: /usr/include/stdarg.h exit.h /usr/local/include/SDL/SDL.h

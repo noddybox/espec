@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.9 2004-01-24 01:47:55 ianc Exp $
+# $Id: Makefile,v 1.10 2004-01-24 02:17:57 ianc Exp $
 # 
 
 
@@ -96,7 +96,7 @@ main.o: /usr/local/include/SDL/SDL_keysym.h
 main.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
 main.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
 main.o: /usr/local/include/SDL/SDL_version.h z80/z80.h spec.h gfx.h gui.h
-main.o: memmenu.h config.h exit.h util.h
+main.o: memmenu.h config.h kbbmp.h exit.h util.h
 spec.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 spec.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 spec.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h

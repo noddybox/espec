@@ -26,6 +26,7 @@
 static const char ident[]="$Id$";
 
 #include "snap.h"
+#include "util.h"
 
 static const char ident_h[]=ESPEC_SNAP_H;
 
@@ -94,7 +95,7 @@ static void PutByte(FILE *fp, Z80Byte b)
 
 /* ---------------------------------------- INTERFACES
 */
-int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, Z80Byte *mem)
+int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Poke poke)
 {
     Z80Word blen;
     Z80Byte type,b,csum,tape_csum;
@@ -128,8 +129,7 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, Z80Byte *mem)
 	    b=GetByte(fp);
 	    csum^=b;
 
-	    if (*addr>=ROMLEN)
-	    	mem[*addr]=b;
+	    poke(*addr,b);
 
 	    (*addr)++;
 	    (*len)--;
@@ -153,6 +153,7 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, Z80Byte *mem)
 
 	/* Check the checksum
 	*/
+	Debug("csum = %d, tape csum = %d\n",csum,tape_csum);
 	return csum==tape_csum;
     }
     else
@@ -167,7 +168,7 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, Z80Byte *mem)
 }
 
 
-int TAPSave(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, Z80Byte *mem)
+int TAPSave(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Peek peek)
 {
     Z80Byte csum;
 
@@ -185,8 +186,12 @@ int TAPSave(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, Z80Byte *mem)
 
     while(*len)
     {
-    	PutByte(fp,mem[*addr]);
-	csum^=mem[*addr];
+	Z80Byte b;
+
+	b=peek(*addr);
+
+    	PutByte(fp,b);
+	csum^=b;
 	(*addr)++;
 	(*len)--;
     }

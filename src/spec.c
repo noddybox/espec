@@ -244,6 +244,19 @@ static void DumpZ80(Z80 *z80)
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static Z80Byte Peek(Z80Word addr)
+{
+    return mem[addr];
+}
+
+
+static void Poke(Z80Word addr, Z80Byte val)
+{
+    if (addr>=ROMLEN)
+	mem[addr]=val;
+}
+
+
 void DrawScanlineAt(int y, int sline)
 {
     int aline;
@@ -339,13 +352,13 @@ static int EDCallback(Z80 *z80, Z80Val data)
 	    }
 	    else
 	    {
-	    	if (TAPSave(tape_out,HIBYTE(state.AF),&state.IX,&state.DE,mem))
+	    	if (TAPSave(tape_out,HIBYTE(state.AF),&state.IX,&state.DE,Peek))
 		{
-		    state.AF&=~eZ80_Carry;
+		    state.AF|=eZ80_Carry;
 		}
 		else
 		{
-		    state.AF|=eZ80_Carry;
+		    state.AF&=~eZ80_Carry;
 		}
 	    }
 	    break;
@@ -357,13 +370,13 @@ static int EDCallback(Z80 *z80, Z80Val data)
 	    }
 	    else
 	    {
-	    	if (TAPLoad(tape_in,HIBYTE(state.AF),&state.IX,&state.DE,mem))
+	    	if (TAPLoad(tape_in,HIBYTE(state.AF),&state.IX,&state.DE,Poke))
 		{
-		    state.AF&=~eZ80_Carry;
+		    state.AF|=eZ80_Carry;
 		}
 		else
 		{
-		    state.AF|=eZ80_Carry;
+		    state.AF&=~eZ80_Carry;
 		}
 	    }
 	    break;
@@ -595,6 +608,8 @@ const Z80Label *SPECGetLabel(void)
 {
     static const Z80Label label[]=
     	{
+	    {0x04c6,	"SAVE"},
+	    {0x0562,	"LOAD"},
 	    {0x5c00,	"KSTATE"},
 	    {0x5c01,	"KSTATE+1"},
 	    {0x5c02,	"KSTATE+2"},

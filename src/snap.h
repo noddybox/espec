@@ -35,18 +35,21 @@
 /* ---------------------------------------- INTERFACES
 */
 
+typedef Z80Byte	(*SNAP_Peek)(Z80Word address);
+typedef void	(*SNAP_Poke)(Z80Word address, Z80Byte val);
+
+
 /* Loads a block from a TAP file.  Returns FALSE for failure.
-   Won't write below location 0x4000 in mem.
 */
 int	TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr,
-		Z80Word *len, Z80Byte *mem);
+		Z80Word *len, SNAP_Poke poke);
 
 
 /* Saves a block to a TAP file.  Returns FALSE for failure
    (which it never does as long as fp is not NULL).
 */
 int	TAPSave(FILE *fp, Z80Byte id, Z80Word *addr,
-		Z80Word *len, Z80Byte *mem);
+		Z80Word *len, SNAP_Peek peek);
 
 
 /* Copies a string.  The result must be freed.

@@ -57,6 +57,10 @@ const Z80Label	*SPECGetLabel(void);
 */
 const char	*SPECInfo(Z80 *z80);
 
+/* Called when the machine is reset
+*/
+void		SPECReset(Z80 *z80);
+
 
 /* Interfaces for snapshot and device control
 */

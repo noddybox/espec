@@ -60,6 +60,13 @@ const char	*Basename(const char *path);
 const char	*Dirname(const char *path);
 
 
+/* Writes the passed text to debug.txt.  Note this is interface is not
+   able to be switched on/off, so debug is only used in a transient way
+   (once the bug is fixed, calls to this should be removed).
+*/
+void		Debug(const char *format,...);
+
+
 #endif
 
 

@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.6 2004-01-14 01:50:20 ianc Exp $
+# $Id: Makefile,v 1.7 2004-01-15 18:53:51 ianc Exp $
 # 
 
 
@@ -55,7 +55,6 @@ OBJECTS	=	main.o		\
 CFLAGS +=	-Iz80 `sdl-config --cflags`
 
 LIBS	=	$(Z80LIB) `sdl-config --libs`
-
 
 $(TARGET): $(OBJECTS) $(Z80LIB)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
@@ -117,7 +116,7 @@ spec.o: /usr/local/include/SDL/SDL_keysym.h
 spec.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
 spec.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
 spec.o: /usr/local/include/SDL/SDL_version.h snap.h gfx.h gui.h config.h
-spec.o: exit.h
+spec.o: exit.h util.h
 snap.o: snap.h /usr/include/stdlib.h /usr/include/sys/cdefs.h
 snap.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 snap.o: /usr/include/stdio.h z80/z80.h
@@ -163,7 +162,7 @@ gui.o: /usr/local/include/SDL/SDL_keyboard.h
 gui.o: /usr/local/include/SDL/SDL_keysym.h /usr/local/include/SDL/SDL_mouse.h
 gui.o: /usr/local/include/SDL/SDL_video.h /usr/local/include/SDL/SDL_mutex.h
 gui.o: /usr/local/include/SDL/SDL_quit.h /usr/local/include/SDL/SDL_version.h
-gui.o: exit.h
+gui.o: exit.h util.h
 memmenu.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 memmenu.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 memmenu.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
@@ -189,11 +188,11 @@ memmenu.o: /usr/local/include/SDL/SDL_mouse.h
 memmenu.o: /usr/local/include/SDL/SDL_video.h
 memmenu.o: /usr/local/include/SDL/SDL_mutex.h
 memmenu.o: /usr/local/include/SDL/SDL_quit.h
-memmenu.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h
+memmenu.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h util.h
 util.o: /usr/include/stdio.h /usr/include/sys/cdefs.h
 util.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-util.o: /usr/include/string.h /usr/include/strings.h util.h
-util.o: /usr/include/stdlib.h exit.h
+util.o: /usr/include/string.h /usr/include/strings.h /usr/include/stdarg.h
+util.o: util.h /usr/include/stdlib.h exit.h
 exit.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 exit.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 exit.o: /usr/include/stdarg.h exit.h /usr/local/include/SDL/SDL.h

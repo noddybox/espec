@@ -41,20 +41,21 @@ static const char ident[]="$Id$";
 static const char ident_h[]=ESPEC_MEMMENU_H;
 
 #ifndef TRUE
-#define TRUE 1
+#define TRUE		1
 #endif
 
 #ifndef FALSE
-#define FALSE 0
+#define FALSE		0
 #endif
 
-#define WHITE	GFXRGB(255,255,255)
-#define BLACK	GFXRGB(0,0,0)
-#define RED	GFXRGB(255,100,100)
-#define GREEN	GFXRGB(100,255,100)
-#define BLUE	GFXRGB(100,100,255)
+#define WHITE		GFXRGB(255,255,255)
+#define BLACK		GFXRGB(0,0,0)
+#define RED		GFXRGB(255,100,100)
+#define GREEN		GFXRGB(100,255,100)
+#define BLUE		GFXRGB(100,100,255)
 
-#define TRACE	"trace"
+#define TRACE		"trace"
+#define TRACEMEM_WIN	10
 
 
 /* ---------------------------------------- TYPES
@@ -66,10 +67,26 @@ typedef struct
 } Breakpoint;
 
 
+typedef struct
+{
+    Z80Word	addr;
+    Z80Word	val;
+} MemTrace;
+
+
+typedef struct
+{
+    Z80State	s;
+    MemTrace	hl[TRACEMEM_WIN];
+    MemTrace	de[TRACEMEM_WIN];
+    MemTrace	sp[TRACEMEM_WIN];
+} Trace;
+
+
 /* ---------------------------------------- STATIC DATA
 */
 static FILE		*trace=NULL;
-static Breakpoint	bpoint={NULL,0};
+static Breakpoint	bpoint={0,NULL};
 static const char	*brk=NULL;
 static int		lodged=FALSE;
 
@@ -111,15 +128,16 @@ static void DisplayMenu(void)
 {
     static const char *menu[]=
     {
-    	"1. Disassemble/Hex dump ",
-    	"2. Disassemble to file  ",
-	"3. Start/Stop trace log ",
-	"4. Playback trace log   ",
-	"5. Add a new breakpoint ",
-	"6. Clear a breakpoint   ",
-	"7. Display breakpoints  ",
-	"8. Clear all breakpoints",
-    	"9. Return               ",
+    	"1   - Disassemble/Hex dump ",
+    	"2   - Disassemble to file  ",
+	"3   - Start/Stop trace log ",
+	"4   - Playback trace log   ",
+	"5   - Add a new breakpoint ",
+	"6    -Clear a breakpoint   ",
+	"7   - Display breakpoints  ",
+	"8   - Clear all breakpoints",
+	"R   - Reset                ",
+    	"ESC - Return               ",
 	NULL
     };
 
@@ -169,6 +187,10 @@ void DisplayZ80State(Z80State *s, int y, Uint32 col)
     GFXPrintPaper(0,y,col,BLACK,
     		  "IX=%4.4x  IY=%4.4x  SP=%4.4x",
 		  s->IX,s->IY,s->SP);
+    y+=8;
+    GFXPrintPaper(0,y,col,BLACK,
+    		  "AF'=%4.4x BC'=%4.4x DE'=%4.4x HL'=%4.4x",
+		  s->AF_,s->BC_,s->DE_,s->HL_);
     y+=8;
     GFXPrintPaper(0,y,col,BLACK,
     		  "I=%2.2x     IM=%2.2x    R=%2.2x",
@@ -396,17 +418,43 @@ static void DoDisassemFile(Z80 *z80, const Z80State *s)
 }
 
 
+static void GetMemTrace(Z80 *z80, MemTrace *t, Z80Word from, int count)
+{
+    int f;
+
+    f=0;
+
+    while(f<count)
+    {
+	Z80Word w;
+
+	w=(Z80Word)SPECReadForDisassem(z80,from)|
+	  (Z80Word)SPECReadForDisassem(z80,from+1)<<8;
+
+	t[f].addr=from;
+	t[f].val=w;
+
+    	from+=2;
+	f++;
+    }
+}
+
+
 static int Instruction(Z80 *z80, Z80Val data)
 {
     int f;
 
     if (trace)
     {
-	Z80State s;
+	Trace t;
 
-	Z80GetState(z80,&s);
+	Z80GetState(z80,&t.s);
 
-	fwrite(&s,sizeof s,1,trace);
+	GetMemTrace(z80,t.hl,t.s.HL-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	GetMemTrace(z80,t.de,t.s.DE-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	GetMemTrace(z80,t.sp,t.s.SP-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+
+	fwrite(&t,sizeof t,1,trace);
     }
 
     for(f=0;f<bpoint.no;f++)
@@ -455,6 +503,27 @@ static void DisableTrace(Z80 *z80)
 }
 
 
+static void DisplayTraceMem(int x, int y, const char *name,
+			    MemTrace *m, Z80Word expect)
+{
+    int f;
+
+    GFXPrint(x,y,GREEN,"%s",name);
+
+    for(f=0;f<TRACEMEM_WIN;f++)
+    {
+	Uint32 paper;
+
+	if (m[f].addr==expect)
+	    paper=RED;
+	else
+	    paper=BLACK;
+
+    	GFXPrintPaper(x,y+f*8+12,GREEN,paper,"%4.4x",m[f].addr);
+    	GFXPrintPaper(x+32,y+f*8+12,WHITE,paper," %4.4x",m[f].val);
+    }
+}
+
 static void PlaybackTrace(Z80 *z80)
 {
     FILE *fp;
@@ -463,7 +532,7 @@ static void PlaybackTrace(Z80 *z80)
     long pos;
     long max_pos;
     Z80Word pc;
-    Z80State s;
+    Trace t;
 
     fp=fopen(TRACE,"rb");
 
@@ -475,7 +544,7 @@ static void PlaybackTrace(Z80 *z80)
 
     fseek(fp,0,SEEK_END);
 
-    max_pos=ftell(fp)/sizeof s;
+    max_pos=ftell(fp)/sizeof t;
 
     if (max_pos==0)
     {
@@ -500,10 +569,14 @@ static void PlaybackTrace(Z80 *z80)
     	Centre("TRACE PLAYBACK",0,WHITE);
     	Centre("Press F1 for help",9,RED);
 
-	fseek(fp,pos*sizeof s,SEEK_SET);
-	fread(&s,sizeof s,1,fp);
+	fseek(fp,pos*sizeof t,SEEK_SET);
+	fread(&t,sizeof t,1,fp);
 
-	DisplayZ80State(&s,136,WHITE);
+	DisplayZ80State(&t.s,136,WHITE);
+
+	DisplayTraceMem(0,192,"MEM (SP)",t.sp,t.s.SP);
+	DisplayTraceMem(100,192,"MEM (HL)",t.hl,t.s.HL);
+	DisplayTraceMem(200,192,"MEM (DE)",t.de,t.s.DE);
 
 	for(f=0;f<10;f++)
 	{
@@ -519,9 +592,9 @@ static void PlaybackTrace(Z80 *z80)
 	    else
 		paper=BLACK;
 
-	    GFXPrintPaper(0,y,GREEN,paper,"%4.4x ",s.PC);
+	    GFXPrintPaper(0,y,GREEN,paper,"%4.4x ",t.s.PC);
 
-	    strcpy(str,Z80Disassemble(z80,&s.PC));
+	    strcpy(str,Z80Disassemble(z80,&t.s.PC));
 	    p=strtok(str,";");
 	    GFXPrintPaper(40,y,WHITE,paper,"%s",str);
 	}
@@ -565,10 +638,10 @@ static void PlaybackTrace(Z80 *z80)
 	    case SDLK_p:
 		if (EnterAddress("PC to search for?",z80,&pc))
 		{
-		    while((rd=fread(&s,sizeof s,1,fp))==1)
+		    while((rd=fread(&t,sizeof t,1,fp))==1)
 		    {
 			pos++;
-			if (s.PC==pc)
+			if (t.s.PC==pc)
 			    break;
 		    }
 
@@ -783,8 +856,15 @@ void MemoryMenu(Z80 *z80)
 		DoClearBreakpoint(z80);
 	    	break;
 
+	    case SDLK_r:
+	    	if (GUIMessage(eYesNoBox,"RESET","Sure?"))
+		{
+		    Z80Reset(z80);
+		    SPECReset(z80);
+		}
+		break;
+
 	    case SDLK_ESCAPE:
-	    case SDLK_9:
 	    	quit=TRUE;
 		break;
 

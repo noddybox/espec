@@ -27,6 +27,7 @@ static const char ident[]="$Id$";
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "util.h"
 #include "exit.h"
@@ -107,5 +108,21 @@ const char *Dirname(const char *path)
     return dir;
 }
 
+
+void Debug(const char *format, ...)
+{
+    static FILE *fp=NULL;
+    va_list ap;
+
+    if (!fp)
+    	fp=fopen("debug.txt","w");
+
+    if (!fp)
+    	return;
+
+    va_start(ap,format);
+    vfprintf(fp,format,ap);
+    va_end(ap);
+}
 
 /* END OF FILE */

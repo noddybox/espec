@@ -34,6 +34,7 @@ static const char ident[]="$Id$";
 #include "gui.h"
 #include "config.h"
 #include "exit.h"
+#include "util.h"
 
 static const char ident_h[]=ESPEC_SPECH;
 
@@ -545,6 +546,13 @@ Z80Word SPECReadWord(Z80 *z80, Z80Word addr)
 
 void SPECWriteWord(Z80 *z80, Z80Word addr, Z80Word val)
 {
+    if (addr==0xff4e && val==0)
+    {
+	Z80State s;
+	Z80GetState(z80,&s);
+    	Debug("Wrote %4.4x to %4.4x @%4.4x\n",val,addr,s.PC);
+    }
+
     if (addr>=ROMLEN)
 	mem[addr]=val&0xff;
 
@@ -819,6 +827,11 @@ const char *SPECInfo(Z80 *z80)
     static char buff[80]={0};
 
     return buff;
+}
+
+
+void SPECReset(Z80 *z80)
+{
 }
 
 

@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.1.1.1 2003-12-23 23:33:02 ianc Exp $
+# $Id: Makefile,v 1.2 2003-12-24 18:19:00 ianc Exp $
 # 
 
 
@@ -89,13 +89,13 @@ main.o: /usr/local/include/SDL/SDL_keyboard.h
 main.o: /usr/local/include/SDL/SDL_keysym.h
 main.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
 main.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
-main.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h memmenu.h config.h
-main.o: exit.h
+main.o: /usr/local/include/SDL/SDL_version.h z80/z80.h spec.h gfx.h gui.h
+main.o: memmenu.h config.h exit.h
 spec.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 spec.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 spec.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
-spec.o: gfx.h /usr/local/include/SDL/SDL.h /usr/local/include/SDL/SDL_main.h
-spec.o: /usr/local/include/SDL/SDL_types.h
+spec.o: spec.h z80/z80.h /usr/local/include/SDL/SDL.h
+spec.o: /usr/local/include/SDL/SDL_main.h /usr/local/include/SDL/SDL_types.h
 spec.o: /usr/local/include/SDL/SDL_getenv.h
 spec.o: /usr/local/include/SDL/SDL_error.h
 spec.o: /usr/local/include/SDL/begin_code.h
@@ -111,7 +111,7 @@ spec.o: /usr/local/include/SDL/SDL_keyboard.h
 spec.o: /usr/local/include/SDL/SDL_keysym.h
 spec.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
 spec.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
-spec.o: /usr/local/include/SDL/SDL_version.h gui.h config.h exit.h
+spec.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h config.h exit.h
 config.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 config.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 config.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
@@ -156,8 +156,9 @@ gui.o: /usr/local/include/SDL/SDL_quit.h /usr/local/include/SDL/SDL_version.h
 gui.o: gfx.h exit.h
 memmenu.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 memmenu.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-memmenu.o: /usr/include/string.h /usr/include/strings.h memmenu.h gfx.h
-memmenu.o: /usr/local/include/SDL/SDL.h /usr/local/include/SDL/SDL_main.h
+memmenu.o: /usr/include/string.h /usr/include/strings.h memmenu.h z80/z80.h
+memmenu.o: spec.h /usr/local/include/SDL/SDL.h
+memmenu.o: /usr/local/include/SDL/SDL_main.h
 memmenu.o: /usr/local/include/SDL/SDL_types.h
 memmenu.o: /usr/local/include/SDL/SDL_getenv.h
 memmenu.o: /usr/local/include/SDL/SDL_error.h
@@ -177,7 +178,7 @@ memmenu.o: /usr/local/include/SDL/SDL_mouse.h
 memmenu.o: /usr/local/include/SDL/SDL_video.h
 memmenu.o: /usr/local/include/SDL/SDL_mutex.h
 memmenu.o: /usr/local/include/SDL/SDL_quit.h
-memmenu.o: /usr/local/include/SDL/SDL_version.h gui.h
+memmenu.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h
 exit.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 exit.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 exit.o: /usr/include/stdarg.h exit.h /usr/local/include/SDL/SDL.h

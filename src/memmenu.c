@@ -20,13 +20,14 @@
 
     -------------------------------------------------------------------------
 
-    Provides a common error exit point
+    Provides the memory menu
 
 */
 static const char ident[]="$Id$";
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "memmenu.h"
 #include "spec.h"
@@ -50,8 +51,6 @@ static const char ident_h[]=ESPEC_MEMMENU_H;
 #define RED	GFXRGB(255,100,100)
 #define GREEN	GFXRGB(100,255,100)
 #define BLUE	GFXRGB(100,100,255)
-
-#define MENU
 
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
@@ -104,7 +103,49 @@ static const char *FlagString(Z80Byte flag)
 }
 
 
-static int EnterAddress(Z80Word *w)
+static int StrEq(const char *a, const char *b)
+{
+    while(*a && *b && tolower(*a)==tolower(*b))
+    {
+    	a++;
+	b++;
+    }
+
+    if (*a || *b)
+	return FALSE;
+    else
+	return TRUE;
+}
+
+
+static Z80Word Address(Z80 *z80, const char *p)
+{
+    Z80State s;
+
+    Z80GetState(z80,&s);
+
+    if (StrEq(p,"AF"))
+    	return s.AF;
+    else if (StrEq(p,"BC"))
+    	return s.BC;
+    else if (StrEq(p,"DE"))
+    	return s.DE;
+    else if (StrEq(p,"HL"))
+    	return s.HL;
+    else if (StrEq(p,"IX"))
+    	return s.IX;
+    else if (StrEq(p,"IY"))
+    	return s.IY;
+    else if (StrEq(p,"SP"))
+    	return s.SP;
+    else if (StrEq(p,"PC"))
+    	return s.PC;
+
+    return (Z80Word)strtoul(p,NULL,0);
+}
+
+
+static int EnterAddress(Z80 *z80, Z80Word *w)
 {
     unsigned long ul;
     const char *p;
@@ -113,7 +154,7 @@ static int EnterAddress(Z80Word *w)
 
     if (*p)
     {
-	ul=strtoul(p,NULL,0);
+	ul=Address(z80,p);
 
 	if (ul>0xffff)
 	{
@@ -213,7 +254,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 
 	    case SDLK_RETURN:
 	    case SDLK_KP_ENTER:
-		EnterAddress(&pc);
+		EnterAddress(z80,&pc);
 	    	break;
 
 	    case SDLK_UP:
@@ -322,8 +363,6 @@ void DisplayState(Z80 *z80)
     GFXPrintPaper(0,y,RED,BLACK,"%s\n",SPECInfo(z80));
     y+=8;
 }
-
-
 
 
 /* END OF FILE */

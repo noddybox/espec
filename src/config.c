@@ -51,6 +51,7 @@ static int	memsize=16;
 static int	frames=50;
 static int	scale=1;
 static int	trace=0;
+static int	sound=1;
 
 static const struct
 {
@@ -61,10 +62,10 @@ static const struct
 		{"rompath",	rompath,	FALSE},
 		{"tapedir",	tapedir,	FALSE},
 		{"fullscreen",	&fullscreen,	TRUE},
-		{"memsize",	&memsize,	TRUE},
 		{"frames",	&frames,	TRUE},
 		{"scale",	&scale,		TRUE},
 		{"trace",	&trace,		TRUE},
+		{"sound",	&sound,		TRUE},
 		{NULL,		NULL,		FALSE}
 	    };
 
@@ -136,7 +137,7 @@ void ConfigRead(void)
     if (getenv("HOME"))
     	strcpy(path,getenv("HOME"));
 
-    strcat(path,"/.ezx81");
+    strcat(path,"/.espec");
 
     if ((fp=fopen(path,"r")))
     {
@@ -154,7 +155,8 @@ int IConfig(IConfigVar v)
 		    &memsize,
 		    &frames,
 		    &scale,
-		    &trace
+		    &trace,
+		    &sound
 		};
 
     return *vars[v];

@@ -51,7 +51,7 @@ static const char ident_fh[]=ESPEC_FONT_H;
 #endif
 
 #define SCR_W	320
-#define SCR_H	200
+#define SCR_H	300
 
 #define LOCK	do							\
 		{							\
@@ -168,8 +168,16 @@ void GFXInit(void)
 
     frame=1000/IConfig(CONF_FRAMES_PER_SEC);
 
-    if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
-	Exit("Failed to init SDL: %s\n",SDL_GetError());
+    if (IConfig(CONF_SOUND))
+    {
+	if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_AUDIO))
+	    Exit("Failed to init SDL: %s\n",SDL_GetError());
+    }
+    else
+    {
+	if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
+	    Exit("Failed to init SDL: %s\n",SDL_GetError());
+    }
 
     if (!(surface=SDL_SetVideoMode(SCR_W*scale,
 				   SCR_H*scale,
@@ -262,6 +270,18 @@ SDL_Event *GFXWaitKey(void)
 }
 
 
+void GFXLock(void)
+{
+    LOCK;
+}
+
+
+void GFXUnlock(void)
+{
+    UNLOCK;
+}
+
+
 void GFXPlot(int x, int y, Uint32 col)
 {
     LOCK;
@@ -269,6 +289,12 @@ void GFXPlot(int x, int y, Uint32 col)
     putpixel(x,y,col);
 
     UNLOCK;
+}
+
+
+void GFXFastPlot(int x, int y, Uint32 col)
+{
+    putpixel(x,y,col);
 }
 
 

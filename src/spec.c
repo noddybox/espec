@@ -47,51 +47,79 @@ static const char ident_h[]=ESPEC_SPECH;
 
 /* ---------------------------------------- STATICS
 */
-static const int	ROMLEN=0x2000;
-static const int	ROM_SAVE=0x2fc;
-static const int	ROM_LOAD=0x347;
-
-/* No of cycles in each 64us HSYNC (hopefully)
-*/
-static const int	HSYNC_PERIOD=321;
+static const int	ROMLEN=0x4000;
+static const int	ROM_SAVE=0x4c6;
+static const int	ROM_LOAD=0x562;
 
 /* The SPEC screen
 */
-static const int	SCR_W=256;
-static const int	SCR_H=192;
-static const int	TXT_W=32;
-static const int	TXT_H=24;
+#define			GFX_W	320
+#define			GFX_H	300
+#define			SCR_W	256
+#define			SCR_H	192
+#define			TXT_W	32
+#define			TXT_H	24
+#define			SCRDATA	0x4000
+#define			ATTR	0x5800
 
-/* These assume a 320x200 screen
-*/
-static const int	OFF_X=(320-256)/2;
-static const int	OFF_Y=(200-192)/2;
+#define			ATTR_AT(x,y)		\
+				mem[ATTR+(x)+((y)/8)*32]
+
+static const int	OFF_X=(GFX_W-SCR_W)/2;
+static const int	OFF_Y=(GFX_H-SCR_H)/2;
 
 static Z80Byte		mem[0x10000];
 
-static Z80Word		RAMBOT=0;
-static Z80Word		RAMTOP=0;
-static Z80Word		RAMLEN=0;
 
-/* Counter used when triggering the interrupts for the display
+/* Number of cycles per scan lines and scan line control
 */
-static int		nmigen=FALSE;
-static int		hsync=FALSE;
+static Z80Val		SCAN_CYCLES=224;
+static int		scanline=0;
 
-/* The ULA
-*/
-static struct
-{
-    int		x;
-    int		y;
-    int		c;
-    int		release;
-} ULA;
 
 /* GFX vars
 */
-static Uint32		white;
-static Uint32		black;
+#define			FLASH	16	/* Frames per flash */
+
+static int		flash=0;
+static int		flashctr=0;
+
+static int		border=0;
+
+#define			TOPL	64	/* Scanlines before 'first' line */
+#define			SCRL	SCR_H	/* Scanlines making up screen data */
+#define			BOTL	56	/* Scanlines after 'last' line */
+
+#define			TOTL	(TOPL+SCRL+BOTL)
+
+#define 		NVAL	235	/* Normal RGB intensity */
+#define 		BVAL	255	/* Bright RGB intensity */
+
+static struct
+{
+    Uint32	col;
+    int		r,g,b;
+} coltable[16]=
+{
+    {0,     0x00,0x00,0x00},        /* BLACK */
+    {0,     0x00,0x00,NVAL},        /* BLUE */
+    {0,     NVAL,0x00,0x00},        /* RED */
+    {0,     NVAL,0x00,NVAL},        /* MAGENTA */
+    {0,     0x00,NVAL,0x00},        /* GREEN */
+    {0,     0x00,NVAL,NVAL},        /* CYAN */
+    {0,     NVAL,NVAL,0x00},        /* YELLOW */
+    {0,     NVAL,NVAL,NVAL},        /* WHITE */
+
+    {0,     0x00,0x00,0x00},        /* BLACK */
+    {0,     0x00,0x00,BVAL},        /* BLUE */
+    {0,     BVAL,0x00,0x00},        /* RED */
+    {0,     BVAL,0x00,BVAL},        /* MAGENTA */
+    {0,     0x00,BVAL,0x00},        /* GREEN */
+    {0,     0x00,BVAL,BVAL},        /* CYAN */
+    {0,     BVAL,BVAL,0x00},        /* YELLOW */
+    {0,     BVAL,BVAL,BVAL},        /* WHITE */
+
+};
 
 
 /* The keyboard
@@ -150,9 +178,6 @@ static const MatrixMap keymap[]=
     {SDLK_RETURN,	KY1(6,0)},
     {SDLK_SPACE,	KY1(7,0)},
 
-    {SDLK_COMMA,	KY1(7,1)},	/* In the right place... */
-    {SDLK_PERIOD,	KY1(7,1)},	/* ...or the right key... */
-
     {SDLK_BACKSPACE,	KY2(0,0,4,0)},
     {SDLK_DELETE,	KY2(0,0,4,0)},
     {SDLK_UP,		KY2(0,0,4,3)},
@@ -160,8 +185,13 @@ static const MatrixMap keymap[]=
     {SDLK_LEFT,		KY2(0,0,3,4)},
     {SDLK_RIGHT,	KY2(0,0,4,2)},
 
-    {SDLK_RSHIFT,	KY1(0,0)},
     {SDLK_LSHIFT,	KY1(0,0)},
+    {SDLK_RSHIFT,	KY1(7,1)},
+    {SDLK_LCTRL,	KY1(0,0)},
+    {SDLK_RCTRL,	KY1(7,1)},
+    {SDLK_LALT,		KY1(0,0)},
+    {SDLK_RALT,		KY1(7,1)},
+    {SDLK_CAPSLOCK,	KY2(0,0,3,1)},
 
     {SDLK_UNKNOWN,	0,0,0,0},
 };
@@ -169,19 +199,71 @@ static const MatrixMap keymap[]=
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+void DrawScanline(int y)
+{
+    int aline;
+    int f,r;
+    int ink,paper,t;
+    Z80Byte *scr;
+    Z80Byte b;
+    Z80Byte att;
+
+    aline=scanline-TOPL;
+
+    GFXHLine(0,GFX_W-1,y,coltable[border].col);
+
+    if (aline>=0 && aline<SCRL)
+    {
+	GFXLock();
+
+	scr=mem+SCRDATA+aline*TXT_W;
+
+	for(f=0;f<TXT_W;f++)
+	{
+	    att=ATTR_AT(f,aline);
+
+	    ink=(att&0x07);
+	    paper=(att&0x38)>>3;
+
+	    if (att&0x40)
+	    {
+		ink+=8;
+		paper+=8;
+	    }
+
+	    if ((att&0x80)&&(flash))
+	    {
+		t=ink;
+		ink=paper;
+		paper=t;
+	    }
+
+	    for(r=7,b=*scr++;r>=0;r--)
+		if (b&(1<<r))
+		    GFXFastPlot(f*8+r+OFF_X,y,coltable[ink].col);
+		else
+		    GFXFastPlot(f*8+r+OFF_X,y,coltable[paper].col);
+	}
+
+	GFXUnlock();
+    }
+}
+
+
 static void RomPatch(void)
 {
     static const Z80Byte save[]=
     {
     	0xed, 0xf0,		/* ED F0 illegal op	*/
-	0xc3, 0x08, 0x02,	/* JP $0207		*/
+	0xc9,			/* RET 			*/
 	0xff			/* End of patch		*/
     };
 
     static const Z80Byte load[]=
     {
-    	0xed, 0xf1,		/* ED F0 illegal op	*/
-	0xc3, 0x08, 0x02,	/* JP $0207		*/
+	0x08,			/* EX AF,AF'		*/
+    	0xed, 0xf1,		/* ED F1 illegal op	*/
+	0xc9,			/* RET 			*/
 	0xff			/* End of patch		*/
     };
 
@@ -195,121 +277,16 @@ static void RomPatch(void)
 }
 
 
-static char ToASCII(Z80Byte b)
-{
-    if (b==0)			/* SPACE */
-    	return ' ';
-    
-    if (b==22)			/* Dash (-) */
-    	return '-';
-
-    if (b>=28 && b<=37)		/* 0-9 */
-    	return '0'+b-28;
-
-    if (b>=38 && b<=63)		/* A-Z */
-    	return 'a'+b-38;
-
-    return 0;
-}
-
-
-static const char *ConvertFilename(Z80Word addr)
-{
-    static char buff[FILENAME_MAX];
-    char *p;
-
-    p=buff;
-    *p=0;
-
-    if (addr>0x8000)
-    	return buff;
-
-    do
-    {
-    	char c=ToASCII(mem[addr]&0x7f);
-
-	if (c)
-	    *p++=c;
-
-    } while(mem[addr++]<0x80);
-
-    *p=0;
-
-    return buff;
-}
-
 
 static void LoadTape(Z80State *state)
 {
-    const char *p=ConvertFilename(state->DE);
-    char path[FILENAME_MAX];
-    FILE *fp;
-    Z80Word addr;
-    int c;
-
-    if (strlen(p)==0)
-    {
-    	GUIMessage("ERROR","Can't load empty filename");
-	return;
-    }
-
-    strcpy(path,SConfig(CONF_TAPEDIR));
-    strcat(path,"/");
-    strcat(path,p);
-    strcat(path,".p");
-
-    if (!(fp=fopen(path,"rb")))
-    {
-    	GUIMessage("ERROR","Can't load file:\n%s",path);
-	return;
-    }
-
-    addr=0x4009;
-
-    while((c=getc(fp))!=EOF)
-    {
-	if (addr>=0x4000)
-	    mem[addr]=(Z80Byte)c;
-
-	addr++;
-    }
-
-    fclose(fp);
+    state->AF|=Z80_F_Carry;
 }
 
 
 static void SaveTape(Z80State *state)
 {
-    const char *p=ConvertFilename(state->DE);
-    char path[FILENAME_MAX];
-    FILE *fp;
-    Z80Word start;
-    Z80Word end;
-
-    if (strlen(p)==0)
-    {
-    	GUIMessage("ERROR","Can't save empty filename");
-	return;
-    }
-
-    strcpy(path,SConfig(CONF_TAPEDIR));
-    strcat(path,"/");
-    strcat(path,p);
-    strcat(path,".p");
-
-    if (!(fp=fopen(path,"wb")))
-    {
-    	GUIMessage("ERROR","Can't write file:\n%s",path);
-	return;
-    }
-
-    start=0x4009;
-    end=(Z80Word)mem[0x4014]|(Z80Word)mem[0x4015]<<8;
-
-    while(start<=end)
-    	putc(mem[start++],fp);
-
-    fclose(fp);
+    state->AF|=Z80_F_Carry;
 }
 
 
@@ -333,87 +310,51 @@ static int EDCallback(Z80 *z80, Z80Val data)
 	    break;
     }
 
+    Z80SetState(z80,&state);
+
     return TRUE;
-}
-
-
-static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
-{
-    Z80State state;
-    Z80Word base;
-    int x,y;
-    int inv;
-    int b;
-
-    Z80GetState(z80,&state);
-
-    /* Extra check due to out dodgy ULA emulation
-    */
-    if (ULA.y>=0 && ULA.y<SCR_H)
-    {
-	Uint32 fg,bg;
-
-    	/* Position on screen corresponding to ULA
-	*/
-	x=OFF_X+ULA.x*8;
-	y=OFF_Y+ULA.y;
-
-	/* Get ULA invert state and clear to ULA 6-but code
-	*/
-	inv=val&0x80;
-	val&=0x3f;
-
-	base=((Z80Word)state.I<<8)|(val<<3)|ULA.c;
-
-	if (inv)
-	{
-	    fg=white;
-	    bg=black;
-	}
-	else
-	{
-	    fg=black;
-	    bg=white;
-	}
-
-	for(b=0;b<8;b++)
-	{
-	    if (mem[base]&(1<<(7-b)))
-	    	GFXPlot(x+b,y,fg);
-	    else
-	    	GFXPlot(x+b,y,bg);
-	}
-    }
-
-    ULA.x=(ULA.x+1)&0x1f;
-
-    if (ULA.x==0)
-    	Z80Interrupt(z80,0xff);
 }
 
 
 static int CheckTimers(Z80 *z80, Z80Val val)
 {
-    if (val>HSYNC_PERIOD)
+    if (val>SCAN_CYCLES)
     {
-	Z80ResetCycles(z80,0);
+	int y;
 
-	if (nmigen)
+	Z80ResetCycles(z80,val-SCAN_CYCLES);
+
+	/* Increment scan line and check for frame flyback
+	*/
+	scanline++;
+
+	if (scanline==TOTL)
 	{
-	    Z80NMI(z80,0xff);
-	    printf("NMIGEN\n");
-	}
-	else if (hsync)
-	{
-	    printf("HSYNC\n");
-	    if (ULA.release)
+	    scanline=0;
+
+	    flashctr++;
+
+	    if (flashctr==FLASH)
 	    {
-	    	/* ULA.release=FALSE; */
-		ULA.c=(ULA.c+1)&7;
-		ULA.y++;
-		ULA.x=0;
+	    	flash^=1;
+		flashctr=0;
 	    }
+
+	    Z80Interrupt(z80,0xff);
+
+	    GFXEndFrame(TRUE);
+	    GFXStartFrame();
 	}
+
+	/* Draw scanline
+	y=OFF_X-TOPL+scanline;
+	*/
+	y=scanline-TOPL+OFF_Y;
+
+	if (y>=0 && y<GFX_H)
+	    DrawScanline(y);
+
+	/* TODO: Process sound emulation */
     }
 
     return TRUE;
@@ -429,7 +370,8 @@ void SPECInit(Z80 *z80)
 
     if (!(fp=fopen(SConfig(CONF_ROMFILE),"rb")))
     {
-	GUIMessage("ERROR","Failed to open SPEC ROM\n%s",SConfig(CONF_ROMFILE));
+	GUIMessage("ERROR","Failed to open Spectrum ROM\n%s",
+						SConfig(CONF_ROMFILE));
 	Exit("");
     }
 
@@ -446,32 +388,19 @@ void SPECInit(Z80 *z80)
     Z80LodgeCallback(z80,Z80_EDHook,EDCallback);
     Z80LodgeCallback(z80,Z80_Fetch,CheckTimers);
 
-    /* Mirror the ROM
+    /* Set up the keyboard
     */
-    memcpy(mem+ROMLEN,mem,ROMLEN);
-
-    RAMBOT=0x4000;
-
-    /* Memory size (1 or 16K)
-    */
-    if (IConfig(CONF_MEMSIZE)==16)
-	RAMLEN=0x2000;
-    else
-	RAMLEN=0x400;
-
-    RAMTOP=RAMBOT+RAMLEN;
-
-    for(f=RAMBOT;f<=RAMTOP;f++)
-    	mem[f]=0;
-
     for(f=0;f<8;f++)
     	matrix[f]=0x1f;
 
-    white=GFXRGB(230,230,230);
-    black=GFXRGB(0,0,0);
+    /* Set up the colours
+    */
+    for(f=0;f<16;f++)
+    	coltable[f].col=GFXRGB(coltable[f].r,coltable[f].g,coltable[f].b);
 
-    nmigen=FALSE;
-    hsync=FALSE;
+    scanline=0;
+    flash=0;
+    flashctr=0;
 
     GFXStartFrame();
 }
@@ -510,115 +439,53 @@ void SPECKeyEvent(SDL_Event *e)
 
 Z80Byte SPECReadMem(Z80 *z80, Z80Word addr)
 {
-    /* Memory reads above 32K invoke the ULA
-    */
-    if (addr>0x7fff)
-    {
-	Z80Byte b;
-
-        /* B6 of R is tied to the IRQ line (only when HSYNC active?)
-        if ((HSYNC)&&(!(z80->R&0x40)))
-            z80->IRQ=TRUE;
-        */
-
-        b=mem[addr&0x7fff];
-
-        /* If bit 6 of the opcode is set the opcode is sent as is to the
-           Z80.  If it's not, the byte is interretted by the ULA.
-        */
-        if (b&0x40)
-	{
-            ULA_Video_Shifter(z80,0);
-	}
-        else
-	{
-            ULA_Video_Shifter(z80,b);
-            b=0;
-	}
-
-	return b;
-    }
-    else
-        return mem[addr&0x7fff];
-
+    /* TODO: Emulation of contention */
+    return mem[addr];
 }
 
 
 void SPECWriteMem(Z80 *z80, Z80Word addr, Z80Byte val)
 {
-    addr=addr&0x7fff;
-
-    if (addr>=RAMBOT && addr<=RAMTOP)
+    if (addr>=ROMLEN)
 	mem[addr]=val;
 }
 
 
 Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 {
-    Z80Byte b=0;
+    Z80Byte lo=port&0xff;
+    Z80Byte hi=port>>8;
+    Z80Byte b=0xff;
+    int f;
 
-    printf("IN  %4.4x\n",port);
-
-    switch(port&0xff)
+    switch(lo)
     {
-    	case 0xfe:	/* ULA */
+	case 0x1f:	/* TODO: Kempston joystick */
+	    break;
+
+	case 0x7f:	/* TODO: Fuller joystick */
+	    break;
+
+	case 0xfb:	/* TODO: ZX Printer */
+	    break;
+
+    	case 0x01:	/* ULA */
 	    /* Key matrix
 	    */
-	    switch(port&0xff00)
-	    {
-	    	case 0xfe00:
-		    b=matrix[0];
-		    break;
-	    	case 0xfd00:
-		    b=matrix[1];
-		    break;
-	    	case 0xfb00:
-		    b=matrix[2];
-		    break;
-	    	case 0xf700:
-		    b=matrix[3];
-		    break;
-	    	case 0xef00:
-		    b=matrix[4];
-		    break;
-	    	case 0xdf00:
-		    b=matrix[5];
-		    break;
-	    	case 0xbf00:
-		    b=matrix[6];
-		    break;
-	    	case 0x7f00:
-		    b=matrix[7];
-		    break;
-	    }
+	    b=0;
 
-	    /* Turn off HSYNC if NMI generator is OFF and redraw screen to
-	       match output ULA has since sent out.
-	    */
-	    if (!nmigen && hsync)
-	    {
-	    	hsync=FALSE;
+	    for(f=0;f<8;f++)
+	    	if (!(hi&(1<<f)))
+		    b&=matrix[f];
 
-		GFXEndFrame(TRUE);
-		GFXClear(white);
+	    b|=0xa0;
 
-		ULA.x=0;
-		ULA.y=-1;
-		ULA.c=7;
-		ULA.release=FALSE;
+	    /* TODO: Emulation of contention */
 
-		GFXStartFrame();
-	    }
-	    else
-	    {
-	    	/* Reset and hold ULA counter
-		*/
-		ULA.c=0;
-		ULA.release=FALSE;
-	    }
 	    break;
 
 	default:
+	    b=0xff;
 	    break;
     }
 
@@ -628,25 +495,15 @@ Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 
 void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
 {
-    printf("OUT %4.4x\n",port);
+    Z80Byte lo=port&0xff;
 
-    /* Any port write releases the ULA line counter
-    */
-    ULA.release=TRUE;
-
-    switch(port&0xff)
+    switch(lo)
     {
-    	case 0xfd:	/* NMI generator OFF */
-	    nmigen=FALSE;
+	case 0x01:	/* ULA */
+	    border=val&0x07;
 	    break;
 
-	case 0xfe:	/* NMI generator ON */
-	    nmigen=TRUE;
-	    break;
-
-	case 0xff:	/* HSYNC generator ON */
-	    hsync=TRUE;
-	    Z80ResetCycles(z80,0);
+	default:
 	    break;
     }
 }
@@ -654,17 +511,13 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
 
 Z80Byte SPECReadForDisassem(Z80 *z80, Z80Word addr)
 {
-    return mem[addr&0x7fff];
+    return mem[addr];
 }
 
 
 const char *SPECInfo(Z80 *z80)
 {
-    static char buff[80];
-
-    sprintf(buff,"NMIGEN: %s  HSYNC: %s",
-		    nmigen ? "ON":"OFF",
-		    hsync ? "ON":"OFF");
+    static char buff[80]={0};
 
     return buff;
 }

@@ -36,7 +36,8 @@ typedef enum
     CONF_MEMSIZE,
     CONF_FRAMES_PER_SEC,
     CONF_SCALE,
-    CONF_TRACE
+    CONF_TRACE,
+    CONF_SOUND
 } IConfigVar;
 
 

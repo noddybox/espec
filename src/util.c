@@ -115,7 +115,10 @@ void Debug(const char *format, ...)
     va_list ap;
 
     if (!fp)
+    {
     	fp=fopen("debug.txt","w");
+	setbuf(fp,NULL);
+    }
 
     if (!fp)
     	return;

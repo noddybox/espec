@@ -203,7 +203,6 @@ static const MatrixMap keymap[]=
     {SDLK_RCTRL,	KY1(7,1)},
     {SDLK_LALT,		KY1(0,0)},
     {SDLK_RALT,		KY1(7,1)},
-    {SDLK_CAPSLOCK,	KY2(0,0,3,1)},
 
     {SDLK_UNKNOWN,	0,0,0,0},
 };

@@ -74,6 +74,26 @@ static int		scale;
 
 static void		(*putpixel)(int x, int y, Uint32 col);
 
+#define NO_BMPIX	10
+
+static struct
+{
+    Uint32      col;
+    int         r,g,b;
+} bmpix[NO_BMPIX]=
+{
+    {0,     0x00,0x00,0x00},        /* BLACK */
+    {0,     0x00,0x00,0xff},        /* BLUE */
+    {0,     0xff,0x00,0x00},        /* RED */
+    {0,     0xff,0x00,0xff},        /* MAGENTA */
+    {0,     0x00,0xff,0x00},        /* GREEN */
+    {0,     0x00,0xff,0xff},        /* CYAN */
+    {0,     0xff,0xff,0x00},        /* YELLOW */
+    {0,     0xff,0xff,0xff},        /* WHITE */
+    {0,     0x90,0x90,0x90},        /* GREY */
+};
+
+
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
@@ -146,10 +166,29 @@ static void DoVLine(int x, int y1, int y2, Uint32 col)
 }
 
 
+static void BMPlot(int bx, int by, int *x, int *y, int w, int h, int col)
+{
+    if (*y<h)
+    {
+	putpixel(bx+*x,by+*y,bmpix[col].col);
+
+	(*x)++;
+
+	if (*x==w)
+	{
+	    *x=0;
+	    (*y)++;
+	}
+    }
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 void GFXInit(void)
 {
+    int f;
+
     if (IConfig(CONF_FULLSCREEN))
 	scale=1;
     else
@@ -187,6 +226,9 @@ void GFXInit(void)
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_WM_SetCaption("eSPEC","eSPEC");
+
+    for(f=0;f<NO_BMPIX;f++)
+    	bmpix[f].col=GFXRGB(bmpix[f].r,bmpix[f].g,bmpix[f].b);
 
     atexit(SDL_Quit);
 }
@@ -411,6 +453,48 @@ void GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
 
 	p++;
 	x+=8;
+    }
+
+    UNLOCK;
+}
+
+
+void GFXBitmap(int x, int y, int w, int h, const unsigned char *data)
+{
+    int pix;
+    int px,py;
+
+    LOCK;
+
+    pix=0;
+    px=0;
+    py=0;
+
+    while(TRUE)
+    {
+    	int i;
+
+	i=*data++;
+
+	if (i<0x80)
+	{
+	    pix=i;
+
+	    BMPlot(x,y,&px,&py,w,h,pix);
+
+	    if (py>=h)
+	    	break;
+	}
+	else
+	{
+	    int f;
+
+	    for (f=0;f<i-0x80;f++)
+		BMPlot(x,y,&px,&py,w,h,pix);
+
+	    if (py>=h)
+	    	break;
+	}
     }
 
     UNLOCK;

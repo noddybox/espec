@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.8 2004-01-20 01:10:45 ianc Exp $
+# $Id: Makefile,v 1.9 2004-01-24 01:47:55 ianc Exp $
 # 
 
 
@@ -40,6 +40,7 @@ SOURCE	=	main.c		\
 		gui.c		\
 		memmenu.c	\
 		util.c		\
+		kbbmp.c		\
 		exit.c
 
 OBJECTS	=	main.o		\
@@ -50,6 +51,7 @@ OBJECTS	=	main.o		\
 		gui.o		\
 		memmenu.o	\
 		util.o		\
+		kbbmp.o		\
 		exit.o
 
 CFLAGS +=	-Iz80 `sdl-config --cflags`
@@ -193,6 +195,7 @@ util.o: /usr/include/stdio.h /usr/include/sys/cdefs.h
 util.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 util.o: /usr/include/string.h /usr/include/strings.h /usr/include/stdarg.h
 util.o: util.h /usr/include/stdlib.h exit.h
+kbbmp.o: kbbmp.h
 exit.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 exit.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 exit.o: /usr/include/stdarg.h exit.h /usr/local/include/SDL/SDL.h

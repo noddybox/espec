@@ -115,10 +115,9 @@ int main(int argc, char *argv[])
 	Z80SingleStep(z80);
 	Z80GetState(z80,&s2);
 
-	/* TODO: Remove debug */
 	if (s2.PC==0)
 	{
-	    printf("PC zero - prev %4.4x\n",s1.PC);
+	    Debug("PC zero - prev %4.4x\n",s1.PC);
 	}
 
 	if (trace)
@@ -216,7 +215,6 @@ int main(int argc, char *argv[])
 		case SDLK_F11:
 		    if (e->key.state==SDL_PRESSED)
 		    	quit=MemoryMenu(z80);
-		    Debug("quit=%d\n");
 		    break;
 
 		case SDLK_F12:

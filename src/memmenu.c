@@ -137,6 +137,12 @@ static void Centre(const char *p, int y, Uint32 col)
 }
 
 
+static void CentrePaper(const char *p, int y, Uint32 pen, Uint32 paper)
+{
+    GFXPrintPaper((GFX_WIDTH-strlen(p)*8)/2,y,pen,paper,"%s",p);
+}
+
+
 static void DisplayMenu(void)
 {
     static const char *menu[]=
@@ -149,6 +155,7 @@ static void DisplayMenu(void)
 	"6   - Set active breakpoints",
 	"7   - Remove a breakpoint   ",
 	"8   - Clear all breakpoints ",
+	"9   - Monitor               ",
 	"R   - Reset                 ",
 	"X   - Exit (without confirm)",
     	"ESC - Return                ",
@@ -735,17 +742,12 @@ static void DoAddBreakpoint(Z80 *z80)
     }
     else
     {
-	int f;
-
-	for(f=0;f<50;f++)
-	{
 	bpoint.no++;
 	bpoint.expr=Realloc(bpoint.expr,bpoint.no * sizeof(*bpoint.expr));
 	bpoint.active=Realloc(bpoint.active,bpoint.no * sizeof(*bpoint.active));
 
 	bpoint.expr[bpoint.no-1]=StrCopy(expr);
 	bpoint.active[bpoint.no-1]=TRUE;
-	}
 
 	SetCallback(z80);
     }
@@ -834,6 +836,158 @@ static void DoClearBreakpoint(Z80 *z80)
 }
 
 
+static void DoMonitor(Z80 *z80)
+{
+    static int overlay=FALSE;
+    int quit=FALSE;
+    int running=FALSE;
+    int step=FALSE;
+
+    SPECEnableScreen(FALSE);
+
+    while(!quit)
+    {
+	MemTrace mt[TRACEMEM_WIN];
+	const char *brk;
+	SDL_Event *e;
+	Z80State s;
+	int f;
+
+	step=FALSE;
+
+	if (overlay)
+	    SPECShowScreen();
+	else
+	    GFXClear(BLACK);
+
+    	CentrePaper("MONITOR",0,WHITE,BLACK);
+    	CentrePaper("Press F1 for help",9,RED,BLACK);
+
+	Z80GetState(z80,&s);
+
+	DisplayZ80State(&s,136,WHITE);
+
+	GetMemTrace(z80,mt,s.SP-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	DisplayTraceMem(0,192,"MEM (SP)",mt,s.SP);
+	GetMemTrace(z80,mt,s.HL-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	DisplayTraceMem(100,192,"MEM (HL)",mt,s.HL);
+	GetMemTrace(z80,mt,s.DE-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	DisplayTraceMem(200,192,"MEM (DE)",mt,s.DE);
+
+	for(f=0;f<10;f++)
+	{
+	    char str[80];
+	    char *p;
+	    int paper;
+	    int y;
+
+	    y=24+f*8;
+
+	    if (f==0)
+		paper=RED;
+	    else
+		paper=BLACK;
+
+	    GFXPrintPaper(0,y,GREEN,paper,"%4.4x ",s.PC);
+
+	    strcpy(str,Z80Disassemble(z80,&s.PC));
+	    p=strtok(str,";");
+	    GFXPrintPaper(40,y,WHITE,paper,"%s",str);
+	}
+
+	GFXEndFrame(FALSE);
+
+	if (running)
+	{
+	    e=GFXGetKey();
+
+	    if (e && e->key.state!=SDL_PRESSED)
+	    	e=NULL;
+	}
+	else
+	    e=GFXWaitKey();
+
+	if (e)
+	{
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_F1:
+		    GUIMessage
+			(eMessageBox,"PLAYBACK HELP","%s",
+			   "ESC   - Exit                     \n"
+			   "ENTER - Single step processor    \n"
+			   "R     - Run till break or stop   \n"
+			   "SPACE - Stop running             \n"
+			   "O     - Toggle overlay mode      \n"
+			   "5     - Add a new breakpoint     \n"
+			   "6     - Set active breakpoints   \n"
+			   "7     - Remove a breakpoint      \n"
+			   "8     - Clear all breakpoints    \n"
+			   "S     - Display current screen   ");
+		    break;
+
+		case SDLK_RETURN:
+		case SDLK_KP_ENTER:
+		    step=TRUE;
+		    break;
+
+		case SDLK_ESCAPE:
+		    quit=TRUE;
+		    break;
+
+		case SDLK_r:
+		    running=TRUE;
+		    break;
+
+		case SDLK_SPACE:
+		    running=FALSE;
+		    break;
+
+		case SDLK_o:
+		    overlay=!overlay;
+		    break;
+
+		case SDLK_5:
+		    DoAddBreakpoint(z80);
+		    break;
+
+		case SDLK_6:
+		    DoActiveBreakpoint(z80);
+		    break;
+
+		case SDLK_7:
+		    DoRemoveBreakpoint(z80);
+		    break;
+
+		case SDLK_8:
+		    DoClearBreakpoint(z80);
+		    break;
+
+		case SDLK_s:
+		    SPECShowScreen();
+		    GFXEndFrame(FALSE);
+		    GFXWaitKey();
+		    break;
+
+		default:
+		    break;
+	    }
+	}
+
+	if (running || step)
+	    Z80SingleStep(z80);
+
+	if (running && (brk=Break()))
+	{
+	    GUIMessage(eMessageBox,"BREAKPOINT","%s",brk);
+	    running=FALSE;
+	}
+    }
+
+    SPECEnableScreen(TRUE);
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 int MemoryMenu(Z80 *z80)
@@ -891,6 +1045,10 @@ int MemoryMenu(Z80 *z80)
 
 	    case SDLK_8:
 		DoClearBreakpoint(z80);
+	    	break;
+
+	    case SDLK_9:
+		DoMonitor(z80);
 	    	break;
 
 	    case SDLK_r:

@@ -56,6 +56,8 @@ const Z80Label	*SPECGetLabel(void);
 /* Interfaces for memory menu
 */
 const char	*SPECInfo(Z80 *z80);
+void		SPECEnableScreen(int enable);
+void		SPECShowScreen(void);
 
 /* Called when the machine is reset
 */

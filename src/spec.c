@@ -84,6 +84,7 @@ static Z80Byte		mem[0x10000];
 */
 static Z80Val		SCAN_CYCLES=224;
 static int		scanline=0;
+static int		enable_screen=TRUE;
 
 
 /* GFX vars
@@ -244,7 +245,7 @@ static void DumpZ80(Z80 *z80)
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
-void DrawScanline(int y)
+void DrawScanlineAt(int y, int sline)
 {
     int aline;
     int f,r;
@@ -253,7 +254,7 @@ void DrawScanline(int y)
     Z80Byte b;
     Z80Byte att;
 
-    aline=scanline-TOPL;
+    aline=sline-TOPL;
 
     GFXHLine(0,GFX_WIDTH-1,y,coltable[border].col);
 
@@ -284,7 +285,7 @@ void DrawScanline(int y)
 	    }
 
 	    for(r=0,b=*scr++;r<8;r++)
-		if (b&(1<<(8-r)))
+		if (b&(1<<(7-r)))
 		    GFXFastPlot(f*8+r+OFF_X,y,coltable[ink].col);
 		else
 		    GFXFastPlot(f*8+r+OFF_X,y,coltable[paper].col);
@@ -294,6 +295,7 @@ void DrawScanline(int y)
     }
 }
 
+#define DrawScanline(y)	DrawScanlineAt(y,scanline)
 
 static void RomPatch(void)
 {
@@ -403,15 +405,18 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 
 	    Z80Interrupt(z80,0xff);
 
-	    GFXEndFrame(TRUE);
-	    GFXStartFrame();
+	    if (enable_screen)
+	    {
+		GFXEndFrame(TRUE);
+		GFXStartFrame();
+	    }
 	}
 
 	/* Draw scanline
 	*/
 	y=scanline-TOPL+OFF_Y;
 
-	if (y>=0 && y<GFX_HEIGHT)
+	if (y>=0 && y<GFX_HEIGHT && enable_screen)
 	    DrawScanline(y);
 
 	/* TODO: Process sound emulation */
@@ -546,13 +551,6 @@ Z80Word SPECReadWord(Z80 *z80, Z80Word addr)
 
 void SPECWriteWord(Z80 *z80, Z80Word addr, Z80Word val)
 {
-    if (addr==0xff4e && val==0)
-    {
-	Z80State s;
-	Z80GetState(z80,&s);
-    	Debug("Wrote %4.4x to %4.4x @%4.4x\n",val,addr,s.PC);
-    }
-
     if (addr>=ROMLEN)
 	mem[addr]=val&0xff;
 
@@ -827,6 +825,27 @@ const char *SPECInfo(Z80 *z80)
     static char buff[80]={0};
 
     return buff;
+}
+
+
+void SPECEnableScreen(int enable)
+{
+    enable_screen=enable;
+}
+
+
+void SPECShowScreen(void)
+{
+    int f;
+    int y;
+
+    for(f=0;f<TOTL;f++)
+    {
+	y=f-TOPL+OFF_Y;
+
+	if (y>=0 && y<GFX_HEIGHT)
+	    DrawScanlineAt(y,f);
+    }
 }
 
 

@@ -26,6 +26,7 @@
 static const char ident[]="$Id$";
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -66,7 +67,8 @@ static void DisplayMenu(void)
     static const char *menu[]=
     {
     	"1. Disassemble/Hex dump",
-    	"2. Return              ",
+    	"2. Disassemble to file ",
+    	"3. Return              ",
 	NULL
     };
 
@@ -145,12 +147,12 @@ static Z80Word Address(Z80 *z80, const char *p)
 }
 
 
-static int EnterAddress(Z80 *z80, Z80Word *w)
+static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
 {
     unsigned long ul;
     const char *p;
 
-    p=GUIInputString("Address?","");
+    p=GUIInputString(prompt ? prompt : "Address?","");
 
     if (*p)
     {
@@ -254,7 +256,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 
 	    case SDLK_RETURN:
 	    case SDLK_KP_ENTER:
-		EnterAddress(z80,&pc);
+		EnterAddress(NULL,z80,&pc);
 	    	break;
 
 	    case SDLK_UP:
@@ -294,6 +296,46 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 }
 
 
+static void DoDisassemFile(Z80 *z80, const Z80State *s)
+{
+    static char fname[FILENAME_MAX]="";
+    FILE *fp;
+    Z80Word start;
+    Z80Word len;
+    Z80Word prev;
+    const char *p;
+
+    EnterAddress("Disassemble from?",z80,&start);
+    EnterAddress("For how many bytes?",z80,&len);
+
+    p=GUIInputString("To file?",fname);
+
+    if (!strlen(p))
+    	return;
+
+    strcpy(fname,p);
+
+    if (!(fp=fopen(fname,"w")))
+    {
+    	GUIMessage("ERROR","Couldn't create file:\n%s",fname);
+	return;
+    }
+
+    prev=len;
+
+    while(len<=prev)
+    {
+    	Z80Word orig=start;
+
+	fprintf(fp,"%4.4x: %s\n",orig,Z80Disassemble(z80,&start));
+	prev=len;
+	len-=(start-orig);
+    }
+
+    fclose(fp);
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 void MemoryMenu(Z80 *z80)
@@ -320,8 +362,12 @@ void MemoryMenu(Z80 *z80)
 	    	DoDisassem(z80,&s);
 		break;
 
-	    case SDLK_ESCAPE:
 	    case SDLK_2:
+	    	DoDisassemFile(z80,&s);
+	    	break;
+
+	    case SDLK_ESCAPE:
+	    case SDLK_3:
 	    	quit=TRUE;
 		break;
 

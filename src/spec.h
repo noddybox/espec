@@ -33,19 +33,20 @@
 
 /* Initialise the SPEC
 */
-void	SPECInit(Z80 *z80);
+void		SPECInit(Z80 *z80);
 
 /* Handle keypresses
 */
-void	SPECKeyEvent(SDL_Event *e);
+void		SPECKeyEvent(SDL_Event *e);
 
 /* Interfaces for the Z80
 */
-Z80Byte	SPECReadMem(Z80 *z80, Z80Word addr);
-void	SPECWriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
-Z80Byte	SPECReadPort(Z80 *z80, Z80Word port);
-void	SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val);
-Z80Byte	SPECReadForDisassem(Z80 *z80, Z80Word addr);
+Z80Byte		SPECReadMem(Z80 *z80, Z80Word addr);
+void		SPECWriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
+Z80Byte		SPECReadPort(Z80 *z80, Z80Word port);
+void		SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val);
+Z80Byte		SPECReadForDisassem(Z80 *z80, Z80Word addr);
+const char	*SPECGetLabel(Z80 *z80, Z80Word addr);
 
 /* Interfaces for memory menu
 */

@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 		SPECWritePort,
 		SPECReadPort,
 		SPECReadForDisassem,
-		NULL);
+		SPECGetLabel);
 
     GFXInit();
 
@@ -95,13 +95,11 @@ int main(int argc, char *argv[])
 
 	Z80GetState(z80,&s1);
 	Z80SingleStep(z80);
-
 	Z80GetState(z80,&s2);
 
-	if (s2.PC>0x3fff)
+	if (s2.PC==0)
 	{
-	    printf("PC > 0x3fff - from 0x%4.4x\n",s1.PC);
-	    return 0;
+	    printf("PC zero - prev %4.4x\n",s1.PC);
 	}
 
 	if (trace)
@@ -115,17 +113,17 @@ int main(int argc, char *argv[])
 	    switch (e->key.keysym.sym)
 	    {
 	    	case SDLK_ESCAPE:
-		    if (e->key.state==SDL_RELEASED)
+		    if (e->key.state==SDL_PRESSED)
 			quit=TRUE;
 		    break;
 
 		case SDLK_F11:
-		    if (e->key.state==SDL_RELEASED)
+		    if (e->key.state==SDL_PRESSED)
 		    	MemoryMenu(z80);
 		    break;
 
 		case SDLK_F12:
-		    if (e->key.state==SDL_RELEASED)
+		    if (e->key.state==SDL_PRESSED)
 		    	trace=!trace;
 		    break;
 
@@ -135,8 +133,6 @@ int main(int argc, char *argv[])
 	    }
 	}
     }
-
-    SDL_Quit();
 
     return EXIT_SUCCESS;
 }

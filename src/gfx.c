@@ -190,6 +190,8 @@ void GFXInit(void)
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_WM_SetCaption("eSPEC","eSPEC");
+
+    atexit(SDL_Quit);
 }
 
 

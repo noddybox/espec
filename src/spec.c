@@ -20,7 +20,7 @@
 
     -------------------------------------------------------------------------
 
-    Provides the emulation for the SPEC
+    Provides the emulation for the Spectrum
 
 */
 static const char ident[]="$Id$";
@@ -50,6 +50,9 @@ static const char ident_h[]=ESPEC_SPECH;
 static const int	ROMLEN=0x4000;
 static const int	ROM_SAVE=0x4c6;
 static const int	ROM_LOAD=0x562;
+
+#define LOAD_PATCH	0xf0
+#define SAVE_PATCH	0xf1
 
 /* The SPEC screen
 */
@@ -94,6 +97,8 @@ static int		border=0;
 
 #define 		NVAL	235	/* Normal RGB intensity */
 #define 		BVAL	255	/* Bright RGB intensity */
+
+static Z80Byte		*line[SCRL];	/* Accelerators to screen data */
 
 static struct
 {
@@ -197,6 +202,40 @@ static const MatrixMap keymap[]=
 };
 
 
+/* ---------------------------------------- DEBUG FUNCTIONS
+static const char *FlagString(Z80Byte flag)
+{
+    static char s[]="76543210";
+    static char c[]="SZ5H3PNC";
+    int f;
+
+    for(f=0;f<8;f++)
+        if (flag&(1<<(7-f)))
+            s[f]=c[f];
+        else
+            s[f]='-';
+
+    return s;
+}
+
+
+static void DumpZ80(Z80 *z80)
+{
+    Z80State s;
+
+    Z80GetState(z80,&s);
+
+    printf("---------------------------------\n");
+    printf("PC=%4.4x  A=%2.2x     F=%s\n",s.PC,s.AF>>8,FlagString(s.AF&0xff));
+    printf("BC=%4.4x  DE=%4.4x  HL=%4.4x\n",s.BC,s.DE,s.HL);
+    printf("IX=%4.4x  IY=%4.4x  SP=%4.4x\n",s.IX,s.IY,s.SP);
+    printf("I=%2.2x     IM=%2.2x    R=%2.2x\n",s.I,s.IM,s.R);
+    printf("IFF1=%2.2x  IFF2=%2.2x\n",s.IFF1,s.IFF2);
+    printf("%s\n",Z80Disassemble(z80,&s.PC));
+}
+*/
+
+
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
 void DrawScanline(int y)
@@ -216,7 +255,7 @@ void DrawScanline(int y)
     {
 	GFXLock();
 
-	scr=mem+SCRDATA+aline*TXT_W;
+	scr=line[aline];
 
 	for(f=0;f<TXT_W;f++)
 	{
@@ -238,8 +277,8 @@ void DrawScanline(int y)
 		paper=t;
 	    }
 
-	    for(r=7,b=*scr++;r>=0;r--)
-		if (b&(1<<r))
+	    for(r=0,b=*scr++;r<8;r++)
+		if (b&(1<<(8-r)))
 		    GFXFastPlot(f*8+r+OFF_X,y,coltable[ink].col);
 		else
 		    GFXFastPlot(f*8+r+OFF_X,y,coltable[paper].col);
@@ -254,7 +293,7 @@ static void RomPatch(void)
 {
     static const Z80Byte save[]=
     {
-    	0xed, 0xf0,		/* ED F0 illegal op	*/
+    	0xed, SAVE_PATCH,	/* ED illegal op	*/
 	0xc9,			/* RET 			*/
 	0xff			/* End of patch		*/
     };
@@ -262,7 +301,7 @@ static void RomPatch(void)
     static const Z80Byte load[]=
     {
 	0x08,			/* EX AF,AF'		*/
-    	0xed, 0xf1,		/* ED F1 illegal op	*/
+    	0xed, LOAD_PATCH,	/* ED illegal op	*/
 	0xc9,			/* RET 			*/
 	0xff			/* End of patch		*/
     };
@@ -298,11 +337,13 @@ static int EDCallback(Z80 *z80, Z80Val data)
 
     switch((Z80Byte)data)
     {
-    	case 0xf0:
+    	case SAVE_PATCH:
+	    puts("Called tape save");
 	    SaveTape(&state);
 	    break;
 
-    	case 0xf1:
+    	case LOAD_PATCH:
+	    puts("Called tape load");
 	    LoadTape(&state);
 	    break;
 
@@ -347,7 +388,6 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 	}
 
 	/* Draw scanline
-	y=OFF_X-TOPL+scanline;
 	*/
 	y=scanline-TOPL+OFF_Y;
 
@@ -366,7 +406,9 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 void SPECInit(Z80 *z80)
 {
     FILE *fp;
-    Z80Word f;
+    int f;
+    int c;
+    int r;
 
     if (!(fp=fopen(SConfig(CONF_ROMFILE),"rb")))
     {
@@ -401,6 +443,25 @@ void SPECInit(Z80 *z80)
     scanline=0;
     flash=0;
     flashctr=0;
+
+    /* Set up screen
+    */
+    c=0;
+    r=0;
+    for(f=0;f<SCRL;f++)
+    {
+    	line[f]=mem+SCRDATA+(c*8*TXT_W)+(r*TXT_W);
+
+	c++;
+
+	if ((c%8)==0)
+	{
+	    if (++r==8)
+	    	r=0;
+	    else
+	    	c-=8;
+	}
+    }
 
     GFXStartFrame();
 }
@@ -469,23 +530,24 @@ Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 	case 0xfb:	/* TODO: ZX Printer */
 	    break;
 
-    	case 0x01:	/* ULA */
-	    /* Key matrix
-	    */
-	    b=0;
+	default:	/* ULA */
+	    if (!(lo&1))
+	    {
+		border=(border+1)%16; /* TODO: Remove debug code */
+		/* Key matrix
+		*/
+		b=0xff;
 
-	    for(f=0;f<8;f++)
-	    	if (!(hi&(1<<f)))
-		    b&=matrix[f];
+		for(f=0;f<8;f++)
+		    if (!(hi&(1<<f)))
+			b&=matrix[f];
 
-	    b|=0xa0;
+		b|=0xa0;
 
-	    /* TODO: Emulation of contention */
-
-	    break;
-
-	default:
-	    b=0xff;
+		/* TODO: Emulation of contention? */
+	    }
+	    else
+	    	b=0xff;
 	    break;
     }
 
@@ -499,8 +561,11 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
 
     switch(lo)
     {
-	case 0x01:	/* ULA */
+	case 0xfe:	/* ULA */
 	    border=val&0x07;
+	    break;
+
+	case 0xfb:	/* TODO: ZX Printer */
 	    break;
 
 	default:
@@ -512,6 +577,206 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
 Z80Byte SPECReadForDisassem(Z80 *z80, Z80Word addr)
 {
     return mem[addr];
+}
+
+
+const char *SPECGetLabel(Z80 *z80, Z80Word addr)
+{
+    static const struct
+    {
+    	Z80Word		addr;
+	const char	*txt;
+    } label[]=
+    	{
+	    {0x5c00,	"KSTATE"},
+	    {0x5c01,	"KSTATE+1"},
+	    {0x5c02,	"KSTATE+2"},
+	    {0x5c03,	"KSTATE+3"},
+	    {0x5c04,	"KSTATE+4"},
+	    {0x5c05,	"KSTATE+5"},
+	    {0x5c06,	"KSTATE+6"},
+	    {0x5c07,	"KSTATE+7"},
+	    {0x5c08,	"LAST_K"},
+	    {0x5c09,	"REPDEL"},
+	    {0x5c0a,	"REPPER"},
+	    {0x5c0b,	"DEFADD"},
+	    {0x5c0c,	"DEFADD+1"},
+	    {0x5c0d,	"K_DATA"},
+	    {0x5c0e,	"TVDATA"},
+	    {0x5c0f,	"TVDATA+1"},
+	    {0x5c10,	"STRMS"},
+	    {0x5c11,	"STRMS+1"},
+	    {0x5c12,	"STRMS+2"},
+	    {0x5c13,	"STRMS+3"},
+	    {0x5c14,	"STRMS+4"},
+	    {0x5c15,	"STRMS+5"},
+	    {0x5c16,	"STRMS+6"},
+	    {0x5c17,	"STRMS+7"},
+	    {0x5c18,	"STRMS+8"},
+	    {0x5c19,	"STRMS+9"},
+	    {0x5c1a,	"STRMS+10"},
+	    {0x5c1b,	"STRMS+11"},
+	    {0x5c1c,	"STRMS+12"},
+	    {0x5c1d,	"STRMS+13"},
+	    {0x5c1e,	"STRMS+14"},
+	    {0x5c1f,	"STRMS+15"},
+	    {0x5c20,	"STRMS+16"},
+	    {0x5c21,	"STRMS+17"},
+	    {0x5c22,	"STRMS+18"},
+	    {0x5c23,	"STRMS+19"},
+	    {0x5c24,	"STRMS+20"},
+	    {0x5c25,	"STRMS+21"},
+	    {0x5c26,	"STRMS+22"},
+	    {0x5c27,	"STRMS+23"},
+	    {0x5c28,	"STRMS+24"},
+	    {0x5c29,	"STRMS+25"},
+	    {0x5c2a,	"STRMS+26"},
+	    {0x5c2b,	"STRMS+27"},
+	    {0x5c2c,	"STRMS+28"},
+	    {0x5c2d,	"STRMS+29"},
+	    {0x5c2e,	"STRMS+30"},
+	    {0x5c2f,	"STRMS+31"},
+	    {0x5c30,	"STRMS+32"},
+	    {0x5c31,	"STRMS+33"},
+	    {0x5c32,	"STRMS+34"},
+	    {0x5c33,	"STRMS+35"},
+	    {0x5c34,	"STRMS+36"},
+	    {0x5c35,	"STRMS+37"},
+	    {0x5c36,	"CHARS"},
+	    {0x5c37,	"CHARS+1"},
+	    {0x5c38,	"RASP"},
+	    {0x5c39,	"PIP"},
+	    {0x5c3a,	"ERR_NR"},
+	    {0x5c3b,	"FLAGS"},
+	    {0x5c3c,	"TV_FLAG"},
+	    {0x5c3d,	"ERR_SP"},
+	    {0x5c3e,	"ERR_SP+1"},
+	    {0x5c3f,	"LIST_SP"},
+	    {0x5c40,	"LIST_SP+1"},
+	    {0x5c41,	"MODE"},
+	    {0x5c42,	"NEWPPC"},
+	    {0x5c43,	"NEWPPC+1"},
+	    {0x5c44,	"NSPPC"},
+	    {0x5c45,	"PPC"},
+	    {0x5c46,	"PPC+1"},
+	    {0x5c47,	"SUBPPC"},
+	    {0x5c48,	"BORDCR"},
+	    {0x5c49,	"E_PPC"},
+	    {0x5c4a,	"E_PPC+1"},
+	    {0x5c4b,	"VARS"},
+	    {0x5c4c,	"VARS+1"},
+	    {0x5c4d,	"DEST"},
+	    {0x5c4e,	"DEST+1"},
+	    {0x5c4f,	"CHANS"},
+	    {0x5c50,	"CHANS+1"},
+	    {0x5c51,	"CURCHL"},
+	    {0x5c52,	"CURCHL+1"},
+	    {0x5c53,	"PROG"},
+	    {0x5c54,	"PROG+1"},
+	    {0x5c55,	"NXTLIN"},
+	    {0x5c56,	"NXTLIN+1"},
+	    {0x5c57,	"DATADD"},
+	    {0x5c58,	"DATADD+1"},
+	    {0x5c59,	"E_LINE"},
+	    {0x5c5a,	"E_LINE+1"},
+	    {0x5c5b,	"K_CUR"},
+	    {0x5c5c,	"K_CUR+1"},
+	    {0x5c5d,	"CH_ADD"},
+	    {0x5c5e,	"CH_ADD+1"},
+	    {0x5c5f,	"X_PTR"},
+	    {0x5c60,	"X_PTR+1"},
+	    {0x5c61,	"WORKSP"},
+	    {0x5c62,	"WORKSP+1"},
+	    {0x5c63,	"STKBOT"},
+	    {0x5c64,	"STKBOT+1"},
+	    {0x5c65,	"STKEND"},
+	    {0x5c66,	"STKEND+1"},
+	    {0x5c67,	"BREG"},
+	    {0x5c68,	"MEM"},
+	    {0x5c69,	"MEM+1"},
+	    {0x5c6a,	"FLAGS2"},
+	    {0x5c6b,	"DF_SZ"},
+	    {0x5c6c,	"S_TOP"},
+	    {0x5c6d,	"S_TOP+1"},
+	    {0x5c6e,	"OLDPPC"},
+	    {0x5c6f,	"OLDPPC+1"},
+	    {0x5c70,	"OSPCC"},
+	    {0x5c71,	"FLAGX"},
+	    {0x5c72,	"STRLEN"},
+	    {0x5c73,	"STRLEN+1"},
+	    {0x5c74,	"T_ADDR"},
+	    {0x5c75,	"T_ADDR+1"},
+	    {0x5c76,	"SEED"},
+	    {0x5c77,	"SEED+1"},
+	    {0x5c78,	"FRAMES"},
+	    {0x5c79,	"FRAMES+1"},
+	    {0x5c7a,	"FRAMES+2"},
+	    {0x5c7b,	"UDG"},
+	    {0x5c7c,	"UDG+1"},
+	    {0x5c7d,	"COORDS_X"},
+	    {0x5c7e,	"COORDS_Y"},
+	    {0x5c7f,	"P_POSN"},
+	    {0x5c80,	"PR_CC"},
+	    {0x5c82,	"ECHO_E"},
+	    {0x5c83,	"ECHO_E+1"},
+	    {0x5c84,	"DF_CC"},
+	    {0x5c85,	"DF_CC+1"},
+	    {0x5c86,	"DFCCL"},
+	    {0x5c87,	"DFCCL+1"},
+	    {0x5c88,	"S_POSN_X"},
+	    {0x5c89,	"S_POSN_Y"},
+	    {0x5c8a,	"S_POSNL_X"},
+	    {0x5c8b,	"S_POSNL_Y"},
+	    {0x5c8c,	"SCR_CT"},
+	    {0x5c8d,	"ATTR_P"},
+	    {0x5c8e,	"MASK_P"},
+	    {0x5c8f,	"ATTR_T"},
+	    {0x5c90,	"MASK_T"},
+	    {0x5c91,	"P_FLAG"},
+	    {0x5c92,	"MEMBOT"},
+	    {0x5c93,	"MEMBOT+1"},
+	    {0x5c94,	"MEMBOT+2"},
+	    {0x5c95,	"MEMBOT+3"},
+	    {0x5c96,	"MEMBOT+4"},
+	    {0x5c97,	"MEMBOT+5"},
+	    {0x5c98,	"MEMBOT+6"},
+	    {0x5c99,	"MEMBOT+7"},
+	    {0x5c9a,	"MEMBOT+8"},
+	    {0x5c9b,	"MEMBOT+9"},
+	    {0x5c9c,	"MEMBOT+10"},
+	    {0x5c9d,	"MEMBOT+11"},
+	    {0x5c9e,	"MEMBOT+12"},
+	    {0x5c9f,	"MEMBOT+13"},
+	    {0x5ca0,	"MEMBOT+14"},
+	    {0x5ca1,	"MEMBOT+15"},
+	    {0x5ca2,	"MEMBOT+16"},
+	    {0x5ca3,	"MEMBOT+17"},
+	    {0x5ca4,	"MEMBOT+18"},
+	    {0x5ca5,	"MEMBOT+19"},
+	    {0x5ca6,	"MEMBOT+20"},
+	    {0x5ca7,	"MEMBOT+21"},
+	    {0x5ca8,	"MEMBOT+22"},
+	    {0x5ca9,	"MEMBOT+23"},
+	    {0x5caa,	"MEMBOT+24"},
+	    {0x5cab,	"MEMBOT+25"},
+	    {0x5cac,	"MEMBOT+26"},
+	    {0x5cad,	"MEMBOT+27"},
+	    {0x5cae,	"MEMBOT+28"},
+	    {0x5caf,	"MEMBOT+29"},
+	    {0x5cb2,	"RAMTOP"},
+	    {0x5cb3,	"RAMTOP+1"},
+	    {0x5cb4,	"P_RAMT"},
+	    {0x5cb5,	"P_RAMT+1"},
+	    {0,		NULL}
+	};
+
+    int f;
+
+    for(f=0;label[f].txt;f++)
+    	if (addr==label[f].addr)
+	    return label[f].txt;
+
+    return NULL;
 }
 
 

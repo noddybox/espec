@@ -22,6 +22,7 @@
 
     Provides the emulation for the SPEC
 
+    Requires access to the HOOK and FETCH Z80 callbacks
 */
 
 #ifndef ESPEC_SPECH

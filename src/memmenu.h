@@ -22,6 +22,8 @@
 
     Provides a menu driven interface for analysing memory
 
+    Requires access to the INSTRUCTION Z80 callback.
+
 */
 
 #ifndef ESPEC_MEMMENU_H

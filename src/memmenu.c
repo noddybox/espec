@@ -53,6 +53,13 @@ static const char ident_h[]=ESPEC_MEMMENU_H;
 #define GREEN	GFXRGB(100,255,100)
 #define BLUE	GFXRGB(100,100,255)
 
+#define TRACE	"trace"
+
+
+/* ---------------------------------------- STATIC DATA
+*/
+FILE	*trace=NULL;
+
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
@@ -68,7 +75,9 @@ static void DisplayMenu(void)
     {
     	"1. Disassemble/Hex dump",
     	"2. Disassemble to file ",
-    	"3. Return              ",
+	"3. Start/Stop trace log",
+	"4. Playback trace log  ",
+    	"5. Return              ",
 	NULL
     };
 
@@ -77,13 +86,13 @@ static void DisplayMenu(void)
     GFXClear(BLACK);
 
     Centre("MEMORY MENU",0,WHITE);
-    Centre("Select an option",8,WHITE);
+    Centre("Select an option",10,RED);
 
     f=0;
 
     while(menu[f])
     {
-    	Centre(menu[f],20+f*10,WHITE);
+    	Centre(menu[f],25+f*10,WHITE);
 	f++;
     }
 }
@@ -102,6 +111,30 @@ static const char *FlagString(Z80Byte flag)
             s[f]='-';
 
     return s;
+}
+
+
+void DisplayZ80State(Z80State *s, int y, Uint32 col)
+{
+    GFXPrintPaper(0,y,col,BLACK,
+		  "PC=%4.4x  A=%2.2x     F=%s",
+		  s->PC,s->AF>>8,FlagString(s->AF&0xff));
+    y+=8;
+    GFXPrintPaper(0,y,col,BLACK,
+    		  "BC=%4.4x  DE=%4.4x  HL=%4.4x",
+		  s->BC,s->DE,s->HL);
+    y+=8;
+    GFXPrintPaper(0,y,col,BLACK,
+    		  "IX=%4.4x  IY=%4.4x  SP=%4.4x",
+		  s->IX,s->IY,s->SP);
+    y+=8;
+    GFXPrintPaper(0,y,col,BLACK,
+    		  "I=%2.2x     IM=%2.2x    R=%2.2x",
+		  s->I,s->IM,s->R);
+    y+=8;
+    GFXPrintPaper(0,y,col,BLACK,
+    		  "IFF1=%2.2x  IFF2=%2.2x",
+		  s->IFF1,s->IFF2);
 }
 
 
@@ -173,6 +206,17 @@ static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
 }
 
 
+static void EnterLong(const char *prompt, long *l)
+{
+    const char *p;
+
+    p=GUIInputString(prompt ? prompt : "Value?","");
+
+    if (*p)
+    	*l=strtol(p,NULL,0);
+}
+
+
 static void DoDisassem(Z80 *z80, const Z80State *s)
 {
     static int hexmode=FALSE;
@@ -188,7 +232,8 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 
 	GFXClear(BLACK);
 
-    	Centre("Press F1 for help",0,RED);
+    	Centre("DISASSEMBLY",0,WHITE);
+    	Centre("Press F1 for help",9,RED);
 
 	curr=pc;
 
@@ -198,7 +243,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 	    char *p;
 	    int y;
 
-	    y=16+f*8;
+	    y=24+f*8;
 
 	    GFXPrint(0,y,GREEN,"%4.4x",curr);
 
@@ -336,6 +381,214 @@ static void DoDisassemFile(Z80 *z80, const Z80State *s)
 }
 
 
+static int Instruction(Z80 *z80, Z80Val data)
+{
+    Z80State s;
+
+    Z80GetState(z80,&s);
+    fwrite(&s,sizeof s,1,trace);
+
+    return TRUE;
+}
+
+
+static void EnableTrace(Z80 *z80, Z80State *s)
+{
+    if (!trace)
+    {
+    	trace=fopen(TRACE,"wb");
+
+	if (trace)
+	{
+	    GUIMessage("NOTICE","Created trace log");
+	    Z80LodgeCallback(z80,Z80_Instruction,Instruction);
+	}
+	else
+	{
+	    GUIMessage("ERROR","Failed to create trace log");
+	}
+    }
+}
+
+
+static void DisableTrace(Z80 *z80)
+{
+    if (trace)
+    {
+	GUIMessage("NOTICE","Closing current trace log");
+    	fclose(trace);
+	trace=NULL;
+	Z80LodgeCallback(z80,Z80_Instruction,NULL);
+    }
+}
+
+
+static void PlaybackTrace(Z80 *z80)
+{
+    FILE *fp;
+    int quit;
+    long prev_pos;
+    long pos;
+    long max_pos;
+    Z80Word pc;
+    Z80State s;
+
+    fp=fopen(TRACE,"rb");
+
+    if (!fp)
+    {
+	GUIMessage("ERROR","Couldn't open tracefile: " TRACE);
+	return;
+    }
+
+    fseek(fp,0,SEEK_END);
+
+    max_pos=ftell(fp)/sizeof s;
+
+    if (max_pos==0)
+    {
+	GUIMessage("ERROR","Empty tracefile: " TRACE);
+	fclose(fp);
+	return;
+    }
+
+    pos=0;
+    prev_pos=pos;
+    pc=0;
+    quit=FALSE;
+
+    while(!quit)
+    {
+	SDL_Event *e;
+	size_t rd;
+	int f;
+
+	GFXClear(BLACK);
+
+    	Centre("TRACE PLAYBACK",0,WHITE);
+    	Centre("Press F1 for help",9,RED);
+
+	fseek(fp,pos*sizeof s,SEEK_SET);
+	fread(&s,sizeof s,1,fp);
+
+	DisplayZ80State(&s,136,WHITE);
+
+	for(f=0;f<10;f++)
+	{
+	    char str[80];
+	    char *p;
+	    int paper;
+	    int y;
+
+	    y=24+f*8;
+
+	    if (f==0)
+		paper=RED;
+	    else
+		paper=BLACK;
+
+	    GFXPrintPaper(0,y,GREEN,paper,"%4.4x ",s.PC);
+
+	    strcpy(str,Z80Disassemble(z80,&s.PC));
+	    p=strtok(str,";");
+	    GFXPrintPaper(40,y,WHITE,paper,"%s",str);
+	}
+
+	GFXPrint(0,112,GREEN,"Current step: %ld",pos+1);
+	GFXPrint(0,120,GREEN,"Total steps : %ld",max_pos);
+
+	prev_pos=pos;
+
+	GFXEndFrame(FALSE);
+
+	e=GFXWaitKey();
+
+	switch(e->key.keysym.sym)
+	{
+	    case SDLK_F1:
+		GUIMessage
+		    ("PLAYBACK HELP","%s",
+		       "ESC - Exit\n"
+		       "Enter - Step number to display\n"
+		       "P - Search for PC\n"
+		       "Cursor Up - Prev step\n"
+		       "Cursor Down - Next step\n"
+		       "Page Up - Back 50 steps\n"
+		       "Page Down - Forward 50 steps\n"
+		       "Cursor Left - Back 1000 steps\n"
+		       "Cursor Right - Forward 1000 steps\n \n"
+		       "NOTE: Disassembly is as memory is NOW");
+		break;
+
+	    case SDLK_ESCAPE:
+	    	quit=TRUE;
+		break;
+
+	    case SDLK_RETURN:
+	    case SDLK_KP_ENTER:
+		EnterLong("Step number?",&pos);
+		pos--;
+		break;
+
+	    case SDLK_p:
+		if (EnterAddress("PC to search for?",z80,&pc))
+		{
+		    while((rd=fread(&s,sizeof s,1,fp))==1)
+		    {
+			pos++;
+			if (s.PC==pc)
+			    break;
+		    }
+
+		    if (rd!=1)
+		    {
+		    	GUIMessage("NOTICE","Address not found");
+			pos=prev_pos;
+		    }
+		}
+	    	break;
+
+	    case SDLK_UP:
+		pos--;
+	    	break;
+
+	    case SDLK_DOWN:
+		pos++;
+	    	break;
+
+	    case SDLK_PAGEUP:
+		pos-=50;
+		break;
+
+	    case SDLK_PAGEDOWN:
+	    	pos+=50;
+		break;
+
+	    case SDLK_LEFT:
+	    	pos-=1000;
+		break;
+
+	    case SDLK_RIGHT:
+	    	pos+=1000;
+		break;
+
+	    default:
+	    	break;
+	}
+
+	/* Check position before next loop
+	*/
+	if (pos<0)
+	    pos=0;
+
+	if (pos>=max_pos)
+	    pos=max_pos-1;
+    }
+
+    fclose(fp);
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 void MemoryMenu(Z80 *z80)
@@ -366,8 +619,20 @@ void MemoryMenu(Z80 *z80)
 	    	DoDisassemFile(z80,&s);
 	    	break;
 
-	    case SDLK_ESCAPE:
 	    case SDLK_3:
+		if (!trace)
+		    EnableTrace(z80,&s);
+		else
+		    DisableTrace(z80);
+	    	break;
+
+	    case SDLK_4:
+		DisableTrace(z80);
+	    	PlaybackTrace(z80);
+		break;
+
+	    case SDLK_ESCAPE:
+	    case SDLK_5:
 	    	quit=TRUE;
 		break;
 
@@ -383,31 +648,9 @@ void MemoryMenu(Z80 *z80)
 void DisplayState(Z80 *z80)
 {
     Z80State s;
-    int y;
 
     Z80GetState(z80,&s);
-
-    y=136;
-
-    GFXPrintPaper(0,y,RED,BLACK,"PC=%4.4x  A=%2.2x     F=%s",
-                    s.PC,s.AF>>8,FlagString(s.AF&0xff));
-    y+=8;
-
-    GFXPrintPaper(0,y,RED,BLACK,"BC=%4.4x  DE=%4.4x  HL=%4.4x",s.BC,s.DE,s.HL);
-    y+=8;
-
-    GFXPrintPaper(0,y,RED,BLACK,"IX=%4.4x  IY=%4.4x  SP=%4.4x",s.IX,s.IY,s.SP);
-    y+=8;
-
-    GFXPrintPaper(0,y,RED,BLACK,"I=%2.2x     IM=%2.2x    R=%2.2x",s.I,s.IM,s.R);
-    y+=8;
-
-    GFXPrintPaper(0,y,RED,BLACK,"IFF1=%2.2x  IFF2=%2.2x",s.IFF1,s.IFF2);
-    y+=8;
-
-    y+=8;
-    GFXPrintPaper(0,y,RED,BLACK,"%s\n",SPECInfo(z80));
-    y+=8;
+    DisplayZ80State(&s,136,RED);
 }
 
 

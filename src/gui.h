@@ -1,0 +1,50 @@
+/*
+
+    espec - Sinclair Spectrum emulator
+
+    Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+    -------------------------------------------------------------------------
+
+    Basic GUI routines
+
+*/
+
+#ifndef ESPEC_GUI_H
+#define ESPEC_GUI_H "$Id$"
+
+#include "SDL.h"
+
+
+/* ---------------------------------------- INTERFACES
+*/
+
+/* Display a simple message box.  A message of longer than 1024 bytes causes
+   undefined behaviour.  Newlines cause a line break.
+*/
+void		GUIMessage(const char *title, const char *format,...);
+
+
+/* Enter a string, max 40 characters
+*/
+const char	*GUIInputString(const char *prompt, const char *orig);
+
+
+#endif
+
+
+/* END OF FILE */

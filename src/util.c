@@ -28,6 +28,7 @@ static const char ident[]="$Id$";
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <sys/param.h>
 
 #include "util.h"
 #include "exit.h"
@@ -85,7 +86,7 @@ const char *Basename(const char *path)
 
 const char *Dirname(const char *path)
 {
-    static char dir[FILENAME_MAX];
+    static char dir[MAXPATHLEN+1];
     char *p;
 
     strcpy(dir,path);

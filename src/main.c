@@ -71,8 +71,8 @@ static void Usage(void)
 */
 int main(int argc, char *argv[])
 {
-    char tape_in[FILENAME_MAX];
-    char tape_out[FILENAME_MAX];
+    char tape_in[FILENAME_MAX]="";
+    char tape_out[FILENAME_MAX]="";
     Z80 *z80;
     SDL_Event *e;
     int quit;
@@ -83,9 +83,6 @@ int main(int argc, char *argv[])
     ConfigRead();
 
     trace=IConfig(CONF_TRACE);
-
-    strcpy(tape_in,SConfig(CONF_TAPEDIR));
-    strcpy(tape_out,SConfig(CONF_TAPEDIR));
 
     z80=Z80Init(SPECWriteMem,
     		SPECReadMem,
@@ -265,22 +262,36 @@ int main(int argc, char *argv[])
 		case SDLK_F8:
 		    if (e->key.state==SDL_PRESSED)
 		    {
+			GFXKeyRepeat(TRUE);
+
 			if (GUIFileSelect("TAPE TO LOAD",TRUE,
-					  tape_in,tape_in))
+					  tape_in[0] ?
+					    Dirname(tape_in) :
+					    SConfig(CONF_TAPEDIR),
+					  tape_in))
 			{
 			    SPECMount(SPEC_TAPE_IN,tape_in);
 			}
+
+			GFXKeyRepeat(FALSE);
 		    }
 		    break;
 
 		case SDLK_F9:
 		    if (e->key.state==SDL_PRESSED)
 		    {
+			GFXKeyRepeat(TRUE);
+
 			if (GUIFileSelect("TAPE TO SAVE",FALSE,
-					  tape_out,tape_out))
+					  tape_out[0] ?
+					    Dirname(tape_out) :
+					    SConfig(CONF_TAPEDIR),
+					  tape_out))
 			{
 			    SPECMount(SPEC_TAPE_OUT,tape_out);
 			}
+
+			GFXKeyRepeat(FALSE);
 		    }
 		    break;
 

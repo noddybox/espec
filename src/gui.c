@@ -31,6 +31,11 @@ static const char ident[]="$Id$";
 #include <stdarg.h>
 #include <ctype.h>
 
+#include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/param.h>
+
 #include "gui.h"
 #include "gfx.h"
 #include "exit.h"
@@ -55,6 +60,17 @@ static const char ident_h[]=ESPEC_GUI_H;
 #define GREY	GFXRGB(160,160,160)
 #define LOGREY	GFXRGB(100,100,100)
 #define GREEN	GFXRGB(100,255,100)
+
+
+/* ---------------------------------------- TYPES
+*/
+typedef struct
+{
+    char	name[MAXPATHLEN+1];
+    unsigned 	size;
+    int		is_dir;
+} FileEnt;
+
 
 /* ---------------------------------------- STATICS
 */
@@ -216,12 +232,53 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 		}
 		break;
 
+	    case SDLK_PAGEUP:
+		if (cur>0)
+		{
+		    cur-=(max-1);
+
+		    if (cur<0)
+		    	cur=0;
+
+		    if (cur<top)
+		    	top=cur;
+		}
+	    	break;
+
+	    case SDLK_PAGEDOWN:
+		if (cur<no-1)
+		{
+		    cur+=(max-1);
+
+		    if (cur>=no)
+		    	cur=no-1;
+
+		    if (cur>top+max-2)
+		    	top=cur-max+2;
+		}
+		break;
+
 	    default:
 		break;
 	}
     }
 
     return cur;
+}
+
+
+static int CmpFile(const void *va,const void *vb)
+{
+    const FileEnt *a=(FileEnt *)va;
+    const FileEnt *b=(FileEnt *)vb;
+
+    if ((a->is_dir)&&(!b->is_dir))
+	return -1;
+
+    if ((!a->is_dir)&&(b->is_dir))
+	return 1;
+
+    return strcmp(a->name,b->name);
 }
 
 
@@ -425,14 +482,120 @@ int GUIListOption(const char *title, int no, char * const list[], int option[])
 int GUIFileSelect(const char *prompt, int load,
 		  const char *start_dir, char path[])
 {
-    /* TODO */
-    if (load)
-	strcpy(path,"/files/emu/spectrum/thrust1.tap");
-    else
-	strcpy(path,"/files/emu/spectrum/testespec.tap");
+    int done=FALSE;
+    int ret=FALSE;
+    char olddir[MAXPATHLEN+1];
+    char pwd[MAXPATHLEN+1];
 
-    /* strcpy(path,"/files/emu/spectrum/testespec.tap"); */
-    return TRUE;
+    if (!load)
+    {
+    	GUIMessage(eMessageBox,"OOPS","Save dialog not yet done");
+	return FALSE;
+    }
+
+    getcwd(olddir,MAXPATHLEN);
+
+    chdir(start_dir);
+
+    while(!done)
+    {
+	int f;
+	int sel;
+	DIR *d;
+	struct dirent *de;
+	struct stat sbuf;
+    	FileEnt *fe=NULL;
+	char **list;
+	int no=0;
+
+    	getcwd(pwd,MAXPATHLEN);
+
+	d=opendir(".");
+
+	while(readdir(d))
+	    no++;
+
+	rewinddir(d);
+
+	fe=Malloc(sizeof *fe * no);
+	no=1;
+
+	strcpy(fe[0].name,"..");
+	fe[0].is_dir=TRUE;
+
+	while((de=readdir(d)))
+	{
+	    if (stat(de->d_name,&sbuf)!=-1)
+	    {
+	    	if (S_ISDIR(sbuf.st_mode) && de->d_name[0]!='.')
+		{
+		    strcpy(fe[no].name,de->d_name);
+		    fe[no].is_dir=TRUE;
+		    no++;
+		}
+		else if (S_ISREG(sbuf.st_mode) && de->d_name[0]!='.')
+		{
+		    strcpy(fe[no].name,de->d_name);
+		    fe[no].is_dir=FALSE;
+		    fe[no].size=(unsigned)sbuf.st_size;
+		    no++;
+		}
+	    }
+	}
+
+	closedir(d);
+
+	qsort(fe,no,sizeof *fe,CmpFile);
+
+	list=Malloc(sizeof *list * no);
+
+	for(f=0;f<no;f++)
+	{
+	    list[f]=Malloc(80);
+
+	    if (fe[f].is_dir)
+		sprintf(list[f],"%-20.20s %9s",fe[f].name,"<DIR>");
+	    else
+		sprintf(list[f],"%-20.20s %9u",fe[f].name,fe[f].size);
+	}
+
+	sel=DoList(pwd,no,list,NULL);
+
+	if (sel==-1)
+	{
+	    ret=FALSE;
+	    done=TRUE;
+	}
+	else
+	{
+	    if (fe[sel].is_dir)
+	    {
+	    	chdir(fe[sel].name);
+	    }
+	    else
+	    {
+	    	strcpy(path,pwd);
+		
+		if (path[strlen(path)]!='/')
+		    strcat(path,"/");
+
+		strcat(path,fe[sel].name);
+
+		done=TRUE;
+		ret=TRUE;
+	    }
+	}
+
+	for(f=0;f<no;f++)
+	{
+	    free(list[f]);
+	}
+
+	free(list);
+	free(de);
+    }
+
+    return ret;
 }
 
 

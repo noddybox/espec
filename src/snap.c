@@ -118,10 +118,10 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Poke poke)
 	blen=GetLSBWord(fp);
     }
 
-    Debug("blen=%u  type=%u\n",id);
-
     type=GetByte(fp);
     csum=id;
+
+    Debug("blen=%u  type=%u  id=%u\n",blen,type,id);
 
     /* Have we found the requested block?
     */

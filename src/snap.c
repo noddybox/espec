@@ -100,8 +100,13 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Poke poke)
     Z80Word blen;
     Z80Byte type,b,csum,tape_csum;
 
+    b=0;
+
     if (!fp)
+    {
+	Debug("No file to load!\n");
     	return FALSE;
+    }
 
     /* Get length (wrapping file if at eof)
     */
@@ -113,6 +118,8 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Poke poke)
 	blen=GetLSBWord(fp);
     }
 
+    Debug("blen=%u  type=%u\n",id);
+
     type=GetByte(fp);
     csum=id;
 
@@ -120,6 +127,7 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Poke poke)
     */
     if (id==type)
     {
+	Debug("Matched type\n");
     	/* Knock of block type
 	*/
 	blen--;

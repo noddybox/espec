@@ -209,6 +209,7 @@ static const MatrixMap keymap[]=
 
 
 /* ---------------------------------------- DEBUG FUNCTIONS
+*/
 static const char *FlagString(Z80Byte flag)
 {
     static char s[]="76543210";
@@ -239,7 +240,6 @@ static void DumpZ80(Z80 *z80)
     printf("IFF1=%2.2x  IFF2=%2.2x\n",s.IFF1,s.IFF2);
     printf("%s\n",Z80Disassemble(z80,&s.PC));
 }
-*/
 
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
@@ -341,11 +341,11 @@ static int EDCallback(Z80 *z80, Z80Val data)
 {
     Z80State state;
 
-    Z80GetState(z80,&state);
-
     switch((Z80Byte)data)
     {
     	case SAVE_PATCH:
+	    Z80GetState(z80,&state);
+
 	    if (!tape_out)
 	    {
 		state.AF|=eZ80_Carry;
@@ -361,9 +361,15 @@ static int EDCallback(Z80 *z80, Z80Val data)
 		    state.AF&=~eZ80_Carry;
 		}
 	    }
+
+	    DumpZ80(z80);
+	    Z80SetState(z80,&state);
+
 	    break;
 
     	case LOAD_PATCH:
+	    Z80GetState(z80,&state);
+
 	    if (!tape_in)
 	    {
 		state.AF|=eZ80_Carry;
@@ -379,13 +385,15 @@ static int EDCallback(Z80 *z80, Z80Val data)
 		    state.AF&=~eZ80_Carry;
 		}
 	    }
+
+	    DumpZ80(z80);
+	    Z80SetState(z80,&state);
+
 	    break;
 
 	default:
 	    break;
     }
-
-    Z80SetState(z80,&state);
 
     return TRUE;
 }
@@ -458,7 +466,7 @@ void SPECInit(Z80 *z80)
     	fclose(fp);
 	GUIMessage(eMessageBox,
 		   "ERROR",
-		   "ROM file must be %d bytes long\n",
+		   "ROM file must be %d bytes long",
 		   ROMLEN);
 	Exit("");
     }

@@ -104,7 +104,7 @@ static int BreaksActive(void)
     int f;
     int ret=FALSE;
 
-    for(f=0;f<bpoint.no;f++)
+    for(f=0;f<bpoint.no && !ret;f++)
     	ret|=bpoint.active[f];
 
     return ret;
@@ -128,6 +128,56 @@ static void ClearCallback(Z80 *z80)
 	Z80RemoveCallback(z80,eZ80_Instruction,Instruction);
 	lodged=FALSE;
     }
+}
+
+
+static int AddBreak(Z80 *z80, const char *expr)
+{
+    bpoint.no++;
+    bpoint.expr=Realloc(bpoint.expr,bpoint.no * sizeof(*bpoint.expr));
+    bpoint.active=Realloc(bpoint.active,bpoint.no * sizeof(*bpoint.active));
+
+    bpoint.expr[bpoint.no-1]=StrCopy(expr);
+    bpoint.active[bpoint.no-1]=TRUE;
+
+    SetCallback(z80);
+
+    return bpoint.no-1;
+}
+
+
+static void DeleteBreak(Z80 *z80, int no)
+{
+    int f;
+
+    if (no>=bpoint.no)
+    	return;
+
+    free(bpoint.expr[no]);
+
+    for(f=no;f<bpoint.no-1;f++)
+    {
+	bpoint.expr[f]=bpoint.expr[f+1];
+	bpoint.active[f]=bpoint.active[f+1];
+    }
+
+    bpoint.no--;
+
+    if (bpoint.no==0)
+    {
+	free(bpoint.expr);
+	bpoint.expr=NULL;
+	bpoint.active=NULL;
+    }
+    else
+    {
+	bpoint.expr=Realloc(bpoint.expr,
+			    bpoint.no * sizeof(*bpoint.expr));
+	bpoint.active=Realloc(bpoint.active,
+			      bpoint.no * sizeof(*bpoint.active));
+    }
+
+    ClearCallback(z80);
 }
 
 
@@ -271,8 +321,8 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
     while(!quit)
     {
 	SDL_Event *e;
-	Z80Word curr;
-	Z80Word next;
+	Z80Word curr=0;
+	Z80Word next=0;
 	int f;
 
 	GFXClear(BLACK);
@@ -716,7 +766,7 @@ static void PlaybackTrace(Z80 *z80)
 }
 
 
-static void DoAddBreakpoint(Z80 *z80)
+static int DoAddBreakpoint(Z80 *z80)
 {
     const char *expr;
     char *error;
@@ -725,7 +775,7 @@ static void DoAddBreakpoint(Z80 *z80)
     expr=GUIInputString("Expression?","");
 
     if (!*expr)
-    	return;
+    	return -1;
 
     if (!Z80Expression(z80,expr,&l,&error))
     {
@@ -739,17 +789,12 @@ static void DoAddBreakpoint(Z80 *z80)
 	    GUIMessage(eMessageBox,"ERROR","Expression is invalid");
 	    free(error);
 	}
+
+	return -1;
     }
     else
     {
-	bpoint.no++;
-	bpoint.expr=Realloc(bpoint.expr,bpoint.no * sizeof(*bpoint.expr));
-	bpoint.active=Realloc(bpoint.active,bpoint.no * sizeof(*bpoint.active));
-
-	bpoint.expr[bpoint.no-1]=StrCopy(expr);
-	bpoint.active[bpoint.no-1]=TRUE;
-
-	SetCallback(z80);
+	return AddBreak(z80,expr);
     }
 }
 
@@ -785,34 +830,7 @@ static void DoRemoveBreakpoint(Z80 *z80)
 
     while (sel!=-1)
     {
-	int f;
-
-	free(bpoint.expr[sel]);
-
-	for(f=sel;f<bpoint.no-1;f++)
-	{
-	    bpoint.expr[f]=bpoint.expr[f+1];
-	    bpoint.active[f]=bpoint.active[f+1];
-	}
-
-	bpoint.no--;
-
-	if (bpoint.no==0)
-	{
-	    free(bpoint.expr);
-	    bpoint.expr=NULL;
-	    bpoint.active=NULL;
-	}
-	else
-	{
-	    bpoint.expr=Realloc(bpoint.expr,
-				bpoint.no * sizeof(*bpoint.expr));
-	    bpoint.active=Realloc(bpoint.active,
-				  bpoint.no * sizeof(*bpoint.active));
-	}
-
-	ClearCallback(z80);
-
+	DeleteBreak(z80,sel);
 	sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
     }
 }
@@ -841,7 +859,10 @@ static void DoMonitor(Z80 *z80)
     static int overlay=FALSE;
     int quit=FALSE;
     int running=FALSE;
+    int update=TRUE;
     int step=FALSE;
+    int trigger=-1;
+    int regdisp=0;
 
     SPECEnableScreen(FALSE);
 
@@ -855,47 +876,68 @@ static void DoMonitor(Z80 *z80)
 
 	step=FALSE;
 
-	if (overlay)
-	    SPECShowScreen();
-	else
-	    GFXClear(BLACK);
-
-    	CentrePaper("MONITOR",0,WHITE,BLACK);
-    	CentrePaper("Press F1 for help",9,RED,BLACK);
-
-	Z80GetState(z80,&s);
-
-	DisplayZ80State(&s,136,WHITE);
-
-	GetMemTrace(z80,mt,s.SP-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
-	DisplayTraceMem(0,192,"MEM (SP)",mt,s.SP);
-	GetMemTrace(z80,mt,s.HL-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
-	DisplayTraceMem(100,192,"MEM (HL)",mt,s.HL);
-	GetMemTrace(z80,mt,s.DE-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
-	DisplayTraceMem(200,192,"MEM (DE)",mt,s.DE);
-
-	for(f=0;f<10;f++)
+	if (update)
 	{
-	    char str[80];
-	    char *p;
-	    int paper;
-	    int y;
-
-	    y=24+f*8;
-
-	    if (f==0)
-		paper=RED;
+	    if (overlay)
+		SPECShowScreen();
 	    else
-		paper=BLACK;
+		GFXClear(BLACK);
 
-	    GFXPrintPaper(0,y,GREEN,paper,"%4.4x ",s.PC);
+	    CentrePaper("MONITOR",0,WHITE,BLACK);
+	    CentrePaper("Press F1 for help",9,RED,BLACK);
 
-	    strcpy(str,Z80Disassemble(z80,&s.PC));
-	    p=strtok(str,";");
-	    GFXPrintPaper(40,y,WHITE,paper,"%s",str);
+	    Z80GetState(z80,&s);
+
+	    DisplayZ80State(&s,136,WHITE);
+
+	    GetMemTrace(z80,mt,s.SP-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	    DisplayTraceMem(0,192,"MEM (SP)",mt,s.SP);
+	    GetMemTrace(z80,mt,s.HL-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	    DisplayTraceMem(100,192,"MEM (HL)",mt,s.HL);
+
+	    switch(regdisp)
+	    {
+	    	case 0:
+		    GetMemTrace(z80,mt,s.DE-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+		    DisplayTraceMem(200,192,"MEM (DE)",mt,s.DE);
+		    break;
+	    	case 1:
+		    GetMemTrace(z80,mt,s.IX-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+		    DisplayTraceMem(200,192,"MEM (IX)",mt,s.IX);
+		    break;
+	    	case 2:
+		    GetMemTrace(z80,mt,s.IY-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+		    DisplayTraceMem(200,192,"MEM (IY)",mt,s.IY);
+		    break;
+	    	case 3:
+		    GetMemTrace(z80,mt,s.BC-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+		    DisplayTraceMem(200,192,"MEM (BC)",mt,s.BC);
+		    break;
+	    }
+
+	    for(f=0;f<10;f++)
+	    {
+		char str[80];
+		char *p;
+		int paper;
+		int y;
+
+		y=24+f*8;
+
+		if (f==0)
+		    paper=RED;
+		else
+		    paper=BLACK;
+
+		GFXPrintPaper(0,y,GREEN,paper,"%4.4x ",s.PC);
+
+		strcpy(str,Z80Disassemble(z80,&s.PC));
+		p=strtok(str,";");
+		GFXPrintPaper(40,y,WHITE,paper,"%s",str);
+	    }
+
+	    GFXEndFrame(FALSE);
 	}
-
-	GFXEndFrame(FALSE);
 
 	if (running)
 	{
@@ -914,16 +956,19 @@ static void DoMonitor(Z80 *z80)
 		case SDLK_F1:
 		    GUIMessage
 			(eMessageBox,"PLAYBACK HELP","%s",
-			   "ESC   - Exit                     \n"
-			   "ENTER - Single step processor    \n"
-			   "R     - Run till break or stop   \n"
-			   "SPACE - Stop running             \n"
-			   "O     - Toggle overlay mode      \n"
-			   "5     - Add a new breakpoint     \n"
-			   "6     - Set active breakpoints   \n"
-			   "7     - Remove a breakpoint      \n"
-			   "8     - Clear all breakpoints    \n"
-			   "S     - Display current screen   ");
+			   "ESC   - Exit                    \n"
+			   "ENTER - Single step processor   \n"
+			   "R     - Run till break or stop  \n"
+			   "W     - Watch till break or stop\n"
+			   "T     - Add temp breakpoint     \n"
+			   "SPACE - Stop running            \n"
+			   "O     - Toggle overlay mode     \n"
+			   "5     - Add a new breakpoint    \n"
+			   "6     - Set active breakpoints  \n"
+			   "7     - Remove a breakpoint     \n"
+			   "8     - Clear all breakpoints   \n"
+			   "H     - Alter reg index display \n"
+			   "S     - Display current screen  ");
 		    break;
 
 		case SDLK_RETURN:
@@ -937,14 +982,28 @@ static void DoMonitor(Z80 *z80)
 
 		case SDLK_r:
 		    running=TRUE;
+		    update=FALSE;
+		    GFXClear(BLACK);
+		    CentrePaper("MONITOR",0,WHITE,BLACK);
+		    CentrePaper("Press F1 for help",9,RED,BLACK);
+		    CentrePaper("Running...",27,RED,BLACK);
+		    GFXEndFrame(FALSE);
+		    break;
+
+		case SDLK_w:
+		    running=TRUE;
 		    break;
 
 		case SDLK_SPACE:
 		    running=FALSE;
+		    update=TRUE;
 		    break;
 
 		case SDLK_o:
-		    overlay=!overlay;
+		    if (update)
+		    {
+			overlay=!overlay;
+		    }
 		    break;
 
 		case SDLK_5:
@@ -964,9 +1023,26 @@ static void DoMonitor(Z80 *z80)
 		    break;
 
 		case SDLK_s:
-		    SPECShowScreen();
-		    GFXEndFrame(FALSE);
-		    GFXWaitKey();
+		    if (update)
+		    {
+			SPECShowScreen();
+			GFXEndFrame(FALSE);
+			GFXWaitKey();
+		    }
+		    break;
+
+		case SDLK_h:
+		    regdisp=(regdisp+1)%4;
+		    break;
+
+		case SDLK_t:
+		    if (trigger!=-1)
+		    {
+		    	DeleteBreak(z80,trigger);
+			trigger=-1;
+		    }
+
+		    trigger=DoAddBreakpoint(z80);
 		    break;
 
 		default:
@@ -981,7 +1057,19 @@ static void DoMonitor(Z80 *z80)
 	{
 	    GUIMessage(eMessageBox,"BREAKPOINT","%s",brk);
 	    running=FALSE;
+	    update=TRUE;
+
+	    if (trigger!=-1)
+	    {
+	    	DeleteBreak(z80,trigger);
+		trigger=-1;
+	    }
 	}
+    }
+
+    if (trigger!=-1)
+    {
+	DeleteBreak(z80,trigger);
     }
 
     SPECEnableScreen(TRUE);

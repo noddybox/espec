@@ -58,8 +58,13 @@ static Uint32	black;
 static Uint32	grey;
 
 
-/* ---------------------------------------- PROTOS
+/* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static void Usage(void)
+{
+    fprintf(stderr,"usage: espec [-m] [-l tape_file] [-s tape_file]\n");
+    exit(EXIT_FAILURE);
+}
 
 
 /* ---------------------------------------- MAIN
@@ -72,6 +77,8 @@ int main(int argc, char *argv[])
     SDL_Event *e;
     int quit;
     int trace;
+    int inital_menu;
+    int f;
 
     ConfigRead();
 
@@ -100,12 +107,65 @@ int main(int argc, char *argv[])
 
     quit=FALSE;
 
-    /* Check for initial memory menu usage
-       TODO: Proper switch handling
+    /* Parse switches
     */
-    if (argc>1 && strcmp(argv[1],"-m")==0)
-    	quit=MemoryMenu(z80);
+    inital_menu=FALSE;
+    tape_in[0]=0;
+    tape_out[0]=0;
 
+    f=1;
+
+    while(f<argc && argv[f][0]=='-')
+    {
+	switch(argv[f][1])
+	{
+	    case 'm':
+		inital_menu=TRUE;
+		break;
+
+	    case 'l':
+	    	if (f>argc-2)
+		{
+		    Usage();
+		}
+
+		strcpy(tape_in,argv[++f]);
+		break;
+
+	    case 's':
+	    	if (f>argc-2)
+		{
+		    Usage();
+		}
+
+		strcpy(tape_out,argv[++f]);
+		break;
+
+	    default:
+	    	Usage();
+		break;
+	}
+
+	f++;
+    }
+
+    if (inital_menu)
+    {
+    	quit=MemoryMenu(z80);
+    }
+
+    if (tape_in[0])
+    {
+	SPECMount(SPEC_TAPE_IN,tape_in);
+    }
+
+    if (tape_out[0])
+    {
+	SPECMount(SPEC_TAPE_IN,tape_out);
+    }
+
+    /* Main loop
+    */
     while(!quit)
     {
 	const char *brk;
@@ -150,6 +210,7 @@ int main(int argc, char *argv[])
 				   "F1  - Help                        \n"
 				   "F2  - About                       \n"
 				   "F3  - View Spectrum keyboad       \n"
+				   "F4  - View mounted tapes          \n"
 				   "F8  - Select tape file for loading\n"
 				   "F9  - Select tape file for saving \n"
 				   "F10 - Close all open tape files   \n"
@@ -190,6 +251,16 @@ int main(int argc, char *argv[])
 			GFXWaitKey();
 		    }
 		    break;
+
+		case SDLK_F4:
+		    if (e->key.state==SDL_PRESSED)
+			GUIMessage(eMessageBox,
+				   "Mounted Tape Files",
+				   "In:  %-20.20s\nOut: %-20.20s",
+				   tape_in[0] ? Basename(tape_in):"None",
+				   tape_out[0] ? Basename(tape_out):"None");
+		    break;
+
 
 		case SDLK_F8:
 		    if (e->key.state==SDL_PRESSED)
@@ -240,10 +311,6 @@ int main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
-
-
-/* ---------------------------------------- PRIVATE FUNCTIONS
-*/
 
 
 /* END OF FILE */

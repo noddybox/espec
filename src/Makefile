@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.10 2004-01-24 02:17:57 ianc Exp $
+# $Id: Makefile,v 1.11 2004-08-27 23:55:16 ianc Exp $
 # 
 
 
@@ -26,7 +26,8 @@
 # Simply comment out if not, and replace as needed.
 # Other CFLAGS lines *are* required.
 #
-CFLAGS	=	-g -Wall -Werror -pedantic -ansi
+CFLAGS	=	-g -Wall -Werror -pedantic -ansi -O2
+#CFLAGS	=	-g -Wall -Werror -pedantic -ansi -O2 -pg
 
 TARGET	=	espec
 
@@ -57,6 +58,7 @@ OBJECTS	=	main.o		\
 CFLAGS +=	-Iz80 `sdl-config --cflags`
 
 LIBS	=	$(Z80LIB) `sdl-config --libs`
+#LIBS	=	$(Z80LIB) `sdl-config --static-libs` -lncurses -lX11
 
 $(TARGET): $(OBJECTS) $(Z80LIB)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
@@ -65,7 +67,7 @@ $(Z80LIB): z80/*.[ch]
 	cd z80; make "EXTERNAL_CFLAGS=`sdl-config --cflags`" ; cd ..
 
 clean:
-	rm -f $(TARGET) $(OBJECTS) core
+	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core
 	cd z80; make clean; cd ..
 
 depend:
@@ -76,143 +78,158 @@ depend:
 # DO NOT DELETE THIS LINE -- make depend depends on it
 
 main.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
-main.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-main.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
-main.o: /usr/local/include/SDL/SDL.h /usr/local/include/SDL/SDL_main.h
-main.o: /usr/local/include/SDL/SDL_types.h
-main.o: /usr/local/include/SDL/SDL_getenv.h
-main.o: /usr/local/include/SDL/SDL_error.h
-main.o: /usr/local/include/SDL/begin_code.h
-main.o: /usr/local/include/SDL/close_code.h
-main.o: /usr/local/include/SDL/SDL_rwops.h /usr/local/include/SDL/SDL_timer.h
-main.o: /usr/local/include/SDL/SDL_audio.h
-main.o: /usr/local/include/SDL/SDL_byteorder.h
-main.o: /usr/local/include/SDL/SDL_cdrom.h
-main.o: /usr/local/include/SDL/SDL_joystick.h
-main.o: /usr/local/include/SDL/SDL_events.h
-main.o: /usr/local/include/SDL/SDL_active.h
-main.o: /usr/local/include/SDL/SDL_keyboard.h
-main.o: /usr/local/include/SDL/SDL_keysym.h
-main.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
-main.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
-main.o: /usr/local/include/SDL/SDL_version.h z80/z80.h spec.h gfx.h gui.h
+main.o: /usr/include/machine/ansi.h /usr/include/stdio.h
+main.o: /usr/include/string.h /usr/local/include/SDL11/SDL.h
+main.o: /usr/local/include/SDL11/SDL_main.h
+main.o: /usr/local/include/SDL11/SDL_types.h
+main.o: /usr/local/include/SDL11/SDL_getenv.h
+main.o: /usr/local/include/SDL11/SDL_error.h
+main.o: /usr/local/include/SDL11/begin_code.h
+main.o: /usr/local/include/SDL11/close_code.h
+main.o: /usr/local/include/SDL11/SDL_rwops.h
+main.o: /usr/local/include/SDL11/SDL_timer.h
+main.o: /usr/local/include/SDL11/SDL_audio.h
+main.o: /usr/local/include/SDL11/SDL_byteorder.h
+main.o: /usr/local/include/SDL11/SDL_cdrom.h
+main.o: /usr/local/include/SDL11/SDL_joystick.h
+main.o: /usr/local/include/SDL11/SDL_events.h
+main.o: /usr/local/include/SDL11/SDL_active.h
+main.o: /usr/local/include/SDL11/SDL_keyboard.h
+main.o: /usr/local/include/SDL11/SDL_keysym.h
+main.o: /usr/local/include/SDL11/SDL_mouse.h
+main.o: /usr/local/include/SDL11/SDL_video.h
+main.o: /usr/local/include/SDL11/SDL_mutex.h
+main.o: /usr/local/include/SDL11/SDL_quit.h
+main.o: /usr/local/include/SDL11/SDL_version.h z80/z80.h spec.h gfx.h gui.h
 main.o: memmenu.h config.h kbbmp.h exit.h util.h
 spec.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
-spec.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-spec.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
-spec.o: spec.h z80/z80.h /usr/local/include/SDL/SDL.h
-spec.o: /usr/local/include/SDL/SDL_main.h /usr/local/include/SDL/SDL_types.h
-spec.o: /usr/local/include/SDL/SDL_getenv.h
-spec.o: /usr/local/include/SDL/SDL_error.h
-spec.o: /usr/local/include/SDL/begin_code.h
-spec.o: /usr/local/include/SDL/close_code.h
-spec.o: /usr/local/include/SDL/SDL_rwops.h /usr/local/include/SDL/SDL_timer.h
-spec.o: /usr/local/include/SDL/SDL_audio.h
-spec.o: /usr/local/include/SDL/SDL_byteorder.h
-spec.o: /usr/local/include/SDL/SDL_cdrom.h
-spec.o: /usr/local/include/SDL/SDL_joystick.h
-spec.o: /usr/local/include/SDL/SDL_events.h
-spec.o: /usr/local/include/SDL/SDL_active.h
-spec.o: /usr/local/include/SDL/SDL_keyboard.h
-spec.o: /usr/local/include/SDL/SDL_keysym.h
-spec.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
-spec.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
-spec.o: /usr/local/include/SDL/SDL_version.h snap.h gfx.h gui.h config.h
+spec.o: /usr/include/machine/ansi.h /usr/include/stdio.h
+spec.o: /usr/include/string.h spec.h z80/z80.h /usr/local/include/SDL11/SDL.h
+spec.o: /usr/local/include/SDL11/SDL_main.h
+spec.o: /usr/local/include/SDL11/SDL_types.h
+spec.o: /usr/local/include/SDL11/SDL_getenv.h
+spec.o: /usr/local/include/SDL11/SDL_error.h
+spec.o: /usr/local/include/SDL11/begin_code.h
+spec.o: /usr/local/include/SDL11/close_code.h
+spec.o: /usr/local/include/SDL11/SDL_rwops.h
+spec.o: /usr/local/include/SDL11/SDL_timer.h
+spec.o: /usr/local/include/SDL11/SDL_audio.h
+spec.o: /usr/local/include/SDL11/SDL_byteorder.h
+spec.o: /usr/local/include/SDL11/SDL_cdrom.h
+spec.o: /usr/local/include/SDL11/SDL_joystick.h
+spec.o: /usr/local/include/SDL11/SDL_events.h
+spec.o: /usr/local/include/SDL11/SDL_active.h
+spec.o: /usr/local/include/SDL11/SDL_keyboard.h
+spec.o: /usr/local/include/SDL11/SDL_keysym.h
+spec.o: /usr/local/include/SDL11/SDL_mouse.h
+spec.o: /usr/local/include/SDL11/SDL_video.h
+spec.o: /usr/local/include/SDL11/SDL_mutex.h
+spec.o: /usr/local/include/SDL11/SDL_quit.h
+spec.o: /usr/local/include/SDL11/SDL_version.h snap.h gfx.h gui.h config.h
 spec.o: exit.h util.h
 snap.o: snap.h /usr/include/stdlib.h /usr/include/sys/cdefs.h
-snap.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-snap.o: /usr/include/stdio.h z80/z80.h
+snap.o: /usr/include/machine/ansi.h /usr/include/stdio.h z80/z80.h util.h
 config.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
-config.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-config.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
-config.o: exit.h config.h
+config.o: /usr/include/machine/ansi.h /usr/include/stdio.h
+config.o: /usr/include/string.h exit.h config.h
 gfx.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
-gfx.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-gfx.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
-gfx.o: /usr/include/stdarg.h gfx.h /usr/local/include/SDL/SDL.h
-gfx.o: /usr/local/include/SDL/SDL_main.h /usr/local/include/SDL/SDL_types.h
-gfx.o: /usr/local/include/SDL/SDL_getenv.h /usr/local/include/SDL/SDL_error.h
-gfx.o: /usr/local/include/SDL/begin_code.h
-gfx.o: /usr/local/include/SDL/close_code.h /usr/local/include/SDL/SDL_rwops.h
-gfx.o: /usr/local/include/SDL/SDL_timer.h /usr/local/include/SDL/SDL_audio.h
-gfx.o: /usr/local/include/SDL/SDL_byteorder.h
-gfx.o: /usr/local/include/SDL/SDL_cdrom.h
-gfx.o: /usr/local/include/SDL/SDL_joystick.h
-gfx.o: /usr/local/include/SDL/SDL_events.h
-gfx.o: /usr/local/include/SDL/SDL_active.h
-gfx.o: /usr/local/include/SDL/SDL_keyboard.h
-gfx.o: /usr/local/include/SDL/SDL_keysym.h /usr/local/include/SDL/SDL_mouse.h
-gfx.o: /usr/local/include/SDL/SDL_video.h /usr/local/include/SDL/SDL_mutex.h
-gfx.o: /usr/local/include/SDL/SDL_quit.h /usr/local/include/SDL/SDL_version.h
-gfx.o: exit.h config.h font.h
+gfx.o: /usr/include/machine/ansi.h /usr/include/stdio.h /usr/include/string.h
+gfx.o: /usr/include/stdarg.h gfx.h /usr/local/include/SDL11/SDL.h
+gfx.o: /usr/local/include/SDL11/SDL_main.h
+gfx.o: /usr/local/include/SDL11/SDL_types.h
+gfx.o: /usr/local/include/SDL11/SDL_getenv.h
+gfx.o: /usr/local/include/SDL11/SDL_error.h
+gfx.o: /usr/local/include/SDL11/begin_code.h
+gfx.o: /usr/local/include/SDL11/close_code.h
+gfx.o: /usr/local/include/SDL11/SDL_rwops.h
+gfx.o: /usr/local/include/SDL11/SDL_timer.h
+gfx.o: /usr/local/include/SDL11/SDL_audio.h
+gfx.o: /usr/local/include/SDL11/SDL_byteorder.h
+gfx.o: /usr/local/include/SDL11/SDL_cdrom.h
+gfx.o: /usr/local/include/SDL11/SDL_joystick.h
+gfx.o: /usr/local/include/SDL11/SDL_events.h
+gfx.o: /usr/local/include/SDL11/SDL_active.h
+gfx.o: /usr/local/include/SDL11/SDL_keyboard.h
+gfx.o: /usr/local/include/SDL11/SDL_keysym.h
+gfx.o: /usr/local/include/SDL11/SDL_mouse.h
+gfx.o: /usr/local/include/SDL11/SDL_video.h
+gfx.o: /usr/local/include/SDL11/SDL_mutex.h
+gfx.o: /usr/local/include/SDL11/SDL_quit.h
+gfx.o: /usr/local/include/SDL11/SDL_version.h exit.h config.h font.h
 gui.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
-gui.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-gui.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
+gui.o: /usr/include/machine/ansi.h /usr/include/stdio.h /usr/include/string.h
 gui.o: /usr/include/stdarg.h /usr/include/ctype.h /usr/include/runetype.h
-gui.o: gui.h gfx.h /usr/local/include/SDL/SDL.h
-gui.o: /usr/local/include/SDL/SDL_main.h /usr/local/include/SDL/SDL_types.h
-gui.o: /usr/local/include/SDL/SDL_getenv.h /usr/local/include/SDL/SDL_error.h
-gui.o: /usr/local/include/SDL/begin_code.h
-gui.o: /usr/local/include/SDL/close_code.h /usr/local/include/SDL/SDL_rwops.h
-gui.o: /usr/local/include/SDL/SDL_timer.h /usr/local/include/SDL/SDL_audio.h
-gui.o: /usr/local/include/SDL/SDL_byteorder.h
-gui.o: /usr/local/include/SDL/SDL_cdrom.h
-gui.o: /usr/local/include/SDL/SDL_joystick.h
-gui.o: /usr/local/include/SDL/SDL_events.h
-gui.o: /usr/local/include/SDL/SDL_active.h
-gui.o: /usr/local/include/SDL/SDL_keyboard.h
-gui.o: /usr/local/include/SDL/SDL_keysym.h /usr/local/include/SDL/SDL_mouse.h
-gui.o: /usr/local/include/SDL/SDL_video.h /usr/local/include/SDL/SDL_mutex.h
-gui.o: /usr/local/include/SDL/SDL_quit.h /usr/local/include/SDL/SDL_version.h
-gui.o: exit.h util.h
+gui.o: gui.h gfx.h /usr/local/include/SDL11/SDL.h
+gui.o: /usr/local/include/SDL11/SDL_main.h
+gui.o: /usr/local/include/SDL11/SDL_types.h
+gui.o: /usr/local/include/SDL11/SDL_getenv.h
+gui.o: /usr/local/include/SDL11/SDL_error.h
+gui.o: /usr/local/include/SDL11/begin_code.h
+gui.o: /usr/local/include/SDL11/close_code.h
+gui.o: /usr/local/include/SDL11/SDL_rwops.h
+gui.o: /usr/local/include/SDL11/SDL_timer.h
+gui.o: /usr/local/include/SDL11/SDL_audio.h
+gui.o: /usr/local/include/SDL11/SDL_byteorder.h
+gui.o: /usr/local/include/SDL11/SDL_cdrom.h
+gui.o: /usr/local/include/SDL11/SDL_joystick.h
+gui.o: /usr/local/include/SDL11/SDL_events.h
+gui.o: /usr/local/include/SDL11/SDL_active.h
+gui.o: /usr/local/include/SDL11/SDL_keyboard.h
+gui.o: /usr/local/include/SDL11/SDL_keysym.h
+gui.o: /usr/local/include/SDL11/SDL_mouse.h
+gui.o: /usr/local/include/SDL11/SDL_video.h
+gui.o: /usr/local/include/SDL11/SDL_mutex.h
+gui.o: /usr/local/include/SDL11/SDL_quit.h
+gui.o: /usr/local/include/SDL11/SDL_version.h exit.h util.h
 memmenu.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
-memmenu.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-memmenu.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h
-memmenu.o: /usr/include/ctype.h /usr/include/runetype.h memmenu.h z80/z80.h
-memmenu.o: spec.h /usr/local/include/SDL/SDL.h
-memmenu.o: /usr/local/include/SDL/SDL_main.h
-memmenu.o: /usr/local/include/SDL/SDL_types.h
-memmenu.o: /usr/local/include/SDL/SDL_getenv.h
-memmenu.o: /usr/local/include/SDL/SDL_error.h
-memmenu.o: /usr/local/include/SDL/begin_code.h
-memmenu.o: /usr/local/include/SDL/close_code.h
-memmenu.o: /usr/local/include/SDL/SDL_rwops.h
-memmenu.o: /usr/local/include/SDL/SDL_timer.h
-memmenu.o: /usr/local/include/SDL/SDL_audio.h
-memmenu.o: /usr/local/include/SDL/SDL_byteorder.h
-memmenu.o: /usr/local/include/SDL/SDL_cdrom.h
-memmenu.o: /usr/local/include/SDL/SDL_joystick.h
-memmenu.o: /usr/local/include/SDL/SDL_events.h
-memmenu.o: /usr/local/include/SDL/SDL_active.h
-memmenu.o: /usr/local/include/SDL/SDL_keyboard.h
-memmenu.o: /usr/local/include/SDL/SDL_keysym.h
-memmenu.o: /usr/local/include/SDL/SDL_mouse.h
-memmenu.o: /usr/local/include/SDL/SDL_video.h
-memmenu.o: /usr/local/include/SDL/SDL_mutex.h
-memmenu.o: /usr/local/include/SDL/SDL_quit.h
-memmenu.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h util.h
+memmenu.o: /usr/include/machine/ansi.h /usr/include/stdio.h
+memmenu.o: /usr/include/string.h /usr/include/ctype.h /usr/include/runetype.h
+memmenu.o: memmenu.h z80/z80.h spec.h /usr/local/include/SDL11/SDL.h
+memmenu.o: /usr/local/include/SDL11/SDL_main.h
+memmenu.o: /usr/local/include/SDL11/SDL_types.h
+memmenu.o: /usr/local/include/SDL11/SDL_getenv.h
+memmenu.o: /usr/local/include/SDL11/SDL_error.h
+memmenu.o: /usr/local/include/SDL11/begin_code.h
+memmenu.o: /usr/local/include/SDL11/close_code.h
+memmenu.o: /usr/local/include/SDL11/SDL_rwops.h
+memmenu.o: /usr/local/include/SDL11/SDL_timer.h
+memmenu.o: /usr/local/include/SDL11/SDL_audio.h
+memmenu.o: /usr/local/include/SDL11/SDL_byteorder.h
+memmenu.o: /usr/local/include/SDL11/SDL_cdrom.h
+memmenu.o: /usr/local/include/SDL11/SDL_joystick.h
+memmenu.o: /usr/local/include/SDL11/SDL_events.h
+memmenu.o: /usr/local/include/SDL11/SDL_active.h
+memmenu.o: /usr/local/include/SDL11/SDL_keyboard.h
+memmenu.o: /usr/local/include/SDL11/SDL_keysym.h
+memmenu.o: /usr/local/include/SDL11/SDL_mouse.h
+memmenu.o: /usr/local/include/SDL11/SDL_video.h
+memmenu.o: /usr/local/include/SDL11/SDL_mutex.h
+memmenu.o: /usr/local/include/SDL11/SDL_quit.h
+memmenu.o: /usr/local/include/SDL11/SDL_version.h gfx.h gui.h util.h
 util.o: /usr/include/stdio.h /usr/include/sys/cdefs.h
-util.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-util.o: /usr/include/string.h /usr/include/strings.h /usr/include/stdarg.h
-util.o: util.h /usr/include/stdlib.h exit.h
+util.o: /usr/include/machine/ansi.h /usr/include/string.h
+util.o: /usr/include/stdarg.h util.h /usr/include/stdlib.h exit.h
 kbbmp.o: kbbmp.h
 exit.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
-exit.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
-exit.o: /usr/include/stdarg.h exit.h /usr/local/include/SDL/SDL.h
-exit.o: /usr/local/include/SDL/SDL_main.h /usr/local/include/SDL/SDL_types.h
-exit.o: /usr/local/include/SDL/SDL_getenv.h
-exit.o: /usr/local/include/SDL/SDL_error.h
-exit.o: /usr/local/include/SDL/begin_code.h
-exit.o: /usr/local/include/SDL/close_code.h
-exit.o: /usr/local/include/SDL/SDL_rwops.h /usr/include/stdio.h
-exit.o: /usr/local/include/SDL/SDL_timer.h /usr/local/include/SDL/SDL_audio.h
-exit.o: /usr/local/include/SDL/SDL_byteorder.h
-exit.o: /usr/local/include/SDL/SDL_cdrom.h
-exit.o: /usr/local/include/SDL/SDL_joystick.h
-exit.o: /usr/local/include/SDL/SDL_events.h
-exit.o: /usr/local/include/SDL/SDL_active.h
-exit.o: /usr/local/include/SDL/SDL_keyboard.h
-exit.o: /usr/local/include/SDL/SDL_keysym.h
-exit.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
-exit.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
-exit.o: /usr/local/include/SDL/SDL_version.h
+exit.o: /usr/include/machine/ansi.h /usr/include/stdarg.h exit.h
+exit.o: /usr/local/include/SDL11/SDL.h /usr/local/include/SDL11/SDL_main.h
+exit.o: /usr/local/include/SDL11/SDL_types.h
+exit.o: /usr/local/include/SDL11/SDL_getenv.h
+exit.o: /usr/local/include/SDL11/SDL_error.h
+exit.o: /usr/local/include/SDL11/begin_code.h
+exit.o: /usr/local/include/SDL11/close_code.h
+exit.o: /usr/local/include/SDL11/SDL_rwops.h /usr/include/stdio.h
+exit.o: /usr/local/include/SDL11/SDL_timer.h
+exit.o: /usr/local/include/SDL11/SDL_audio.h
+exit.o: /usr/local/include/SDL11/SDL_byteorder.h
+exit.o: /usr/local/include/SDL11/SDL_cdrom.h
+exit.o: /usr/local/include/SDL11/SDL_joystick.h
+exit.o: /usr/local/include/SDL11/SDL_events.h
+exit.o: /usr/local/include/SDL11/SDL_active.h
+exit.o: /usr/local/include/SDL11/SDL_keyboard.h
+exit.o: /usr/local/include/SDL11/SDL_keysym.h
+exit.o: /usr/local/include/SDL11/SDL_mouse.h
+exit.o: /usr/local/include/SDL11/SDL_video.h
+exit.o: /usr/local/include/SDL11/SDL_mutex.h
+exit.o: /usr/local/include/SDL11/SDL_quit.h
+exit.o: /usr/local/include/SDL11/SDL_version.h

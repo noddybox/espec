@@ -44,7 +44,7 @@ static const char ident_h[]=ESPEC_CONFIG_H;
 
 /* ---------------------------------------- CONFIG
 */
-static char	rompath[FILENAME_MAX]="./zx81.rom";
+static char	rompath[FILENAME_MAX]="./spec48.rom";
 static char	tapedir[FILENAME_MAX]=".";
 static int	fullscreen=FALSE;
 static int	memsize=16;

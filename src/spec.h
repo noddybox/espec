@@ -44,14 +44,15 @@ void		SPECKeyEvent(SDL_Event *e);
 
 /* Interfaces for the Z80
 */
-Z80Byte		SPECReadMem(Z80 *z80, Z80Word addr);
-void		SPECWriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
-Z80Word		SPECReadWord(Z80 *z80, Z80Word addr);
-void		SPECWriteWord(Z80 *z80, Z80Word addr, Z80Word val);
+Z80Byte		SPECPeek(Z80 *z80, Z80Word addr);
+void		SPECPoke(Z80 *z80, Z80Word addr, Z80Byte val);
+
+#define SPECDisPeek SPECPeek
+
 Z80Byte		SPECReadPort(Z80 *z80, Z80Word port);
 void		SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val);
-Z80Byte		SPECReadForDisassem(Z80 *z80, Z80Word addr);
-const Z80Label	*SPECGetLabel(void);
+
+/* const Z80Label	*SPECGetLabel(void); */
 
 /* Interfaces for memory menu
 */

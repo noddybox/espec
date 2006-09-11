@@ -35,6 +35,7 @@ static const char ident[]="$Id$";
 #include "gfx.h"
 #include "gui.h"
 #include "util.h"
+#include "expr.h"
 
 #include <SDL.h>
 
@@ -56,6 +57,9 @@ static const char ident_h[]=ESPEC_MEMMENU_H;
 
 #define TRACE		"trace"
 #define TRACEMEM_WIN	10
+
+#define HI(w)		(((w)&0xff00)>>8)
+#define LO(w)		((w)&0xff)
 
 
 /* ---------------------------------------- TYPES
@@ -95,10 +99,131 @@ static int		lodged=FALSE;
 /* ---------------------------------------- PROTOS
 */
 static int		Instruction(Z80 *z80, Z80Val data);
+static int		Address(Z80 *z80, const char *p, Z80Word *addr);
+static int		Expand(void *client, const char *p, long *res);
 
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static int StrEq(const char *a, const char *b)
+{
+    while(*a && *b && tolower(*a)==tolower(*b))
+    {
+        a++;
+        b++;
+    }
+
+    if (*a || *b)
+        return FALSE;
+    else
+        return TRUE;
+}
+
+
+static int Address(Z80 *z80, const char *p, Z80Word *addr)
+{
+    long e=0;
+
+    if (ExprEval(p,&e,Expand,z80))
+    {
+    	*addr=e;
+	return TRUE;
+    }
+    else
+    {
+    	return FALSE;
+    }
+}
+
+static int Expand(void *client, const char *p, long *res)
+{
+    Z80State s;
+    int ok=TRUE;
+
+    Z80GetState(client,&s);
+
+    if (StrEq(p,"AF"))
+    	*res=s.AF;
+    else if (StrEq(p,"BC"))
+    	*res=s.BC;
+    else if (StrEq(p,"DE"))
+    	*res=s.DE;
+    else if (StrEq(p,"HL"))
+    	*res=s.HL;
+    else if (StrEq(p,"IX"))
+    	*res=s.IX;
+    else if (StrEq(p,"IY"))
+    	*res=s.IY;
+    else if (StrEq(p,"SP"))
+    	*res=s.SP;
+    else if (StrEq(p,"PC"))
+    	*res=s.PC;
+    else if (StrEq(p,"A"))
+    	*res=HI(s.AF);
+    else if (StrEq(p,"F"))
+    	*res=LO(s.AF);
+    else if (StrEq(p,"B"))
+    	*res=HI(s.BC);
+    else if (StrEq(p,"C"))
+    	*res=LO(s.BC);
+    else if (StrEq(p,"D"))
+    	*res=HI(s.DE);
+    else if (StrEq(p,"E"))
+    	*res=LO(s.DE);
+    else if (StrEq(p,"H"))
+    	*res=HI(s.HL);
+    else if (StrEq(p,"L"))
+    	*res=LO(s.HL);
+    else if (StrEq(p,"AF_"))
+    	*res=s.AF_;
+    else if (StrEq(p,"BC_"))
+    	*res=s.BC_;
+    else if (StrEq(p,"DE_"))
+    	*res=s.DE_;
+    else if (StrEq(p,"HL_"))
+    	*res=s.HL_;
+    else if (StrEq(p,"A_"))
+    	*res=HI(s.AF_);
+    else if (StrEq(p,"F_"))
+    	*res=LO(s.AF_);
+    else if (StrEq(p,"B_"))
+    	*res=HI(s.BC_);
+    else if (StrEq(p,"C_"))
+    	*res=LO(s.BC_);
+    else if (StrEq(p,"D_"))
+    	*res=HI(s.DE_);
+    else if (StrEq(p,"E_"))
+    	*res=LO(s.DE_);
+    else if (StrEq(p,"H_"))
+    	*res=HI(s.HL_);
+    else if (StrEq(p,"L_"))
+	*res=LO(s.HL_);
+    else if (StrEq(p,"IM"))
+	*res=s.IM;
+    else if (StrEq(p,"R"))
+	*res=s.R;
+    else if (StrEq(p,"IFF1"))
+	*res=s.IFF1;
+    else if (StrEq(p,"IFF2"))
+	*res=s.IFF2;
+    else if (p[0]=='@')
+    {
+	Z80Word n;
+
+	if (Address(client,p+1,&n))
+	{
+	    *res=SPECDisPeek(client,n);
+	}
+	else
+	{
+	    ok=FALSE;
+	}
+    }
+
+    return ok;
+}
+
+
 static int BreaksActive(void)
 {
     int f;
@@ -276,24 +401,20 @@ void DisplayZ80State(Z80State *s, int y, Uint32 col)
 static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
 {
     const char *p;
-    char *error;
     long l;
 
     p=GUIInputString(prompt ? prompt : "Address?","");
 
     if (*p)
     {
-	if (!Z80Expression(z80,p,&l,&error))
-	{
-	    GUIMessage(eMessageBox,
-		       "ERROR","%s",error ? error:"Invalid expression");
-
-	    free(error);
-	}
-	else
+	if (ExprEval(p,&l,Expand,z80))
 	{
 	    *w=(Z80Word)l;
 	    return TRUE;
+	}
+	else
+	{
+	    GUIMessage(eMessageBox,"ERROR","%s",ExprError());
 	}
     }
 
@@ -351,7 +472,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 		{
 		    Z80Byte b;
 
-		    b=SPECReadForDisassem(z80,curr);
+		    b=SPECDisPeek(z80,curr);
 
 		    GFXPrint(40+n*24,y,WHITE,"%2.2x",(int)b);
 
@@ -499,8 +620,8 @@ static void GetMemTrace(Z80 *z80, MemTrace *t, Z80Word from, int count)
     {
 	Z80Word w;
 
-	w=(Z80Word)SPECReadForDisassem(z80,from)|
-	  (Z80Word)SPECReadForDisassem(z80,from+1)<<8;
+	w=(Z80Word)SPECDisPeek(z80,from)|
+	  (Z80Word)SPECDisPeek(z80,from+1)<<8;
 
 	t[f].addr=from;
 	t[f].val=w;
@@ -533,7 +654,7 @@ static int Instruction(Z80 *z80, Z80Val data)
 	{
 	    long l;
 
-	    if (Z80Expression(z80,bpoint.expr[f],&l,NULL))
+	    if (ExprEval(bpoint.expr[f],&l,Expand,z80))
 	    {
 		if (l)
 		    brk=bpoint.expr[f];
@@ -769,7 +890,6 @@ static void PlaybackTrace(Z80 *z80)
 static int DoAddBreakpoint(Z80 *z80)
 {
     const char *expr;
-    char *error;
     long l;
 
     expr=GUIInputString("Expression?","");
@@ -777,24 +897,14 @@ static int DoAddBreakpoint(Z80 *z80)
     if (!*expr)
     	return -1;
 
-    if (!Z80Expression(z80,expr,&l,&error))
+    if (ExprEval(expr,&l,Expand,z80))
     {
-	if (error)
-	{
-	    GUIMessage(eMessageBox,"INVALID EXPRESSION","%s",error);
-	    free(error);
-	}
-	else
-	{
-	    GUIMessage(eMessageBox,"ERROR","Expression is invalid");
-	    free(error);
-	}
-
-	return -1;
+	return AddBreak(z80,expr);
     }
     else
     {
-	return AddBreak(z80,expr);
+	GUIMessage(eMessageBox,"INVALID EXPRESSION","%s",ExprError());
+	return -1;
     }
 }
 

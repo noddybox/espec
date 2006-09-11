@@ -104,7 +104,6 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Poke poke)
 
     if (!fp)
     {
-	Debug("No file to load!\n");
     	return FALSE;
     }
 
@@ -121,13 +120,10 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Poke poke)
     type=GetByte(fp);
     csum=id;
 
-    Debug("blen=%u  type=%u  id=%u\n",blen,type,id);
-
     /* Have we found the requested block?
     */
     if (id==type)
     {
-	Debug("Matched type\n");
     	/* Knock of block type
 	*/
 	blen--;
@@ -161,7 +157,6 @@ int TAPLoad(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Poke poke)
 
 	/* Check the checksum
 	*/
-	Debug("csum = %d, tape csum = %d\n",csum,tape_csum);
 	return csum==tape_csum;
     }
     else

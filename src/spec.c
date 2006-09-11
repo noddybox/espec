@@ -71,14 +71,12 @@ static FILE		*tape_out;
 #define			SCRDATA	0x4000
 #define			ATTR	0x5800
 
-#define			ATTR_AT(x,y)		\
-				mem[ATTR+(x)+((y)/8)*32]
+#define			ATTR_AT(x,y)	mem[ATTR+(x)+((y)/8)*32]
 
 static const int	OFF_X=(GFX_WIDTH-SCR_W)/2;
 static const int	OFF_Y=(GFX_HEIGHT-SCR_H)/2;
 
 static Z80Byte		mem[0x10000];
-
 
 /* Number of cycles per scan lines and scan line control
 */
@@ -210,6 +208,7 @@ static const MatrixMap keymap[]=
 
 /* ---------------------------------------- DEBUG FUNCTIONS
 */
+#if 0
 static const char *FlagString(Z80Byte flag)
 {
     static char s[]="76543210";
@@ -240,24 +239,12 @@ static void DumpZ80(Z80 *z80)
     printf("IFF1=%2.2x  IFF2=%2.2x\n",s.IFF1,s.IFF2);
     printf("%s\n",Z80Disassemble(z80,&s.PC));
 }
+#endif
 
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
-static Z80Byte Peek(Z80Word addr)
-{
-    return mem[addr];
-}
-
-
-static void Poke(Z80Word addr, Z80Byte val)
-{
-    if (addr>=ROMLEN)
-	mem[addr]=val;
-}
-
-
-void DrawScanlineAt(int y, int sline)
+static void DrawScanlineAt(int y, int sline)
 {
     int aline;
     int f,r;
@@ -336,6 +323,31 @@ static void RomPatch(void)
 }
 
 
+Z80Byte SPECPeek(Z80 *cpu, Z80Word addr)
+{
+    return mem[addr];
+}
+
+
+Z80Byte SnapPeek(Z80Word addr)
+{
+    return mem[addr];
+}
+
+
+void SPECPoke(Z80 *cpu, Z80Word addr, Z80Byte val)
+{
+    if (addr>=ROMLEN)
+      mem[addr]=val;
+}
+
+
+void SnapPoke(Z80Word addr, Z80Byte val)
+{
+    if (addr>=ROMLEN)
+      mem[addr]=val;
+}
+
 
 static int EDCallback(Z80 *z80, Z80Val data)
 {
@@ -352,7 +364,11 @@ static int EDCallback(Z80 *z80, Z80Val data)
 	    }
 	    else
 	    {
-	    	if (TAPSave(tape_out,HIBYTE(state.AF),&state.IX,&state.DE,Peek))
+	    	if (TAPSave(tape_out,
+			    HIBYTE(state.AF),
+			    &state.IX,
+			    &state.DE,
+			    SnapPeek))
 		{
 		    state.AF|=eZ80_Carry;
 		}
@@ -362,7 +378,6 @@ static int EDCallback(Z80 *z80, Z80Val data)
 		}
 	    }
 
-	    DumpZ80(z80);
 	    Z80SetState(z80,&state);
 
 	    break;
@@ -376,17 +391,22 @@ static int EDCallback(Z80 *z80, Z80Val data)
 	    }
 	    else
 	    {
-	    	if (TAPLoad(tape_in,HIBYTE(state.AF),&state.IX,&state.DE,Poke))
+	    	if (TAPLoad(tape_in,
+			    HIBYTE(state.AF),
+			    &state.IX,
+			    &state.DE,
+			    SnapPoke))
 		{
 		    state.AF|=eZ80_Carry;
+		    state.BC=0xb001;
 		}
 		else
 		{
 		    state.AF&=~eZ80_Carry;
+		    state.BC=0xff01;
 		}
 	    }
 
-	    DumpZ80(z80);
 	    Z80SetState(z80,&state);
 
 	    break;
@@ -512,39 +532,6 @@ void SPECKeyEvent(SDL_Event *e)
 }
 
 
-Z80Byte SPECReadMem(Z80 *z80, Z80Word addr)
-{
-    /* TODO: Emulation of contention */
-    return mem[addr];
-}
-
-
-void SPECWriteMem(Z80 *z80, Z80Word addr, Z80Byte val)
-{
-    if (addr>=ROMLEN)
-	mem[addr]=val;
-}
-
-
-Z80Word SPECReadWord(Z80 *z80, Z80Word addr)
-{
-    /* TODO: Emulation of contention */
-    return (Z80Word)mem[addr]|(Z80Word)mem[addr+1]<<8;
-}
-
-
-void SPECWriteWord(Z80 *z80, Z80Word addr, Z80Word val)
-{
-    if (addr>=ROMLEN)
-	mem[addr]=val&0xff;
-
-    addr++;
-
-    if (addr>=ROMLEN)
-	mem[addr]=val>>8;
-}
-
-
 Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 {
     Z80Byte lo=port&0xff;
@@ -606,12 +593,7 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
 }
 
 
-Z80Byte SPECReadForDisassem(Z80 *z80, Z80Word addr)
-{
-    return mem[addr];
-}
-
-
+/*
 const Z80Label *SPECGetLabel(void)
 {
     static const Z80Label label[]=
@@ -804,6 +786,7 @@ const Z80Label *SPECGetLabel(void)
 
     return label;
 }
+*/
 
 
 const char *SPECInfo(Z80 *z80)

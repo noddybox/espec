@@ -84,15 +84,9 @@ int main(int argc, char *argv[])
 
     trace=IConfig(CONF_TRACE);
 
-    z80=Z80Init(SPECWriteMem,
-    		SPECReadMem,
-		SPECWriteWord,
-		SPECReadWord,
-		SPECWritePort,
-		SPECReadPort,
-		SPECReadForDisassem);
+    z80=Z80Init(SPECPeek,SPECPoke,SPECReadPort,SPECWritePort,SPECDisPeek);
 
-    Z80SetLabels(z80,SPECGetLabel());
+    /* Z80SetLabels(z80,SPECGetLabel()); */
 
     GFXInit();
 

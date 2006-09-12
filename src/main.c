@@ -161,16 +161,7 @@ int main(int argc, char *argv[])
     {
 	const char *brk;
 
-	Z80State s1,s2;
-
-	Z80GetState(z80,&s1);
 	Z80SingleStep(z80);
-	Z80GetState(z80,&s2);
-
-	if (s2.PC==0)
-	{
-	    Debug("PC zero - prev %4.4x\n",s1.PC);
-	}
 
 	if (trace)
 	{

@@ -23,8 +23,6 @@
     Provides the memory menu
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -38,8 +36,6 @@ static const char ident[]="$Id$";
 #include "expr.h"
 
 #include <SDL.h>
-
-static const char ident_h[]=ESPEC_MEMMENU_H;
 
 #ifndef TRUE
 #define TRUE		1
@@ -1197,8 +1193,6 @@ int MemoryMenu(Z80 *z80)
 
     Z80GetState(z80,&s);
 
-    GFXKeyRepeat(TRUE);
-
     while(!done)
     {
 	DisplayMenu();
@@ -1270,8 +1264,6 @@ int MemoryMenu(Z80 *z80)
 	    	break;
 	}
     }
-
-    GFXKeyRepeat(FALSE);
 
     return quit;
 }

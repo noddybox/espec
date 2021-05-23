@@ -209,15 +209,6 @@ struct Z80
 extern Z80Label			*z80_labels;
 
 
-/* ---------------------------------------- FLAG TABLES
-*/
-extern Z80Byte			PSZtable[512];
-extern Z80Byte			SZtable[512];
-extern Z80Byte			Ptable[512];
-extern Z80Byte			Stable[512];
-extern Z80Byte			Ztable[512];
-
-
 /* ---------------------------------------- GLOBAL GENERAL OPCODES/ROUTINES
 */
 void Z80_Decode(Z80 *cpu, Z80Byte opcode);

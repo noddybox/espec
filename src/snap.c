@@ -23,12 +23,8 @@
     Utilities for handling snapshots
 
 */
-static const char ident[]="$Id$";
-
 #include "snap.h"
 #include "util.h"
-
-static const char ident_h[]=ESPEC_SNAP_H;
 
 
 /* ---------------------------------------- MACROS

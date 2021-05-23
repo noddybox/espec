@@ -23,8 +23,6 @@
     Wrapper to SDL
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,11 +31,9 @@ static const char ident[]="$Id$";
 #include "gfx.h"
 #include "exit.h"
 #include "config.h"
+#include "util.h"
 
 #include "font.h"
-
-static const char ident_h[]=ESPEC_GFX_H;
-static const char ident_fh[]=ESPEC_FONT_H;
 
 
 /* ---------------------------------------- MACROS
@@ -50,24 +46,12 @@ static const char ident_fh[]=ESPEC_FONT_H;
 #define FALSE 0
 #endif
 
-#define LOCK	do							\
-		{							\
-		    if (SDL_MUSTLOCK(surface))				\
-		    	if (SDL_LockSurface(surface)<0)			\
-			    Exit("Failed to lock surface: %s\n",	\
-			    		SDL_GetError());		\
-		} while(0)
-
-#define UNLOCK	do							\
-		{							\
-		    if (SDL_MUSTLOCK(surface))				\
-		    	SDL_UnlockSurface(surface);			\
-		} while(0)
-
-
 /* ---------------------------------------- STATICS
 */
-static SDL_Surface	*surface;
+static SDL_Window       *window;
+static SDL_Renderer	*renderer;
+static SDL_Texture      *texture;
+static Uint32           *pixels;
 static Uint32		ticks;
 static Uint32		frame;
 static int		scale;
@@ -98,44 +82,9 @@ static struct
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
 
-/* Taken from SDL documentation
-*/
 static void normal_putpixel(int x, int y, Uint32 pixel)
 {
-    int bpp;
-    Uint8 *p;
-
-    bpp=surface->format->BytesPerPixel;
-    p=(Uint8 *)surface->pixels+y*surface->pitch+x*bpp;
-
-    switch(bpp)
-    {
-	case 1:
-	    *p=pixel;
-	    break;
-
-	case 2:
-	    *(Uint16 *)p=pixel;
-	    break;
-
-	case 3:
-	    if(SDL_BYTEORDER==SDL_BIG_ENDIAN)
-	    {
-		p[0]=(pixel>>16)&0xff;
-		p[1]=(pixel>>8)&0xff;
-		p[2]=pixel&0xff;
-	    } else
-	    {
-		p[0]=pixel&0xff;
-		p[1]=(pixel>>8)&0xff;
-		p[2]=(pixel>>16)&0xff;
-	    }
-	    break;
-
-	case 4:
-	    *(Uint32 *)p=pixel;
-	    break;
-    }
+    pixels[x + y * GFX_WIDTH] = pixel;
 }
 
 
@@ -148,7 +97,7 @@ static void scale_putpixel(int x, int y, Uint32 pixel)
 
     for(sx=0;sx<scale;sx++)
 	for(sy=0;sy<scale;sy++)
-	    normal_putpixel(x+sx,y+sy,pixel);
+            pixels[x+sx + (y+sy) * GFX_WIDTH * scale] = pixel;
 }
 
 
@@ -215,17 +164,35 @@ void GFXInit(void)
 	    Exit("Failed to init SDL: %s\n",SDL_GetError());
     }
 
-    if (!(surface=SDL_SetVideoMode(GFX_WIDTH*scale,
-				   GFX_HEIGHT*scale,
-				   0,
-				   IConfig(CONF_FULLSCREEN) ?
-				   		SDL_FULLSCREEN : 0)))
+
+    if (!(window=SDL_CreateWindow("eSPEC",
+                                  SDL_WINDOWPOS_UNDEFINED,
+                                  SDL_WINDOWPOS_UNDEFINED,
+                                  GFX_WIDTH*scale,
+				  GFX_HEIGHT*scale,
+				  IConfig(CONF_FULLSCREEN) ?
+				   		SDL_WINDOW_FULLSCREEN : 0)))
     {
-	Exit("Failed to open video: %s\n",SDL_GetError());
+	Exit("Failed to open window: %s\n",SDL_GetError());
     }
 
+    if (!(renderer = SDL_CreateRenderer(window, -1, 0)))
+    {
+	Exit("Failed to create renderer: %s\n",SDL_GetError());
+    }
+
+    if (!(texture = SDL_CreateTexture(renderer,
+                                      SDL_PIXELFORMAT_ARGB8888,
+                                      SDL_TEXTUREACCESS_STREAMING,
+                                      GFX_WIDTH*scale,
+                                      GFX_HEIGHT*scale)))
+    {
+	Exit("Failed to create texture: %s\n",SDL_GetError());
+    }
+
+    pixels = Malloc(sizeof(Uint32) * GFX_WIDTH*scale * GFX_HEIGHT*scale);
+
     SDL_ShowCursor(SDL_DISABLE);
-    SDL_WM_SetCaption("eSPEC","eSPEC");
 
     for(f=0;f<NO_BMPIX;f++)
     	bmpix[f].col=GFXRGB(bmpix[f].r,bmpix[f].g,bmpix[f].b);
@@ -234,21 +201,20 @@ void GFXInit(void)
 }
 
 
-SDL_Surface *GFXGetSurface(void)
-{
-    return surface;
-}
-
-
 Uint32 GFXRGB(Uint8 r, Uint8 g, Uint8 b)
 {
-    return SDL_MapRGB(surface->format,r,g,b);
+    return 0xff << 24 | (Uint32)r << 16 | (Uint32)g << 8 | b; 
 }
 
 
 void GFXClear(Uint32 col)
 {
-    SDL_FillRect(surface,NULL,col);
+    int f;
+
+    for(f = 0; f < GFX_WIDTH * scale * GFX_HEIGHT * scale; f++)
+    {
+        pixels[f] = col;
+    }
 }
 
 
@@ -260,7 +226,12 @@ void GFXStartFrame(void)
 
 void GFXEndFrame(int delay)
 {
-    SDL_UpdateRect(surface,0,0,0,0);
+    SDL_UpdateTexture(texture, NULL,
+                      pixels, GFX_WIDTH * scale * sizeof(Uint32));
+
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    SDL_RenderPresent(renderer);
 
     if (delay)
     {
@@ -271,16 +242,6 @@ void GFXEndFrame(int delay)
 	if (diff<frame)
 	    SDL_Delay(frame-diff);
     }
-}
-
-
-void GFXKeyRepeat(int repeat)
-{
-    if (repeat)
-    	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,
-			    SDL_DEFAULT_REPEAT_INTERVAL);
-    else
-    	SDL_EnableKeyRepeat(0,0);
 }
 
 
@@ -311,29 +272,7 @@ SDL_Event *GFXWaitKey(void)
 }
 
 
-void GFXLock(void)
-{
-    LOCK;
-}
-
-
-void GFXUnlock(void)
-{
-    UNLOCK;
-}
-
-
 void GFXPlot(int x, int y, Uint32 col)
-{
-    LOCK;
-
-    putpixel(x,y,col);
-
-    UNLOCK;
-}
-
-
-void GFXFastPlot(int x, int y, Uint32 col)
 {
     putpixel(x,y,col);
 }
@@ -341,18 +280,13 @@ void GFXFastPlot(int x, int y, Uint32 col)
 
 void GFXRect(int x, int y, int w, int h, Uint32 col, int solid)
 {
-    LOCK;
-
     if (solid)
     {
-	SDL_Rect r;
-
-	r.x=x*scale;
-	r.y=y*scale;
-	r.w=w*scale;
-	r.h=h*scale;
-
-	SDL_FillRect(surface,&r,col);
+        while(h--)
+        {
+            DoHLine(x,x+w-1,y,col);
+            y++;
+        }
     }
     else
     {
@@ -361,24 +295,18 @@ void GFXRect(int x, int y, int w, int h, Uint32 col, int solid)
 	DoVLine(x,y,y+h-1,col);
 	DoVLine(x+w-1,y,y+h-1,col);
     }
-
-    UNLOCK;
 }
 
 
 void GFXHLine(int x1, int x2, int y, Uint32 col)
 {
-    LOCK;
     DoHLine(x1,x2,y,col);
-    UNLOCK;
 }
 
 
 void GFXVLine(int x, int y1, int y2, Uint32 col)
 {
-    LOCK;
     DoVLine(x,y1,y2,col);
-    UNLOCK;
 }
 
 
@@ -394,8 +322,6 @@ void GFXPrint(int x, int y, Uint32 col, const char *format, ...)
     va_end(va);
 
     p=buff;
-
-    LOCK;
 
     while(*p)
     {
@@ -414,8 +340,6 @@ void GFXPrint(int x, int y, Uint32 col, const char *format, ...)
 	p++;
 	x+=8;
     }
-
-    UNLOCK;
 }
 
 
@@ -432,8 +356,6 @@ void GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
     va_end(va);
 
     p=buff;
-
-    LOCK;
 
     while(*p)
     {
@@ -454,8 +376,6 @@ void GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
 	p++;
 	x+=8;
     }
-
-    UNLOCK;
 }
 
 
@@ -463,8 +383,6 @@ void GFXBitmap(int x, int y, int w, int h, const unsigned char *data)
 {
     int pix;
     int px,py;
-
-    LOCK;
 
     pix=0;
     px=0;
@@ -496,8 +414,6 @@ void GFXBitmap(int x, int y, int w, int h, const unsigned char *data)
 	    	break;
 	}
     }
-
-    UNLOCK;
 }
 
 

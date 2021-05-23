@@ -23,11 +23,7 @@
     The bitmap data for the spectrum keyboard
 
 */
-static const char ident[]="$Id$";
-
 #include "kbbmp.h"
-
-static const char ident_h[]=ESPEC_KBBMP_H;
 
 const unsigned char keyboard_bitmap[]=
 {

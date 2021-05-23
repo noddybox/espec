@@ -21,8 +21,6 @@
     -------------------------------------------------------------------------
 
 */
-static const char id[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -247,8 +245,6 @@ int main(int argc, char *argv[])
 		case SDLK_F8:
 		    if (e->key.state==SDL_PRESSED)
 		    {
-			GFXKeyRepeat(TRUE);
-
 			if (GUIFileSelect("TAPE TO LOAD",TRUE,
 					  tape_in[0] ?
 					    Dirname(tape_in) :
@@ -257,16 +253,12 @@ int main(int argc, char *argv[])
 			{
 			    SPECMount(SPEC_TAPE_IN,tape_in);
 			}
-
-			GFXKeyRepeat(FALSE);
 		    }
 		    break;
 
 		case SDLK_F9:
 		    if (e->key.state==SDL_PRESSED)
 		    {
-			GFXKeyRepeat(TRUE);
-
 			if (GUIFileSelect("TAPE TO SAVE",FALSE,
 					  tape_out[0] ?
 					    Dirname(tape_out) :
@@ -275,8 +267,6 @@ int main(int argc, char *argv[])
 			{
 			    SPECMount(SPEC_TAPE_OUT,tape_out);
 			}
-
-			GFXKeyRepeat(FALSE);
 		    }
 		    break;
 

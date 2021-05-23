@@ -23,16 +23,11 @@
     Provides a common error exit point
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include "exit.h"
 
 #include <SDL.h>
-
-static const char ident_h[]=ESPEC_EXIT_H;
-
 
 /* ---------------------------------------- EXPORTED INTERFACES
 */

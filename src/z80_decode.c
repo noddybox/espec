@@ -29,8 +29,6 @@
 #include "z80.h"
 #include "z80_private.h"
 
-static const char ident[]="$Id$";
-
 /* ---------------------------------------- TABLES AND INIT
 */
 static Z80Byte		PSZtable[512];

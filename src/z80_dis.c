@@ -23,8 +23,6 @@
     $Id$
 
 */
-static const char ident[]="$Id$";
-
 #ifdef ENABLE_DISASSEM
 
 #include <stdio.h>

@@ -23,8 +23,6 @@
     Provides the emulation for the Spectrum
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,8 +33,6 @@ static const char ident[]="$Id$";
 #include "config.h"
 #include "exit.h"
 #include "util.h"
-
-static const char ident_h[]=ESPEC_SPECH;
 
 #ifndef TRUE
 #define TRUE 1
@@ -138,7 +134,7 @@ static Z80Byte		matrix[8];
 
 typedef struct
 {
-    SDLKey	key;
+    SDL_Keycode	key;
     int		m1,b1,m2,b2;
 } MatrixMap;
 
@@ -259,8 +255,6 @@ static void DrawScanlineAt(int y, int sline)
 
     if (aline>=0 && aline<SCRL)
     {
-	GFXLock();
-
 	scr=line[aline];
 
 	for(f=0;f<TXT_W;f++)
@@ -285,12 +279,10 @@ static void DrawScanlineAt(int y, int sline)
 
 	    for(r=0,b=*scr++;r<8;r++)
 		if (b&(1<<(7-r)))
-		    GFXFastPlot(f*8+r+OFF_X,y,coltable[ink].col);
+		    GFXPlot(f*8+r+OFF_X,y,coltable[ink].col);
 		else
-		    GFXFastPlot(f*8+r+OFF_X,y,coltable[paper].col);
+		    GFXPlot(f*8+r+OFF_X,y,coltable[paper].col);
 	}
-
-	GFXUnlock();
     }
 }
 
@@ -504,6 +496,11 @@ void SPECInit(Z80 *z80)
 void SPECKeyEvent(SDL_Event *e)
 {
     const MatrixMap *m;
+
+    if (e->key.repeat)
+    {
+        return;
+    }
 
     m=keymap;
 

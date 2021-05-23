@@ -55,11 +55,6 @@
 void		GFXInit(void);
 
 
-/* Get the SDL_Surface for the screen
-*/
-SDL_Surface	*GFXGetSurface(void);
-
-
 /* Get the pixel value for a colour
 */
 Uint32		GFXRGB(Uint8 r, Uint8 g, Uint8 b);
@@ -97,26 +92,10 @@ SDL_Event	*GFXGetKey(void);
 SDL_Event	*GFXWaitKey(void);
 
 
-/* Lock the screen for updates
-*/
-void		GFXLock(void);
-
-
-/* Unlock the screen following updates
-*/
-void		GFXUnlock(void);
-
-
 /*
     Note that no bound checking (except for GFXPrint()) is done - it is the
     callers responsibility to plot onscreen.
 */
-
-/* Plot a point without locking.  GFXLock() and GFXUnlock() MUST surround
-   calls to this
-*/
-void		GFXFastPlot(int x, int y, Uint32 col);
-
 
 /* Plot a point
 */

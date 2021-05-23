@@ -23,15 +23,11 @@
     Config file
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "exit.h"
 #include "config.h"
-
-static const char ident_h[]=ESPEC_CONFIG_H;
 
 #ifndef TRUE
 #define TRUE 1
@@ -90,8 +86,8 @@ static void Parse(FILE *fp)
 	    char *t1=NULL;
 	    char *t2=NULL;
 
-	    t1=strtok(buff,"\t");
-	    t2=strtok(NULL,"\t");
+	    t1=strtok(buff,"\t ");
+	    t2=strtok(NULL,"\t ");
 
 	    if (t2)
 	    {

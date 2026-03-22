@@ -49,6 +49,8 @@ static void InitTables()
 
 static void Z80_CheckInterrupt(Z80 *cpu)
 {
+    Z80Word vector;
+
     /* Check interrupts
     */
     if (cpu->raise)
@@ -95,7 +97,8 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 
 		case 2:
 		    PUSH(cpu->PC);
-		    cpu->PC=(Z80Word)cpu->I*256+cpu->devbyte;
+                    vector=(Z80Word)cpu->I*256+cpu->devbyte;
+                    cpu->PC=PEEKW(vector);
 		    break;
 	    }
 	}

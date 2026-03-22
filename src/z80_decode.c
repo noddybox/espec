@@ -116,13 +116,13 @@ void Z80_InitialiseInternals(void)
     }
 }
 
-static Z80Word FPEEKW(Z80 *cpu, Z80Word addr)
+Z80Word FPEEKW(Z80 *cpu, Z80Word addr)
 {
     return (PEEK(addr) | (Z80Word)PEEK(addr+1)<<8);
 }
 
 
-static void FPOKEW(Z80 *cpu, Z80Word addr, Z80Word val)
+void FPOKEW(Z80 *cpu, Z80Word addr, Z80Word val)
 {
     cpu->mwrite(cpu,addr,val);
     cpu->mwrite(cpu,addr+1,val>>8);

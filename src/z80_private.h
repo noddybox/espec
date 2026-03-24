@@ -213,6 +213,8 @@ extern Z80Label			*z80_labels;
 */
 void Z80_Decode(Z80 *cpu, Z80Byte opcode);
 void Z80_InitialiseInternals(void);
+Z80Word FPEEKW(Z80 *cpu, Z80Word address);
+void FPOKEW(Z80 *cpu, Z80Word address, Z80Word val);
 
 
 /* ---------------------------------------- DISASSEMBLY

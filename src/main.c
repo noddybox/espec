@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 		    if (e->key.state==SDL_PRESSED)
 			GUIMessage(eMessageBox,
 				   "espec - ZX Spectrum Emulator",
-				   "(c) 2004 Ian Cowburn\n"
+				   "(c) 2004-2026 Ian Cowburn\n"
 				   " \n"
 				   "This software comes with ABSOLUTELY \n"
 				   "NO WARRANTY, and you are free to    \n"

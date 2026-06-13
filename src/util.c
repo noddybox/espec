@@ -66,6 +66,16 @@ char *StrCopy(const char *source)
 }
 
 
+char *SafeStrCopy(char *destination,
+                  const char *source,                                
+                  size_t destination_size)
+{
+    strncpy(destination, source, destination_size);
+    destination[destination_size - 1] = 0;
+    return destination;
+}
+
+
 const char *Basename(const char *path)
 {
     const char *p=path+strlen(path);

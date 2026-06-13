@@ -40,6 +40,7 @@ SOURCE	=	main.c		\
 		util.c		\
 		kbbmp.c		\
 		exit.c		\
+		tape.c		\
 		expr.c		\
 		z80.c		\
 		z80_decode.c	\
@@ -55,6 +56,7 @@ OBJECTS	=	main.o		\
 		util.o		\
 		kbbmp.o		\
 		exit.o		\
+		tape.o		\
 		expr.o		\
 		z80.o		\
 		z80_decode.o	\

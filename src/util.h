@@ -47,6 +47,13 @@ void		*Realloc(void *p, size_t size);
 char		*StrCopy(const char *source);
 
 
+/* Safely copies a string.  The destination is returned.
+*/
+char		*SafeStrCopy(char *destination,
+                             const char *source,
+                             size_t destination_size);
+
+
 /* Returns the filename portion of path.  Note returned pointer is pointing
    inside of path.
 */

@@ -32,6 +32,7 @@
 #include "gui.h"
 #include "config.h"
 #include "exit.h"
+#include "tape.h"
 #include "util.h"
 
 #ifndef TRUE
@@ -52,8 +53,8 @@ static const int	ROMLEN=0x4000;
 static const int	ROM_SAVE=0x4c6;
 static const int	ROM_LOAD=0x562;
 
-static FILE		*tape_in;
-static FILE		*tape_out;
+static int selected_in_tape = FALSE;
+static int selected_out_tape = FALSE;
 
 #define LOAD_PATCH	0xf0
 #define SAVE_PATCH	0xf1
@@ -350,13 +351,19 @@ static int EDCallback(Z80 *z80, Z80Val data)
     	case SAVE_PATCH:
 	    Z80GetState(z80,&state);
 
-	    if (!tape_out)
+	    if (!TAPEFile(TAP_OUT) && !selected_out_tape)
+            {
+                TAPESelectOutput();
+                selected_out_tape = TRUE;
+            }
+
+	    if (!TAPEFile(TAP_OUT))
 	    {
 		state.AF|=eZ80_Carry;
 	    }
 	    else
 	    {
-	    	if (TAPSave(tape_out,
+	    	if (TAPSave(TAPEFile(TAP_OUT),
 			    HIBYTE(state.AF),
 			    &state.IX,
 			    &state.DE,
@@ -377,13 +384,19 @@ static int EDCallback(Z80 *z80, Z80Val data)
     	case LOAD_PATCH:
 	    Z80GetState(z80,&state);
 
-	    if (!tape_in)
+	    if (!TAPEFile(TAP_IN) && !selected_in_tape)
+            {
+                TAPESelectInput();
+                selected_in_tape = TRUE;
+            }
+
+	    if (!TAPEFile(TAP_IN))
 	    {
 		state.AF|=eZ80_Carry;
 	    }
 	    else
 	    {
-	    	if (TAPLoad(tape_in,
+	    	if (TAPLoad(TAPEFile(TAP_IN),
 			    HIBYTE(state.AF),
 			    &state.IX,
 			    &state.DE,
@@ -855,50 +868,6 @@ void SPECReset(Z80 *z80)
     }
 
     GFXStartFrame();
-}
-
-
-void SPECMount(SPECMountType type, const char *path)
-{
-    switch(type)
-    {
-    	case SPEC_TAPE_IN:
-	    if (tape_in)
-	    	fclose(tape_in);
-
-	    tape_in=fopen(path,"rb");
-	    break;
-
-    	case SPEC_TAPE_OUT:
-	    if (tape_out)
-	    	fclose(tape_out);
-
-	    tape_out=fopen(path,"wb");
-	    break;
-    }
-}
-
-
-void SPECUnmount(SPECMountType type)
-{
-    switch(type)
-    {
-    	case SPEC_TAPE_IN:
-	    if (tape_in)
-	    {
-	    	fclose(tape_in);
-		tape_in=NULL;
-	    }
-	    break;
-
-    	case SPEC_TAPE_OUT:
-	    if (tape_out)
-	    {
-	    	fclose(tape_out);
-		tape_out=NULL;
-	    }
-	    break;
-    }
 }
 
 

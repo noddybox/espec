@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_TAPE_H
-#define ESPEC_TAPE_H "$Id$"
+#define ESPEC_TAPE_H
 
 #include <stdio.h>
 

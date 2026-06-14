@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_FONT_H
-#define ESPEC_FONT_H "$Id$"
+#define ESPEC_FONT_H
 
 typedef unsigned char	FontChar[64];
 

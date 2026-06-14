@@ -2,7 +2,7 @@
 
     espec - Sinclair Spectrum emulator
 
-    Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
+    Copyright (C) 2026  Ian Cowburn (ianc@noddybox.demon.co.uk)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,44 +20,21 @@
 
     -------------------------------------------------------------------------
 
-    Provides the emulation for the SPEC
+    Convert an SDL keysym into a char
+
 */
 
-#ifndef ESPEC_SPECH
-#define ESPEC_SPECH
+#ifndef ESPEC_SYMTOCHAR_H
+#define ESPEC_SYMTOCHAR_H
 
-#include "z80.h"
-#include "SDL.h"
+#include <SDL_keyboard.h>
 
-/* Initialise the SPEC
+/* ---------------------------------------- INTERFACES
 */
-void		SPECInit(Z80 *z80);
 
-/* Handle keypresses
+/* Convert a SDL keysym to a char.  Returns 0 if there is no mapping.
 */
-void		SPECKeyEvent(SDL_Event *e);
-
-/* Interfaces for the Z80
-*/
-Z80Byte		SPECPeek(Z80 *z80, Z80Word addr);
-void		SPECPoke(Z80 *z80, Z80Word addr, Z80Byte val);
-
-#define SPECDisPeek SPECPeek
-
-Z80Byte		SPECReadPort(Z80 *z80, Z80Word port);
-void		SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val);
-
-/* const Z80Label	*SPECGetLabel(void); */
-
-/* Interfaces for memory menu
-*/
-const char	*SPECInfo(Z80 *z80);
-void		SPECEnableScreen(int enable);
-void		SPECShowScreen(void);
-
-/* Called when the machine is reset
-*/
-void		SPECReset(Z80 *z80);
+char		SYMToChar(SDL_Keycode keysym);
 
 #endif
 

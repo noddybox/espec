@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_UTIL_H
-#define ESPEC_UTIL_H "$Id$"
+#define ESPEC_UTIL_H
 
 #include <stdlib.h>
 
@@ -72,6 +72,13 @@ const char	*Dirname(const char *path);
    (once the bug is fixed, calls to this should be removed).
 */
 void		Debug(const char *format,...);
+
+
+/* See if the passed strings match, case insensitive, up to the passed length.
+   Returns TRUE if they match, otherwise FALSE.  If nul is hit before the
+   length then just up to that is checked.
+*/
+int		StartsWith(const char *a, const char *b, size_t len);
 
 
 #endif

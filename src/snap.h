@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_SNAP_H
-#define ESPEC_SNAP_H "$Id$"
+#define ESPEC_SNAP_H
 
 #include <stdlib.h>
 #include <stdio.h>

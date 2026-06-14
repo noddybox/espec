@@ -37,6 +37,7 @@
 #include "gui.h"
 #include "gfx.h"
 #include "exit.h"
+#include "symtochar.h"
 #include "util.h"
 
 
@@ -56,6 +57,8 @@
 #define GREY	GFXRGB(160,160,160)
 #define LOGREY	GFXRGB(100,100,100)
 #define GREEN	GFXRGB(100,255,100)
+
+#define MAX_MATCH 20
 
 
 /* ---------------------------------------- TYPES
@@ -118,6 +121,7 @@ static int DoList(const char *title, int no, char * const list[], int *option)
     int cur;
     int done;
     int f;
+    char match[MAX_MATCH + 1] = {0};
 
     if (no==0)
     	return -1;
@@ -180,29 +184,6 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 	    	done=TRUE;
 		break;
 
-	    case SDLK_SPACE:
-	    	if (option)
-		    option[cur]=!option[cur];
-		break;
-
-	    case SDLK_i:
-	    	if (option)
-		    for(f=0;f<no;f++)
-			option[f]=!option[f];
-		break;
-
-	    case SDLK_s:
-	    	if (option)
-		    for(f=0;f<no;f++)
-			option[f]=TRUE;
-		break;
-
-	    case SDLK_c:
-	    	if (option)
-		    for(f=0;f<no;f++)
-			option[f]=FALSE;
-		break;
-
 	    case SDLK_ESCAPE:
 		cur=-1;
 	    	done=TRUE;
@@ -254,8 +235,73 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 		}
 		break;
 
+	    case SDLK_BACKSPACE:
+	    	match[0] = 0;
+		break;
+
 	    default:
 		break;
+	}
+
+	if (option)
+	{
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_SPACE:
+		    option[cur]=!option[cur];
+		    break;
+
+		case SDLK_i:
+		    for(f=0;f<no;f++)
+			option[f]=!option[f];
+		    break;
+
+		case SDLK_s:
+		    for(f=0;f<no;f++)
+			option[f]=TRUE;
+		    break;
+
+		case SDLK_c:
+		    for(f=0;f<no;f++)
+			option[f]=FALSE;
+		    break;
+
+		default:
+		    break;
+	    }
+	}
+	else
+	{
+	    char c = SYMToChar(e->key.keysym.sym);
+	    size_t l = strlen(match);
+
+	    if (c && l < MAX_MATCH)
+	    {
+		int found = FALSE;
+
+	    	match[l++] = c;
+		match[l] = 0;
+
+		for(f = 0; f < no && !found; f++)
+		{
+		    if (StartsWith(list[f], match, l))
+		    {
+			found = TRUE;
+
+		    	cur = f;
+			
+			if (cur < top)
+			{
+			    top = cur;
+			}
+
+			if (cur > top + max - 2)
+			{
+			    top = cur - max + 2;
+			}
+		    }
+		}
+	    }
 	}
     }
 

@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_GFX_H
-#define ESPEC_GFX_H "$Id$"
+#define ESPEC_GFX_H
 
 #include "SDL.h"
 

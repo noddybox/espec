@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_GUI_H
-#define ESPEC_GUI_H "$Id$"
+#define ESPEC_GUI_H
 
 
 /* ---------------------------------------- INTERFACES

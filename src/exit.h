@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_EXIT_H
-#define ESPEC_EXIT_H "$Id$"
+#define ESPEC_EXIT_H
 
 
 /* Exit

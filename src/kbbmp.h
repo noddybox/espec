@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_KBBMP_H
-#define ESPEC_KBBMP_H "$Id$"
+#define ESPEC_KBBMP_H
 
 
 #define KBBMP_WIDTH	256

@@ -27,7 +27,7 @@
 */
 
 #ifndef Z80_PRIVATE_H
-#define Z80_PRIVATE_H "$Id$"
+#define Z80_PRIVATE_H
 
 #ifndef TRUE
 #define TRUE	1

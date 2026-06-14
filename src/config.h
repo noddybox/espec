@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_CONFIG_H
-#define ESPEC_CONFIG_H "$Id$"
+#define ESPEC_CONFIG_H
 
 
 /* Integer settings

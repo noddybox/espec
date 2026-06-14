@@ -25,7 +25,7 @@
 */
 
 #ifndef ESPEC_MEMMENU_H
-#define ESPEC_MEMMENU_H "$Id$"
+#define ESPEC_MEMMENU_H
 
 #include "z80.h"
 

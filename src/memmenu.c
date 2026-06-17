@@ -88,7 +88,7 @@ typedef struct
 */
 static FILE		*trace=NULL;
 static Breakpoint	bpoint={0,NULL,NULL};
-static const char	*brk=NULL;
+static const char	*brkpoint=NULL;
 static int		lodged=FALSE;
 
 
@@ -653,7 +653,7 @@ static int Instruction(Z80 *z80, Z80Val data)
 	    if (ExprEval(bpoint.expr[f],&l,Expand,z80))
 	    {
 		if (l)
-		    brk=bpoint.expr[f];
+		    brkpoint=bpoint.expr[f];
 	    }
 	}
 
@@ -975,7 +975,7 @@ static void DoMonitor(Z80 *z80)
     while(!quit)
     {
 	MemTrace mt[TRACEMEM_WIN];
-	const char *brk;
+	const char *brkpoint;
 	SDL_Event *e;
 	Z80State s;
 	int f;
@@ -1159,9 +1159,9 @@ static void DoMonitor(Z80 *z80)
 	if (running || step)
 	    Z80SingleStep(z80);
 
-	if (running && (brk=Break()))
+	if (running && (brkpoint=Break()))
 	{
-	    GUIMessage(eMessageBox,"BREAKPOINT","%s",brk);
+	    GUIMessage(eMessageBox,"BREAKPOINT","%s",brkpoint);
 	    running=FALSE;
 	    update=TRUE;
 
@@ -1282,8 +1282,8 @@ const char *Break(void)
 {
     const char *ret;
 
-    ret=brk;
-    brk=NULL;
+    ret=brkpoint;
+    brkpoint=NULL;
 
     return ret;
 }

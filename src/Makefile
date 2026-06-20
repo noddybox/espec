@@ -43,6 +43,7 @@ SOURCE	=	main.c		\
 		tape.c		\
 		symtochar.c	\
 		font.c	        \
+		audio.c	        \
 		expr.c		\
 		z80.c		\
 		z80_decode.c	\
@@ -61,6 +62,7 @@ OBJECTS	=	main.o		\
 		tape.o		\
 		symtochar.o	\
 		font.o	        \
+		audio.o	        \
 		expr.o		\
 		z80.o		\
 		z80_decode.o	\
@@ -97,3 +99,4 @@ symtochar.o: symtochar.h
 font.o: font.h
 z80.o: z80.h z80_private.h
 z80_decode.o: z80.h z80_private.h
+audio.o: audio.c audio.h

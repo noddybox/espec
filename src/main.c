@@ -37,6 +37,7 @@
 #include "exit.h"
 #include "tape.h"
 #include "util.h"
+#include "audio.h"
 
 
 /* ---------------------------------------- MACROS
@@ -86,6 +87,14 @@ int main(int argc, char *argv[])
     /* Z80SetLabels(z80,SPECGetLabel()); */
 
     GFXInit();
+
+    if (IConfig(CONF_SOUND))
+    {
+    	if (!AUDIOInit())
+	{
+	    fprintf(stderr, "warning: couldn't initialise audio\n");
+	}
+    }
 
     SPECInit(z80);
 

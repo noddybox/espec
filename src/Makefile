@@ -83,7 +83,7 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-main.o: z80.h spec.h gfx.h gui.h memmenu.h config.h kbbmp.h exit.h tape.h
+main.o: z80.h spec.h gfx.h gui.h memmenu.h config.h kbbmp.h exit.h tape.h audio.h
 main.o: util.h
 spec.o: spec.h z80.h snap.h gfx.h gui.h config.h exit.h tape.h util.h
 snap.o: snap.h z80.h util.h

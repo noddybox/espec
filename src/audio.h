@@ -24,8 +24,8 @@
 
 */
 
-#ifndef ESPEC_TAPE_H
-#define ESPEC_TAPE_H
+#ifndef ESPEC_AUDIO_H
+#define ESPEC_AUDIO_H
 
 #include <stdlib.h>
 
@@ -37,6 +37,7 @@
    can't be opened.
 */
 int		AUDIOInit(void);
+
 
 /* Add the passed buffer to the sound queue.  It is a signed 8-bit mono
    sample which will be converted as appropriate by the audio interface.

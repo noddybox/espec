@@ -149,8 +149,14 @@ Z80	*Z80Init(Z80ReadMemory read_memory,
 
 void Z80Reset(Z80 *cpu)
 {
+    int f;
+
     cpu->cycle=0;
     cpu->PC=0;
+
+    cpu->timer[eZ80_Timer_1] = 0;
+    cpu->timer[eZ80_Timer_2] = 0;
+    cpu->timer[eZ80_Timer_3] = 0;
 
     cpu->AF.w=0xffff;
     cpu->BC.w=0xffff;
@@ -361,5 +367,18 @@ const char *Z80Disassemble(Z80 *cpu, Z80Word *pc)
     return "NO DISASSEMBLER";
 #endif
 }
+
+
+Z80Val Z80GetTimer(Z80 *cpu, Z80Timer timer)
+{
+    return cpu->timer[timer];
+}
+
+
+void Z80SetTimer(Z80 *cpu, Z80Timer timer, Z80Val value)
+{
+    cpu->timer[timer] = value;
+}
+
 
 /* END OF FILE */

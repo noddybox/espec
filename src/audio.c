@@ -27,17 +27,41 @@
 #include <SDL.h>
 
 #include "audio.h"
+#include "util.h"
+
+/* ---------------------------------------- INTERNAL DATA
+*/
+static SDL_AudioSpec		actual;
+static SDL_AudioDeviceID	device;
+
 
 /* ---------------------------------------- INTERFACES
 */
-
 int AUDIOInit(void)
 {
-    return 0;
+    SDL_AudioSpec spec = {0};
+
+    spec.freq = SAMPLE_RATE;
+    spec.format = AUDIO_S8;
+    spec.channels = 1;
+    spec.samples = 4096;
+
+    device = SDL_OpenAudioDevice(NULL, 0, &spec, &actual, 0);
+
+    if (device != 0)
+    {
+    	SDL_PauseAudioDevice(device, 0);
+    }
+
+    return device != 0;
 }
 
-void AUDIOQueue(char *buffer, size_t len)
+void AUDIOQueue(Uint8 *buffer, size_t len)
 {
+    if (device != 0)
+    {
+	SDL_QueueAudio(device, buffer, len);
+    }
 }
 
 

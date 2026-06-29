@@ -96,6 +96,8 @@ struct Z80
     Z80Callback		callback[eZ80_NO_CALLBACK][MAX_PER_CALLBACK];
 
     int			last_cb;
+
+    Z80Val		timer[3];
 };
 
 
@@ -159,7 +161,13 @@ struct Z80
 #define IS_IX_IY		(cpu->shift==0xdd || cpu->shift==0xfd)
 #define OFFSET(off)		off=(IS_IX_IY ? (Z80Relative)FETCH_BYTE:0)
 
-#define TSTATE(n)		cpu->cycle+=n
+#define TSTATE(n)		do					\
+				{					\
+				    cpu->cycle+=n;			\
+				    cpu->timer[eZ80_Timer_1]+=n;	\
+				    cpu->timer[eZ80_Timer_2]+=n;	\
+				    cpu->timer[eZ80_Timer_3]+=n;	\
+				} while(0)
 
 #define ADD_R(v)		cpu->R=((cpu->R&0x80)|((cpu->R+(v))&0x7f))
 #define INC_R			ADD_R(1)

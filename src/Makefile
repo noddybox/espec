@@ -85,7 +85,7 @@ clean:
 
 main.o: z80.h spec.h gfx.h gui.h memmenu.h config.h kbbmp.h exit.h tape.h audio.h
 main.o: util.h
-spec.o: spec.h z80.h snap.h gfx.h gui.h config.h exit.h tape.h util.h
+spec.o: spec.h z80.h snap.h gfx.h gui.h config.h exit.h tape.h util.h audio.h
 snap.o: snap.h z80.h util.h
 config.o: exit.h config.h
 gfx.o: gfx.h exit.h config.h util.h font.h
@@ -99,4 +99,4 @@ symtochar.o: symtochar.h
 font.o: font.h
 z80.o: z80.h z80_private.h
 z80_decode.o: z80.h z80_private.h
-audio.o: audio.c audio.h
+audio.o: audio.c audio.h util.h

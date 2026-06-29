@@ -151,6 +151,16 @@ typedef struct
 } Z80Label;
 
 
+/* The Z80 provides a number of cycle timers
+*/
+typedef enum
+{
+    eZ80_Timer_1,
+    eZ80_Timer_2,
+    eZ80_Timer_3
+} Z80Timer;
+
+
 /* ---------------------------------------- INTERFACES
 */
 
@@ -228,6 +238,12 @@ void	Z80Exec(Z80 *cpu);
 Z80Val	Z80Cycles(Z80 *cpu);
 void	Z80GetState(Z80 *cpu, Z80State *state);
 void	Z80SetState(Z80 *cpu, const Z80State *state);
+
+
+/* Timers that count in cycle counts
+*/
+Z80Val  Z80GetTimer(Z80 *cpu, Z80Timer timer);
+void    Z80SetTimer(Z80 *cpu, Z80Timer timer, Z80Val cycles);
 
 
 /* Set address to label mappings for the disassembler

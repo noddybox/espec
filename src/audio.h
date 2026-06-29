@@ -28,6 +28,11 @@
 #define ESPEC_AUDIO_H
 
 #include <stdlib.h>
+#include <SDL.h>
+
+/* The sample rate
+*/
+#define SAMPLE_RATE 48000
 
 /* ---------------------------------------- INTERFACES
 */
@@ -39,10 +44,11 @@
 int		AUDIOInit(void);
 
 
-/* Add the passed buffer to the sound queue.  It is a signed 8-bit mono
+/* Add the passed buffer to the sound queue.  It is an unsigned 8-bit mono
    sample which will be converted as appropriate by the audio interface.
+   Well turns out SDL does that for you.
 */
-void		AUDIOQueue(char *buffer, size_t len);
+void		AUDIOQueue(Uint8 *buffer, size_t len);
 
 
 #endif

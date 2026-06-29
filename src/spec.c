@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <SDL.h>
 #include "spec.h"
 #include "snap.h"
 #include "gfx.h"
@@ -33,6 +34,7 @@
 #include "config.h"
 #include "exit.h"
 #include "tape.h"
+#include "audio.h"
 #include "util.h"
 
 #ifndef TRUE
@@ -77,7 +79,9 @@ static Z80Byte		mem[0x10000];
 
 /* Number of cycles per scan lines and scan line control
 */
-static Z80Val		SCAN_CYCLES=224;
+#define SCAN_CYCLES	224
+#define FRAME_CYCLES	69888
+
 static int		scanline=0;
 static int		enable_screen=TRUE;
 
@@ -202,6 +206,22 @@ static const MatrixMap keymap[]=
     {SDLK_UNKNOWN,	0,0,0,0},
 };
 
+static size_t		sample_buff_sz;
+static double		cycles_per_sample;
+
+typedef struct SoundRecord
+{
+    Z80Val		cycle;
+    Uint8		level;
+    struct SoundRecord	*next;
+} SoundRecord;
+
+static struct
+{
+    SoundRecord	*head;
+    SoundRecord	*tail;
+    Uint8	last_level;
+} sound;
 
 /* ---------------------------------------- DEBUG FUNCTIONS
 */
@@ -250,6 +270,39 @@ static void ClearKeys(void)
         matrix[f] = 0xff;
     }
 }
+
+static void AddSoundRecord(Z80Val cycle, Uint8 level)
+{
+    SoundRecord *new = Malloc(sizeof *new);
+
+    new->cycle = cycle;
+    new->level = level;
+    new->next = NULL;
+
+    if (sound.tail)
+    {
+    	sound.tail->next = new;
+	sound.tail = new;
+    }
+    else
+    {
+    	sound.head = new;
+    	sound.tail = new;
+    }
+}
+
+static void ClearSoundRecord(void)
+{
+    while(sound.head)
+    {
+    	SoundRecord *next = sound.head->next;
+	free(sound.head);
+	sound.head = next;
+    }
+
+    sound.tail = NULL;
+}
+
 
 static void DrawScanlineAt(int y, int sline)
 {
@@ -485,6 +538,55 @@ static int CheckTimers(Z80 *z80, Z80Val val)
             {
                 selected_out_tape--;
             }
+
+	    if (IConfig(CONF_SOUND))
+	    {
+		Uint8 *sample = Malloc(sample_buff_sz);
+		SoundRecord *current = sound.head;
+		int offset = 0;
+
+		memset(sample, 0, sample_buff_sz);
+
+		if (current)
+		{
+		    int f;
+		    int first_offset = (int)(current->cycle / cycles_per_sample);
+
+		    for(f = 0; f < first_offset; f++)
+		    {
+			sample[f] = sound.last_level;
+		    }
+
+		    while(current)
+		    {
+			int next_offset;
+
+			if (current->next)
+			{
+			    next_offset = (int)(current->cycle / cycles_per_sample);
+			}
+			else
+			{
+			    next_offset = sample_buff_sz;
+			}
+
+			for(f = offset; f < next_offset; f++)
+			{
+			    sample[f] = current->level;
+			}
+
+			offset = next_offset;
+			sound.last_level = current->level;
+			current = current->next;
+		    }
+		}
+
+		AUDIOQueue(sample, sample_buff_sz);
+
+		free(sample);
+		ClearSoundRecord();
+	    }
+
 	}
 
 	/* Draw scanline
@@ -494,7 +596,7 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 	if (y>=0 && y<GFX_HEIGHT && enable_screen)
 	    DrawScanline(y);
 
-	/* TODO: Process sound emulation */
+	Z80SetTimer(z80, eZ80_Timer_1, 0);
     }
 
     return TRUE;
@@ -531,6 +633,14 @@ void SPECInit(Z80 *z80)
     RomPatch();
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
+
+    /* Calculate the audio buffer sizes
+    */
+    if (IConfig(CONF_SOUND))
+    {
+    	sample_buff_sz = SAMPLE_RATE / IConfig(CONF_FRAMES_PER_SEC);
+	cycles_per_sample = (double)FRAME_CYCLES / (double)SAMPLE_RATE;
+    }
 
     SPECReset(z80);
 }
@@ -622,6 +732,7 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
     {
 	case 0xfe:	/* ULA */
 	    border=val&0x07;
+	    AddSoundRecord(Z80GetTimer(z80, eZ80_Timer_1), val & 0x10 ? 64 : 0);
 	    break;
 
 	case 0xfb:	/* TODO: ZX Printer */

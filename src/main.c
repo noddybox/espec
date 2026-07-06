@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
     if (IConfig(CONF_SOUND))
     {
-    	if (!AUDIOInit())
+    	if (!AUDIOInit(SPECAudioFrequency()))
 	{
 	    fprintf(stderr, "warning: couldn't initialise audio\n");
 	}

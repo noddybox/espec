@@ -59,6 +59,10 @@ void		SPECShowScreen(void);
 */
 void		SPECReset(Z80 *z80);
 
+/* Return the audio frequency wanted by the Spectrum
+*/
+int		SPECAudioFrequency(void);
+
 #endif
 
 

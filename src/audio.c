@@ -37,11 +37,11 @@ static SDL_AudioDeviceID	device;
 
 /* ---------------------------------------- INTERFACES
 */
-int AUDIOInit(void)
+int AUDIOInit(int frequency)
 {
     SDL_AudioSpec spec = {0};
 
-    spec.freq = SAMPLE_RATE;
+    spec.freq = frequency;
     spec.format = AUDIO_S8;
     spec.channels = 1;
     spec.samples = 4096;
@@ -56,7 +56,7 @@ int AUDIOInit(void)
     return device != 0;
 }
 
-void AUDIOQueue(Uint8 *buffer, size_t len)
+void AUDIOQueue(Sint8 *buffer, size_t len)
 {
     if (device != 0)
     {

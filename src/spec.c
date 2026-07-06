@@ -206,13 +206,23 @@ static const MatrixMap keymap[]=
     {SDLK_UNKNOWN,	0,0,0,0},
 };
 
-static size_t		sample_buff_sz;
-static double		cycles_per_sample;
+/* Timers
+*/
+#define SCANLINE_TIMER	eZ80_Timer_1
+#define AUDIO_TIMER	eZ80_Timer_2
+
+/* Sound emulation
+*/
+#define AUDIO_FRAMES	2
+#define AUDIO_SCALE	6		/* This is used as a shift value */
+#define AUDIO_CYCLES	(AUDIO_FRAMES * FRAME_CYCLES)
+
+static size_t audio_sample_sz;
 
 typedef struct SoundRecord
 {
     Z80Val		cycle;
-    Uint8		level;
+    Sint8		level;
     struct SoundRecord	*next;
 } SoundRecord;
 
@@ -220,7 +230,7 @@ static struct
 {
     SoundRecord	*head;
     SoundRecord	*tail;
-    Uint8	last_level;
+    Sint8	last_level;
 } sound;
 
 /* ---------------------------------------- DEBUG FUNCTIONS
@@ -271,7 +281,7 @@ static void ClearKeys(void)
     }
 }
 
-static void AddSoundRecord(Z80Val cycle, Uint8 level)
+static void AddSoundRecord(Z80Val cycle, Sint8 level)
 {
     SoundRecord *new = Malloc(sizeof *new);
 
@@ -496,14 +506,76 @@ static int EDCallback(Z80 *z80, Z80Val data)
     return TRUE;
 }
 
-
-static int CheckTimers(Z80 *z80, Z80Val val)
+static void CheckSound(Z80 *z80)
 {
-    if (val>SCAN_CYCLES)
+    if (IConfig(CONF_SOUND))
+    {
+    	if (Z80GetTimer(z80, AUDIO_TIMER) > AUDIO_CYCLES)
+	{
+	    static Sint8 *sample;
+	    SoundRecord *current = sound.head;
+	    int offset = 0;
+
+	    sample = Malloc(audio_sample_sz);
+
+	    memset(sample, 0, audio_sample_sz);
+
+	    if (current)
+	    {
+		int f;
+		int first_offset = current->cycle >> AUDIO_SCALE;
+
+		for(f = 0; f < first_offset; f++)
+		{
+		    sample[f] = sound.last_level;
+		}
+
+		while(current)
+		{
+		    int next_offset;
+
+		    if (current->next)
+		    {
+			next_offset = current->cycle >> AUDIO_SCALE;
+		    }
+		    else
+		    {
+			next_offset = audio_sample_sz;
+		    }
+
+		    for(f = offset; f < next_offset; f++)
+		    {
+			sample[f] = current->level;
+		    }
+
+		    offset = next_offset;
+		    sound.last_level = current->level;
+		    current = current->next;
+		}
+	    }
+
+	    AUDIOQueue(sample, audio_sample_sz);
+
+	    ClearSoundRecord();
+
+	    Z80SetTimer(z80, AUDIO_TIMER, 0);
+	    free(sample);
+	}
+    }
+}
+
+
+static void CheckScanlines(Z80 *z80)
+{
+    Z80Val val;
+
+    val = Z80GetTimer(z80, SCANLINE_TIMER);
+
+    if (val > SCAN_CYCLES)
     {
 	int y;
 
-	Z80ResetCycles(z80,val-SCAN_CYCLES);
+	Z80SetTimer(z80, SCANLINE_TIMER, val - SCAN_CYCLES);
 
 	/* Increment scan line and check for frame flyback
 	*/
@@ -538,55 +610,6 @@ static int CheckTimers(Z80 *z80, Z80Val val)
             {
                 selected_out_tape--;
             }
-
-	    if (IConfig(CONF_SOUND))
-	    {
-		Uint8 *sample = Malloc(sample_buff_sz);
-		SoundRecord *current = sound.head;
-		int offset = 0;
-
-		memset(sample, 0, sample_buff_sz);
-
-		if (current)
-		{
-		    int f;
-		    int first_offset = (int)(current->cycle / cycles_per_sample);
-
-		    for(f = 0; f < first_offset; f++)
-		    {
-			sample[f] = sound.last_level;
-		    }
-
-		    while(current)
-		    {
-			int next_offset;
-
-			if (current->next)
-			{
-			    next_offset = (int)(current->cycle / cycles_per_sample);
-			}
-			else
-			{
-			    next_offset = sample_buff_sz;
-			}
-
-			for(f = offset; f < next_offset; f++)
-			{
-			    sample[f] = current->level;
-			}
-
-			offset = next_offset;
-			sound.last_level = current->level;
-			current = current->next;
-		    }
-		}
-
-		AUDIOQueue(sample, sample_buff_sz);
-
-		free(sample);
-		ClearSoundRecord();
-	    }
-
 	}
 
 	/* Draw scanline
@@ -595,10 +618,14 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 
 	if (y>=0 && y<GFX_HEIGHT && enable_screen)
 	    DrawScanline(y);
-
-	Z80SetTimer(z80, eZ80_Timer_1, 0);
     }
+}
 
+
+static int CheckTimers(Z80 *z80, Z80Val val)
+{
+    CheckSound(z80);
+    CheckScanlines(z80);
     return TRUE;
 }
 
@@ -633,14 +660,6 @@ void SPECInit(Z80 *z80)
     RomPatch();
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
-
-    /* Calculate the audio buffer sizes
-    */
-    if (IConfig(CONF_SOUND))
-    {
-    	sample_buff_sz = SAMPLE_RATE / IConfig(CONF_FRAMES_PER_SEC);
-	cycles_per_sample = (double)FRAME_CYCLES / (double)SAMPLE_RATE;
-    }
 
     SPECReset(z80);
 }
@@ -732,7 +751,7 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
     {
 	case 0xfe:	/* ULA */
 	    border=val&0x07;
-	    AddSoundRecord(Z80GetTimer(z80, eZ80_Timer_1), val & 0x10 ? 64 : 0);
+	    AddSoundRecord(Z80GetTimer(z80, AUDIO_TIMER), val & 0x10 ? 64 : 0);
 	    break;
 
 	case 0xfb:	/* TODO: ZX Printer */
@@ -1009,6 +1028,19 @@ void SPECReset(Z80 *z80)
     }
 
     GFXStartFrame();
+}
+
+
+int SPECAudioFrequency(void)
+{
+    int freq = FRAME_CYCLES * IConfig(CONF_FRAMES_PER_SEC) >> AUDIO_SCALE;
+
+    audio_sample_sz =
+    	(int)((double)freq /
+		(double)IConfig(CONF_FRAMES_PER_SEC) *
+		    (double)AUDIO_FRAMES);
+
+    return freq;
 }
 
 

@@ -1,0 +1,95 @@
+# espec
+
+espec is a basic emulation of the 48K Spectrum.  It was mainly done as a test bed for my Z80 emulation.
+
+## Usage
+
+To run it simply run the generated `espec` executable.  It reads configuration from `$HOME/.espec`, an example of which can be found in `example_config`.
+
+In use the keyboard is as the Spectrum, with the left hand side shift, control and alt keys acting as Caps Shift, and the right hand shift, control acting as Symbol Shift.
+
+To quit the emulator press the ESCAPE key.
+
+To get a quick help press F1.
+
+As described in the help, the function keys do the following:
+
+F1 - Display the help message
+
+F2 - Display a message about the emulator.
+
+F3 - Display the Spectrum keyboard for reference.
+
+F4 - View any mounted tape files.
+
+F8 - Select the TAP file used to loading.
+
+F9 - Select the TAP file used for saving.
+
+F10 - Close any open tape files.
+
+F11 - Display the Memory Menu.
+
+F12 - Display an overlay of the current state of the Z80 CPU while the system is running.
+
+## TAP Files
+
+The emulator only supports the use of TAP files, which are simple binary representation of the contents of a tape.
+
+## Memory Menu
+
+The memory menu allows you to inspect the state of the running system, mainly for debugging purposes.  At all points indicated you can press F1 to get an overview of the available keys.
+
+As a general note, when an address is prompted for you can enter expressions, register names and can use different bases.  For instance `pc` will enter the address as the current contents of the Program Counter.  By default numbers are decimal.  To use hex number prefix the value with `0x`.
+
+### Main Menu
+
+The main memory menu offers these options:
+
+#### 1 - Disassemble/Hex dump
+
+Displays a disassembly or hex dump of memory, press F1 to get an overview of the keys.
+
+#### 2 - Disassemble to file
+
+Saves a disassembly to a file.  It will prompt for a start address, and number of bytes to disassemble and the name of an output file.  If no path is specified the file will be output to the current directory.
+
+#### 3 - Start/Stop trace log
+
+This option will start and stop the tracing of CPU state to a trace file, called `trace` which it will output to the current directory.
+
+#### 4 - Playback trace log
+
+This will allow you to play through the contents of a saved `trace` file.  Press F1 for details of the available key commands.  Note that the disassembly will be memory as it is NOW rather than at the time of the trace.
+
+#### 5 - Add a new breakpoint
+
+Allows you to enter an address which when the PC hits that address the emulation will be paused and the memory menu entered.
+
+#### 6 - Set active breakpoints
+
+Allows you to set which breakpoints are active.  Follow the on-screen prompts.
+
+#### 7 - Remove a breakpoint
+
+Allows you to remove a selected breakpoint.  Follow the on-screen prompts.
+
+#### 8 - Clear all breakpoints
+
+Prompts as to whether to clear all breakpoints.
+
+#### 9 - Monitor
+
+Allows you to monitor the running system, single stepping, running (and optionally watching) the system, and doing so till a breakpoint is hit.  Press F1 for details of the available key commands.
+
+#### R - Reset
+
+Reset the running system.
+
+#### X - Exit (without confirm)
+
+Exits the emulator without prompting you first.
+
+#### ESCAPE - Return
+
+Return to the running system.

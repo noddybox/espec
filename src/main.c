@@ -39,9 +39,10 @@
 #include "util.h"
 #include "audio.h"
 
-
 /* ---------------------------------------- MACROS
 */
+#define ESPEC_VERSION "V1.0"
+
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -197,7 +198,8 @@ int main(int argc, char *argv[])
 		    if (e->key.state==SDL_PRESSED)
 			GUIMessage(eMessageBox,
 				   "espec - ZX Spectrum Emulator",
-				   "(c) 2004-2026 Ian Cowburn\n"
+				   "(c) 2004-2026 Ian Cowburn "
+				   ESPEC_VERSION "\n"
 				   " \n"
 				   "This software comes with ABSOLUTELY \n"
 				   "NO WARRANTY, and you are free to    \n"

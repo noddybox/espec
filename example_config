@@ -10,7 +10,9 @@ tapedir         /path/to/tap_files
 # 1 for fullscreen, 0 for windowed.  Defaults to windowed
 fullscreen      0
 
-# The number of frames per second.  50 is the default.
+# The number of frames per second.  50 is the default.  Note a PAL emulation
+# is done, so setting this to 60 won't suddenly make the Spectrum NTSC.  It'll
+# just make the PAL Spectrum run quicker.
 frames          50
 
 # An integer scale ratio.  Defaults to 1.

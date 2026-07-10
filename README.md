@@ -64,7 +64,15 @@ This will allow you to play through the contents of a saved `trace` file.  Press
 
 #### 5 - Add a new breakpoint
 
-Allows you to enter an address which when the PC hits that address the emulation will be paused and the memory menu entered.
+Allows you to enter an expression which will cause a breakpoint to be trigger.
+There are two modes.
+
+If the expression has an == check in it then the breakpoint
+will be triggered if the expression evaluates true, e.g. `hl==0x1234` will stop
+if the HL register pair holds the value 0x1234.
+
+If there is no equality check then the value is taken as a value to stop at
+when the Program Counter equals that value.
 
 #### 6 - Set active breakpoints
 

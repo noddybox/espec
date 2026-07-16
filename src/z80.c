@@ -47,9 +47,10 @@ static void InitTables()
     Z80_InitialiseInternals();
 }
 
-static void Z80_CheckInterrupt(Z80 *cpu)
+static int Z80_CheckInterrupt(Z80 *cpu)
 {
     Z80Word vector;
+    int raise = cpu->raise;
 
     /* Check interrupts
     */
@@ -87,7 +88,7 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 		case 0:
 		    INC_R;
 		    Z80_Decode(cpu,cpu->devbyte);
-		    return;
+		    return FALSE;
 		    break;
 
 		case 1:
@@ -105,6 +106,8 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 
 	cpu->raise=FALSE;
     }
+
+    return raise;
 }
 
 
@@ -250,15 +253,16 @@ int Z80SingleStep(Z80 *cpu)
     cpu->last_cb=TRUE;
     cpu->shift=0;
 
-    Z80_CheckInterrupt(cpu);
+    if (!Z80_CheckInterrupt(cpu))
+    {
+	INC_R;
+
+	opcode=FETCH_BYTE;
+
+	Z80_Decode(cpu,opcode);
+    }
 
     CALLBACK(eZ80_Instruction,cpu->cycle);
-
-    INC_R;
-
-    opcode=FETCH_BYTE;
-
-    Z80_Decode(cpu,opcode);
 
     return cpu->last_cb;
 }

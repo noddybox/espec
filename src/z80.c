@@ -88,7 +88,7 @@ static int Z80_CheckInterrupt(Z80 *cpu)
 		case 0:
 		    INC_R;
 		    Z80_Decode(cpu,cpu->devbyte);
-		    return FALSE;
+		    return TRUE;
 		    break;
 
 		case 1:

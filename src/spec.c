@@ -55,8 +55,8 @@ static const int	ROMLEN=0x4000;
 static const int	ROM_SAVE=0x4c6;
 static const int	ROM_LOAD=0x562;
 
-static int selected_in_tape = 0;
-static int selected_out_tape = 0;
+static int selected_in_tape_counter = 0;
+static int selected_out_tape_counter = 0;
 
 #define LOAD_PATCH	0xf0
 #define SAVE_PATCH	0xf1
@@ -424,7 +424,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
     	case SAVE_PATCH:
 	    Z80GetState(z80,&state);
 
-	    if (!TAPEFile(TAP_OUT) && !selected_out_tape)
+	    if (!TAPEFile(TAP_OUT) && !selected_out_tape_counter)
             {
                 /* Clear the keys as otherwise the ENTER up is consumed
                    by the GUI and the Spectrum thinks the ENTER key is being
@@ -432,7 +432,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
                 */
                 ClearKeys();
                 TAPESelectOutput();
-                selected_out_tape = 50;
+                selected_out_tape_counter = 50;
             }
 
 	    if (!TAPEFile(TAP_OUT))
@@ -462,7 +462,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
     	case LOAD_PATCH:
 	    Z80GetState(z80,&state);
 
-	    if (!TAPEFile(TAP_IN) && !selected_in_tape)
+	    if (!TAPEFile(TAP_IN) && !selected_in_tape_counter)
             {
                 /* Clear the keys as otherwise the ENTER up is consumed
                    by the GUI and the Spectrum thinks the ENTER key is being
@@ -470,7 +470,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
                 */
                 ClearKeys();
                 TAPESelectInput();
-                selected_in_tape = 50;
+                selected_in_tape_counter = 50;
             }
 
 	    if (!TAPEFile(TAP_IN))
@@ -601,14 +601,14 @@ static void CheckScanlines(Z80 *z80)
 		GFXStartFrame();
 	    }
 
-            if (selected_in_tape > 0)
+            if (selected_in_tape_counter > 0)
             {
-                selected_in_tape--;
+                selected_in_tape_counter--;
             }
 
-            if (selected_out_tape > 0)
+            if (selected_out_tape_counter > 0)
             {
-                selected_out_tape--;
+                selected_out_tape_counter--;
             }
 	}
 

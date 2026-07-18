@@ -41,7 +41,7 @@
 
 /* ---------------------------------------- MACROS
 */
-#define ESPEC_VERSION "V1.1-dev"
+#define ESPEC_VERSION "V1.1"
 
 #ifndef TRUE
 #define TRUE 1

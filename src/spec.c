@@ -763,7 +763,6 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
 }
 
 
-/*
 const Z80Label *SPECGetLabel(void)
 {
     static const Z80Label label[]=
@@ -956,7 +955,6 @@ const Z80Label *SPECGetLabel(void)
 
     return label;
 }
-*/
 
 
 const char *SPECInfo(Z80 *z80)

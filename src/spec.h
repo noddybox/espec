@@ -47,7 +47,7 @@ void		SPECPoke(Z80 *z80, Z80Word addr, Z80Byte val);
 Z80Byte		SPECReadPort(Z80 *z80, Z80Word port);
 void		SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val);
 
-/* const Z80Label	*SPECGetLabel(void); */
+const Z80Label	*SPECGetLabel(void);
 
 /* Interfaces for memory menu
 */

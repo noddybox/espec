@@ -134,74 +134,170 @@ static int Address(Z80 *z80, const char *p, Z80Word *addr)
 static int Expand(void *client, const char *p, long *res)
 {
     Z80State s;
-    int ok=TRUE;
+    int ok=FALSE;
 
     Z80GetState(client,&s);
 
     if (StrEq(p,"AF"))
+    {
     	*res=s.AF;
+	ok=TRUE;
+    }
     else if (StrEq(p,"BC"))
+    {
     	*res=s.BC;
+	ok=TRUE;
+    }
     else if (StrEq(p,"DE"))
+    {
     	*res=s.DE;
+	ok=TRUE;
+    }
     else if (StrEq(p,"HL"))
+    {
     	*res=s.HL;
+	ok=TRUE;
+    }
     else if (StrEq(p,"IX"))
+    {
     	*res=s.IX;
+	ok=TRUE;
+    }
     else if (StrEq(p,"IY"))
+    {
     	*res=s.IY;
+	ok=TRUE;
+    }
     else if (StrEq(p,"SP"))
+    {
     	*res=s.SP;
+	ok=TRUE;
+    }
     else if (StrEq(p,"PC"))
+    {
     	*res=s.PC;
+	ok=TRUE;
+    }
     else if (StrEq(p,"A"))
+    {
     	*res=HI(s.AF);
+	ok=TRUE;
+    }
     else if (StrEq(p,"F"))
+    {
     	*res=LO(s.AF);
+	ok=TRUE;
+    }
     else if (StrEq(p,"B"))
+    {
     	*res=HI(s.BC);
+	ok=TRUE;
+    }
     else if (StrEq(p,"C"))
+    {
     	*res=LO(s.BC);
+	ok=TRUE;
+    }
     else if (StrEq(p,"D"))
+    {
     	*res=HI(s.DE);
+	ok=TRUE;
+    }
     else if (StrEq(p,"E"))
+    {
     	*res=LO(s.DE);
+	ok=TRUE;
+    }
     else if (StrEq(p,"H"))
+    {
     	*res=HI(s.HL);
+	ok=TRUE;
+    }
     else if (StrEq(p,"L"))
+    {
     	*res=LO(s.HL);
+	ok=TRUE;
+    }
     else if (StrEq(p,"AF_"))
+    {
     	*res=s.AF_;
+	ok=TRUE;
+    }
     else if (StrEq(p,"BC_"))
+    {
     	*res=s.BC_;
+	ok=TRUE;
+    }
     else if (StrEq(p,"DE_"))
+    {
     	*res=s.DE_;
+	ok=TRUE;
+    }
     else if (StrEq(p,"HL_"))
+    {
     	*res=s.HL_;
+	ok=TRUE;
+    }
     else if (StrEq(p,"A_"))
+    {
     	*res=HI(s.AF_);
+	ok=TRUE;
+    }
     else if (StrEq(p,"F_"))
+    {
     	*res=LO(s.AF_);
+	ok=TRUE;
+    }
     else if (StrEq(p,"B_"))
+    {
     	*res=HI(s.BC_);
+	ok=TRUE;
+    }
     else if (StrEq(p,"C_"))
+    {
     	*res=LO(s.BC_);
+	ok=TRUE;
+    }
     else if (StrEq(p,"D_"))
+    {
     	*res=HI(s.DE_);
+	ok=TRUE;
+    }
     else if (StrEq(p,"E_"))
+    {
     	*res=LO(s.DE_);
+	ok=TRUE;
+    }
     else if (StrEq(p,"H_"))
+    {
     	*res=HI(s.HL_);
+	ok=TRUE;
+    }
     else if (StrEq(p,"L_"))
+    {
 	*res=LO(s.HL_);
+	ok=TRUE;
+    }
     else if (StrEq(p,"IM"))
+    {
 	*res=s.IM;
+	ok=TRUE;
+    }
     else if (StrEq(p,"R"))
+    {
 	*res=s.R;
+	ok=TRUE;
+    }
     else if (StrEq(p,"IFF1"))
+    {
 	*res=s.IFF1;
+	ok=TRUE;
+    }
     else if (StrEq(p,"IFF2"))
+    {
 	*res=s.IFF2;
+	ok=TRUE;
+    }
     else if (p[0]=='@')
     {
 	Z80Word n;
@@ -209,10 +305,26 @@ static int Expand(void *client, const char *p, long *res)
 	if (Address(client,p+1,&n))
 	{
 	    *res=SPECDisPeek(client,n);
+	    ok=TRUE;
 	}
 	else
 	{
 	    ok=FALSE;
+	}
+    }
+
+    if (!ok)
+    {
+    	int f;
+	const Z80Label *label = SPECGetLabel();
+
+	for(f = 0; label[f].label && !ok; f++)
+	{
+	    if (StrEq(label[f].label, p))
+	    {
+	    	*res = label[f].address;
+		ok = TRUE;
+	    }
 	}
     }
 

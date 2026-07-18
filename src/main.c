@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 
     z80=Z80Init(SPECPeek,SPECPoke,SPECReadPort,SPECWritePort,SPECDisPeek);
 
-    /* Z80SetLabels(z80,SPECGetLabel()); */
+    Z80SetLabels(z80,SPECGetLabel());
 
     GFXInit();
 

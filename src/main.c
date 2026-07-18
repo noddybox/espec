@@ -273,6 +273,9 @@ int main(int argc, char *argv[])
 	}
     }
 
+    TAPEUnmount(TAP_IN);
+    TAPEUnmount(TAP_OUT);
+
     return EXIT_SUCCESS;
 }
 

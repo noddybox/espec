@@ -154,4 +154,19 @@ int StartsWith(const char *a, const char *b, size_t len)
 }
 
 
+int FileExists(const char *path)
+{
+    FILE *fp;
+
+    fp = fopen(path, "rb");
+
+    if (fp)
+    {
+    	fclose(fp);
+    }
+
+    return fp != NULL;
+}
+
+
 /* END OF FILE */

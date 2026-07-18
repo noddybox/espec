@@ -81,6 +81,12 @@ void		Debug(const char *format,...);
 int		StartsWith(const char *a, const char *b, size_t len);
 
 
+/* Return TRUE if a file exists.  Existance is no indication it can be
+   written to.
+*/
+int		FileExists(const char *path);
+
+
 #endif
 
 

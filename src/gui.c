@@ -60,6 +60,9 @@
 
 #define MAX_MATCH 20
 
+#define LIST_CANCEL -1
+#define LIST_NEW -2
+
 
 /* ---------------------------------------- TYPES
 */
@@ -113,7 +116,8 @@ static void Box(const char *title, int x, int y, int width, int height)
 }
 
 
-static int DoList(const char *title, int no, char * const list[], int *option)
+static int DoList(const char *title, int no, char * const list[], int *option,
+                  char *input)
 {
     static const int max=GFX_HEIGHT/8-8;
     SDL_Event *e;
@@ -122,9 +126,15 @@ static int DoList(const char *title, int no, char * const list[], int *option)
     int done;
     int f;
     char match[MAX_MATCH + 1] = {0};
+    size_t input_len = 0;
 
     if (no==0)
-    	return -1;
+    	return LIST_CANCEL;
+
+    if (input)
+    {
+    	*input = 0;
+    }
 
     top=0;
     cur=0;
@@ -145,7 +155,17 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 	    		GFX_HEIGHT-28,WHITE);
 	}
 	else
-	    Centre("Cursors and RETURN to select",GFX_HEIGHT-28,WHITE);
+	{
+	    if (input)
+	    {
+		Centre("Enter new name and press RETURN",GFX_HEIGHT-36,WHITE);
+		Centre("Or select with cursors",GFX_HEIGHT-28,WHITE);
+	    }
+	    else
+	    {
+		Centre("Cursors and RETURN to select",GFX_HEIGHT-28,WHITE);
+	    }
+	}
 
 	Centre("ESCAPE to cancel",GFX_HEIGHT-20,WHITE);
 
@@ -174,6 +194,14 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 	    }
 	}
 
+	if (input)
+	{
+	    static const int y_pos = GFX_HEIGHT - 44;
+
+	    GFXRect(8,y_pos,GFX_WIDTH-16,8,BLACK,TRUE);
+	    GFXPrint(8,y_pos,WHITE,"File: %s%c",input,FONT_CURSOR);
+	}
+
 	GFXEndFrame(FALSE);
 
 	e=GFXWaitKey();
@@ -181,7 +209,7 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 	switch(e->key.keysym.sym)
 	{
 	    case SDLK_RETURN:
-	    	done=TRUE;
+		done=TRUE;
 		break;
 
 	    case SDLK_ESCAPE:
@@ -236,7 +264,18 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 		break;
 
 	    case SDLK_BACKSPACE:
-	    	match[0] = 0;
+	    case SDLK_DELETE:
+		if (input)
+		{
+		    if (input_len)
+		    {
+		    	input[--input_len] = 0;
+		    }
+		}
+		else
+		{
+		    match[0] = 0;
+		}
 		break;
 
 	    default:
@@ -273,31 +312,43 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 	else
 	{
 	    char c = SYMToChar(e->key.keysym.sym);
-	    size_t l = strlen(match);
 
-	    if (c && l < MAX_MATCH)
+	    if (input)
 	    {
-		int found = FALSE;
-
-	    	match[l++] = c;
-		match[l] = 0;
-
-		for(f = 0; f < no && !found; f++)
+	    	if (input_len < 25)
 		{
-		    if (StartsWith(list[f], match, l))
+		    input[input_len++] = c;
+		    input[input_len] = 0;
+		}
+	    }
+	    else
+	    {
+		size_t l = strlen(match);
+
+		if (c && l < MAX_MATCH)
+		{
+		    int found = FALSE;
+
+		    match[l++] = c;
+		    match[l] = 0;
+
+		    for(f = 0; f < no && !found; f++)
 		    {
-			found = TRUE;
-
-		    	cur = f;
-			
-			if (cur < top)
+			if (StartsWith(list[f], match, l))
 			{
-			    top = cur;
-			}
+			    found = TRUE;
 
-			if (cur > top + max - 2)
-			{
-			    top = cur - max + 2;
+			    cur = f;
+			    
+			    if (cur < top)
+			    {
+				top = cur;
+			    }
+
+			    if (cur > top + max - 2)
+			    {
+				top = cur - max + 2;
+			    }
 			}
 		    }
 		}
@@ -305,7 +356,14 @@ static int DoList(const char *title, int no, char * const list[], int *option)
 	}
     }
 
-    return cur;
+    if (input && input_len)
+    {
+    	return LIST_NEW;
+    }
+    else
+    {
+	return cur;
+    }
 }
 
 
@@ -435,7 +493,7 @@ const char *GUIInputString(const char *prompt, const char *orig)
     static char buff[41];
     size_t len;
     int done=FALSE;
-    unsigned char c;
+    char c;
     SDL_Event *e;
 
     buff[0]=0;
@@ -470,9 +528,9 @@ const char *GUIInputString(const char *prompt, const char *orig)
 		break;
 
 	    default:
-		c=(unsigned char)e->key.keysym.sym;
+		c=SYMToChar(e->key.keysym.sym);
 
-	    	if (len<40 && isprint(c))
+	    	if (len<40 && c)
 		{
 		    buff[len++]=c;
 		    buff[len]=0;
@@ -487,7 +545,7 @@ const char *GUIInputString(const char *prompt, const char *orig)
 
 int GUIListSelect(const char *title, int no, char * const list[])
 {
-    return DoList(title,no,list,NULL);
+    return DoList(title,no,list,NULL, NULL);
 }
 
 
@@ -505,9 +563,9 @@ int GUIListOption(const char *title, int no, char * const list[], int option[])
     for(f=0;f<no;f++)
     	o[f]=option[f];
 
-    sel=DoList(title,no,list,o);
+    sel=DoList(title,no,list,o,NULL);
 
-    if (sel!=-1)
+    if (sel!=LIST_CANCEL)
     	for(f=0;f<no;f++)
 	    option[f]=o[f];
 
@@ -524,12 +582,7 @@ int GUIFileSelect(const char *prompt, int load,
     int ret=FALSE;
     char olddir[MAXPATHLEN+1];
     char pwd[MAXPATHLEN+1];
-
-    if (!load)
-    {
-    	GUIMessage(eMessageBox,"OOPS","Save dialog not yet done");
-	return FALSE;
-    }
+    char input[MAXPATHLEN + 1];
 
     getcwd(olddir,MAXPATHLEN);
 
@@ -597,30 +650,45 @@ int GUIFileSelect(const char *prompt, int load,
 		sprintf(list[f],"%-20.20s %9u",fe[f].name,fe[f].size);
 	}
 
-	sel=DoList(pwd,no,list,NULL);
+	sel=DoList(pwd,no,list,NULL,load ? NULL:input);
 
-	if (sel==-1)
+	if (sel==LIST_CANCEL)
 	{
 	    ret=FALSE;
 	    done=TRUE;
 	}
 	else
 	{
-	    if (fe[sel].is_dir)
+	    if (sel == LIST_NEW)
 	    {
-	    	chdir(fe[sel].name);
-	    }
-	    else
-	    {
-	    	strcpy(path,pwd);
+		strcpy(path,pwd);
 		
 		if (path[strlen(path)]!='/')
 		    strcat(path,"/");
 
-		strcat(path,fe[sel].name);
+		strcat(path,input);
 
 		done=TRUE;
 		ret=TRUE;
+	    }
+	    else
+	    {
+		if (fe[sel].is_dir)
+		{
+		    chdir(fe[sel].name);
+		}
+		else
+		{
+		    strcpy(path,pwd);
+		    
+		    if (path[strlen(path)]!='/')
+			strcat(path,"/");
+
+		    strcat(path,fe[sel].name);
+
+		    done=TRUE;
+		    ret=TRUE;
+		}
 	    }
 	}
 

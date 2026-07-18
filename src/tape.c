@@ -79,6 +79,15 @@ int TAPESelectOutput(void)
                       tape_out[0] ? Dirname(tape_out) : SConfig(CONF_TAPEDIR),
                       path))
     {
+	if (FileExists(path))
+	{
+	    if (!GUIMessage(eYesNoBox, "FILE EXISTS",
+			      "Overwrite %s", Basename(path)))
+	    {
+	    	return FALSE;
+	    }
+	}
+
         TAPEMount(TAP_OUT, path);
         return TRUE;
     }

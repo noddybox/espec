@@ -75,28 +75,10 @@ LIBS	=	`sdl2-config --libs`
 $(TARGET): $(OBJECTS) 
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
-depend:
-	makedepend $(SOURCE)
+depend.mak: $(SOURCE) *.h
+	$(CC) -MM $(SOURCE) > depend.mak
 
 clean:
 	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core Makefile.bak
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-main.o: z80.h spec.h gfx.h gui.h memmenu.h config.h kbbmp.h exit.h tape.h audio.h
-main.o: util.h
-spec.o: spec.h z80.h snap.h gfx.h gui.h config.h exit.h tape.h util.h audio.h
-snap.o: snap.h z80.h util.h
-config.o: exit.h config.h
-gfx.o: gfx.h exit.h config.h util.h font.h
-gui.o: gui.h gfx.h exit.h symtochar.h util.h
-memmenu.o: memmenu.h z80.h spec.h gfx.h gui.h util.h expr.h
-util.o: util.h exit.h
-kbbmp.o: kbbmp.h
-exit.o: exit.h
-tape.o: tape.h util.h gui.h config.h
-symtochar.o: symtochar.h
-font.o: font.h
-z80.o: z80.h z80_private.h
-z80_decode.o: z80.h z80_private.h
-audio.o: audio.c audio.h util.h
+include depend.mak

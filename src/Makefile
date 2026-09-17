@@ -18,8 +18,6 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.12 2006-09-11 00:35:48 ianc Exp $
-# 
 
 
 # This CFLAGS assumes that gcc is being used.
@@ -76,9 +74,15 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 depend.mak: $(SOURCE) *.h
-	$(CC) -MM $(SOURCE) > depend.mak
+	$(CC) -MM $(SOURCE) > depend.mak || true
+
+kbbmp.c: ../gfx/keyb.gfxbmp
+	cfile8 ../gfx/keyb.gfxbmp kbbmp.c keyboard_bitmap
+
+../gfx/keyb.gfxbmp: ../gfx/keyb.png
+	cd ../gfx ; $(MAKE)
 
 clean:
-	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core Makefile.bak
+	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core
 
 include depend.mak

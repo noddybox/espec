@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "SDL.h"
+#include <SDL.h>
 
 #include "z80.h"
 #include "spec.h"
@@ -42,7 +42,7 @@
 
 /* ---------------------------------------- MACROS
 */
-#define ESPEC_VERSION "V1.2-dev"
+#define ESPEC_VERSION "V1.2"
 
 #ifndef TRUE
 #define TRUE 1

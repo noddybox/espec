@@ -64,9 +64,10 @@ OBJECTS	=	main.o		\
 		expr.o		\
 		z80.o		\
 		z80_decode.o	\
-		z80_dis.o
+		z80_dis.o	\
+		gfx-bitmap.o
 
-CFLAGS +=	`sdl2-config --cflags` -DENABLE_DISASSEM
+CFLAGS +=	`sdl2-config --cflags` -Igfx-bitmap -DENABLE_DISASSEM
 
 LIBS	=	`sdl2-config --libs`
 
@@ -77,12 +78,15 @@ depend.mak: $(SOURCE) *.h
 	$(CC) -MM $(SOURCE) > depend.mak || true
 
 kbbmp.c: ../gfx/keyb.gfxbmp
-	cfile8 ../gfx/keyb.gfxbmp kbbmp.c keyboard_bitmap
+	cfile8 -h template -c template ../gfx/keyb.gfxbmp kbbmp.c keyboard_bitmap
 
 ../gfx/keyb.gfxbmp: ../gfx/keyb.png
 	cd ../gfx ; $(MAKE)
 
 clean:
 	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core
+
+gfx-bitmap.o: gfx-bitmap/gfx-bitmap.c gfx-bitmap/gfx-bitmap.h
+	$(CC) -c -o gfx-bitmap.o gfx-bitmap/gfx-bitmap.c
 
 include depend.mak

@@ -1,9 +1,7 @@
-spec.o: spec.c spec.h z80.h snap.h gfx.h gui.h config.h exit.h tape.h \
- audio.h util.h
 snap.o: snap.c snap.h z80.h util.h
 config.o: config.c exit.h config.h
 util.o: util.c util.h exit.h
-kbbmp.o: kbbmp.c
+kbbmp.o: kbbmp.c kbbmp.h
 exit.o: exit.c exit.h
 tape.o: tape.c tape.h util.h gui.h config.h
 symtochar.o: symtochar.c symtochar.h

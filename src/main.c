@@ -2,7 +2,7 @@
 
     espec - Sinclair Spectrum emulator
 
-    Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
+    Copyright (C) 2003  Ian Cowburn (deathstation9000@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 #include "tape.h"
 #include "util.h"
 #include "audio.h"
+#include "gfx-bitmap.h"
 
 /* ---------------------------------------- MACROS
 */
@@ -78,6 +79,7 @@ int main(int argc, char *argv[])
     int trace;
     int inital_menu;
     int f;
+    GFX_Bitmap bitmap;
 
     ConfigRead();
 
@@ -86,6 +88,14 @@ int main(int argc, char *argv[])
     z80=Z80Init(SPECPeek,SPECPoke,SPECReadPort,SPECWritePort,SPECDisPeek);
 
     Z80SetLabels(z80,SPECGetLabel());
+
+    if (GFX_Bitmap_Decode(keyboard_bitmap,
+    			  KEYBOARD_BITMAP_LEN,
+			  &bitmap) != eGFX_Ok)
+    {
+	fprintf(stderr, "error: failed to decoded keyboard bitmap\n");
+	return EXIT_FAILURE;
+    }
 
     GFXInit();
 
@@ -219,11 +229,7 @@ int main(int argc, char *argv[])
 		case SDLK_F3:
 		    if (e->key.state==SDL_PRESSED)
 		    {
-			GFXBitmap((GFX_WIDTH-KBBMP_WIDTH)/2,
-				  (GFX_HEIGHT-KBBMP_HEIGHT)/2,
-				  KBBMP_WIDTH, KBBMP_HEIGHT,
-				  keyboard_bitmap);
-
+			GFXBitmap(&bitmap);
 			GFXEndFrame(FALSE);
 			GFXWaitKey();
 		    }

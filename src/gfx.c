@@ -2,7 +2,7 @@
 
     espec - Sinclair Spectrum emulator
 
-    Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
+    Copyright (C) 2003  Ian Cowburn (deathstation9000@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -115,20 +115,8 @@ static void DoVLine(int x, int y1, int y2, Uint32 col)
 }
 
 
-static void BMPlot(int bx, int by, int *x, int *y, int w, int h, int col)
+static void BMPlot(int x, int y, uint8_t col)
 {
-    if (*y<h)
-    {
-	putpixel(bx+*x,by+*y,bmpix[col].col);
-
-	(*x)++;
-
-	if (*x==w)
-	{
-	    *x=0;
-	    (*y)++;
-	}
-    }
 }
 
 
@@ -379,39 +367,16 @@ void GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
 }
 
 
-void GFXBitmap(int x, int y, int w, int h, const unsigned char *data)
+void GFXBitmap(const GFX_Bitmap *bitmap)
 {
-    int pix;
-    int px,py;
+    int cx = (GFX_WIDTH - bitmap->width) / 2;
+    int cy = (GFX_HEIGHT - bitmap->height) / 2;
 
-    pix=0;
-    px=0;
-    py=0;
-
-    while(TRUE)
+    for(int y = 0; y < bitmap->height; y++)
     {
-    	int i;
-
-	i=*data++;
-
-	if (i<0x80)
+	for(int x = 0; x < bitmap->width; x++)
 	{
-	    pix=i;
-
-	    BMPlot(x,y,&px,&py,w,h,pix);
-
-	    if (py>=h)
-	    	break;
-	}
-	else
-	{
-	    int f;
-
-	    for (f=0;f<i-0x80;f++)
-		BMPlot(x,y,&px,&py,w,h,pix);
-
-	    if (py>=h)
-	    	break;
+	    putpixel(cx + x, cy + y,bmpix[GFX_BITMAP_AT(*bitmap, x, y)].col);
 	}
     }
 }

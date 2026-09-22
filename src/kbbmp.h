@@ -2,7 +2,7 @@
 
     espec - Sinclair Spectrum emulator
 
-    Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
+    Copyright (C) 2026  Ian Cowburn (deathstation9000@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,20 +20,16 @@
 
     -------------------------------------------------------------------------
 
-    The bitmap data for the spectrum keyboard
-
 */
+#ifndef CFILE8_KBBMP_H
+#define CFILE8_KBBMP_H
 
-#ifndef ESPEC_KBBMP_H
-#define ESPEC_KBBMP_H
+#include <stdint.h>
 
+/* Auto generated binary of ../gfx/keyb.gfxbmp
+*/
+extern const uint8_t keyboard_bitmap[];
 
-#define KBBMP_WIDTH	256
-#define KBBMP_HEIGHT	176
-
-extern const unsigned char keyboard_bitmap[];
+#define KEYBOARD_BITMAP_LEN 12922
 
 #endif
-
-
-/* END OF FILE */

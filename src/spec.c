@@ -432,7 +432,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
                 */
                 ClearKeys();
                 TAPESelectOutput();
-                selected_out_tape_counter = 50;
+                selected_out_tape_counter = 200;
             }
 
 	    if (!TAPEFile(TAP_OUT))
@@ -470,7 +470,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
                 */
                 ClearKeys();
                 TAPESelectInput();
-                selected_in_tape_counter = 50;
+                selected_in_tape_counter = 200;
             }
 
 	    if (!TAPEFile(TAP_IN))

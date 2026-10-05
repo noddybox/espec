@@ -197,6 +197,7 @@ int main(int argc, char *argv[])
 				   "F2  - About                       \n"
 				   "F3  - View Spectrum keyboad       \n"
 				   "F4  - View mounted tapes          \n"
+				   "F5  - Reset                       \n"
 				   "F8  - Select tape file for loading\n"
 				   "F9  - Select tape file for saving \n"
 				   "F10 - Close all open tape files   \n"
@@ -237,6 +238,14 @@ int main(int argc, char *argv[])
 
 		case SDLK_F4:
                     TAPEDisplayInfo();
+		    break;
+
+		case SDLK_F5:
+		    if (GUIMessage(eYesNoBox,"RESET","Sure?"))
+		    {
+			Z80Reset(z80);
+			SPECReset(z80);
+		    }
 		    break;
 
 

@@ -39,6 +39,8 @@ F3 - Display the Spectrum keyboard for reference.
 
 F4 - View any mounted tape files.
 
+F5 - Reset the Spectrum.
+
 F8 - Select the TAP file used to loading.
 
 F9 - Select the TAP file used for saving.

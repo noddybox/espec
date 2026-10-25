@@ -95,7 +95,6 @@ static int		lodged=FALSE;
 /* ---------------------------------------- PROTOS
 */
 static int		Instruction(Z80 *z80, Z80Val data);
-static int		Address(Z80 *z80, const char *p, Z80Word *addr);
 static int		Expand(void *client, const char *p, long *res);
 
 
@@ -116,215 +115,135 @@ static int StrEq(const char *a, const char *b)
 }
 
 
-static int Address(Z80 *z80, const char *p, Z80Word *addr)
+static int GetLabel(const char *label, Z80Word *result)
 {
-    long e=0;
+    const Z80Label *labels = SPECGetLabel();
 
-    if (ExprEval(p,&e,Expand,z80))
+    for(int f = 0; labels[f].label; f++)
     {
-    	*addr=e;
-	return TRUE;
+    	if (StrEq(label, labels[f].label))
+	{
+	    *result = labels[f].address;
+	    return TRUE;
+	}
     }
-    else
-    {
-    	return FALSE;
-    }
+
+    return FALSE;
 }
+
 
 static int Expand(void *client, const char *p, long *res)
 {
-    Z80State s;
-    int ok=FALSE;
+    Z80State state;
+    Z80 *cpu;
+    int ok=TRUE;
 
-    Z80GetState(client,&s);
+    cpu=client;
+
+    Z80GetState(cpu, &state);
 
     if (StrEq(p,"AF"))
-    {
-    	*res=s.AF;
-	ok=TRUE;
-    }
+    	*res=state.AF;
     else if (StrEq(p,"BC"))
-    {
-    	*res=s.BC;
-	ok=TRUE;
-    }
+    	*res=state.BC;
     else if (StrEq(p,"DE"))
-    {
-    	*res=s.DE;
-	ok=TRUE;
-    }
+    	*res=state.DE;
     else if (StrEq(p,"HL"))
-    {
-    	*res=s.HL;
-	ok=TRUE;
-    }
+    	*res=state.HL;
     else if (StrEq(p,"IX"))
-    {
-    	*res=s.IX;
-	ok=TRUE;
-    }
+    	*res=state.IX;
     else if (StrEq(p,"IY"))
-    {
-    	*res=s.IY;
-	ok=TRUE;
-    }
+    	*res=state.IY;
     else if (StrEq(p,"SP"))
-    {
-    	*res=s.SP;
-	ok=TRUE;
-    }
+    	*res=state.SP;
     else if (StrEq(p,"PC"))
-    {
-    	*res=s.PC;
-	ok=TRUE;
-    }
+    	*res=state.PC;
     else if (StrEq(p,"A"))
-    {
-    	*res=HI(s.AF);
-	ok=TRUE;
-    }
+    	*res=HI(state.AF);
     else if (StrEq(p,"F"))
-    {
-    	*res=LO(s.AF);
-	ok=TRUE;
-    }
+    	*res=LO(state.AF);
     else if (StrEq(p,"B"))
-    {
-    	*res=HI(s.BC);
-	ok=TRUE;
-    }
+    	*res=HI(state.BC);
     else if (StrEq(p,"C"))
-    {
-    	*res=LO(s.BC);
-	ok=TRUE;
-    }
+    	*res=LO(state.BC);
     else if (StrEq(p,"D"))
-    {
-    	*res=HI(s.DE);
-	ok=TRUE;
-    }
+    	*res=HI(state.DE);
     else if (StrEq(p,"E"))
-    {
-    	*res=LO(s.DE);
-	ok=TRUE;
-    }
+    	*res=LO(state.DE);
     else if (StrEq(p,"H"))
-    {
-    	*res=HI(s.HL);
-	ok=TRUE;
-    }
+    	*res=HI(state.HL);
     else if (StrEq(p,"L"))
-    {
-    	*res=LO(s.HL);
-	ok=TRUE;
-    }
+    	*res=LO(state.HL);
     else if (StrEq(p,"AF_"))
-    {
-    	*res=s.AF_;
-	ok=TRUE;
-    }
+    	*res=state.AF_;
     else if (StrEq(p,"BC_"))
-    {
-    	*res=s.BC_;
-	ok=TRUE;
-    }
+    	*res=state.BC_;
     else if (StrEq(p,"DE_"))
-    {
-    	*res=s.DE_;
-	ok=TRUE;
-    }
+    	*res=state.DE_;
     else if (StrEq(p,"HL_"))
-    {
-    	*res=s.HL_;
-	ok=TRUE;
-    }
+    	*res=state.HL_;
     else if (StrEq(p,"A_"))
-    {
-    	*res=HI(s.AF_);
-	ok=TRUE;
-    }
+    	*res=HI(state.AF_);
     else if (StrEq(p,"F_"))
-    {
-    	*res=LO(s.AF_);
-	ok=TRUE;
-    }
+    	*res=LO(state.AF_);
     else if (StrEq(p,"B_"))
-    {
-    	*res=HI(s.BC_);
-	ok=TRUE;
-    }
+    	*res=HI(state.BC_);
     else if (StrEq(p,"C_"))
-    {
-    	*res=LO(s.BC_);
-	ok=TRUE;
-    }
+    	*res=LO(state.BC_);
     else if (StrEq(p,"D_"))
-    {
-    	*res=HI(s.DE_);
-	ok=TRUE;
-    }
+    	*res=HI(state.DE_);
     else if (StrEq(p,"E_"))
-    {
-    	*res=LO(s.DE_);
-	ok=TRUE;
-    }
+    	*res=LO(state.DE_);
     else if (StrEq(p,"H_"))
-    {
-    	*res=HI(s.HL_);
-	ok=TRUE;
-    }
+    	*res=HI(state.HL_);
     else if (StrEq(p,"L_"))
-    {
-	*res=LO(s.HL_);
-	ok=TRUE;
-    }
+	*res=LO(state.HL_);
     else if (StrEq(p,"IM"))
-    {
-	*res=s.IM;
-	ok=TRUE;
-    }
+	*res=state.IM;
     else if (StrEq(p,"R"))
-    {
-	*res=s.R;
-	ok=TRUE;
-    }
+	*res=state.R;
     else if (StrEq(p,"IFF1"))
-    {
-	*res=s.IFF1;
-	ok=TRUE;
-    }
+	*res=state.IFF1;
     else if (StrEq(p,"IFF2"))
+	*res=state.IFF2;
+    else if (*p == '!')
     {
-	*res=s.IFF2;
-	ok=TRUE;
-    }
-    else if (p[0]=='@')
-    {
-	Z80Word n;
+	long n;
 
-	if (Address(client,p+1,&n))
+	if (ExprEval(p + 1, &n, Expand, client))
 	{
-	    *res=SPECDisPeek(client,n);
-	    ok=TRUE;
+	    *res = SPECPeek(cpu, n);
 	}
 	else
 	{
-	    ok=FALSE;
+	    ok = FALSE;
 	}
     }
-
-    if (!ok)
+    else if (*p == '@')
     {
-    	int f;
-	const Z80Label *label = SPECGetLabel();
+	long n;
 
-	for(f = 0; label[f].label && !ok; f++)
+	if (ExprEval(p + 1, &n, Expand, client))
 	{
-	    if (StrEq(label[f].label, p))
-	    {
-	    	*res = label[f].address;
-		ok = TRUE;
-	    }
+	    *res=(Z80Word)SPECPeek(cpu, n)|
+		 (Z80Word)SPECPeek(cpu, n+1)<<8;
+	}
+	else
+	{
+	    ok = FALSE;
+	}
+    }
+    else
+    {
+	Z80Word n;
+
+	if (GetLabel(p, &n))
+	{
+	    *res = n;
+	}
+	else
+	{
+	    ok = FALSE;
 	}
     }
 

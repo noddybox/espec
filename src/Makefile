@@ -84,7 +84,7 @@ kbbmp.c: ../gfx/keyb.gfxbmp
 	cd ../gfx ; $(MAKE)
 
 clean:
-	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core
+	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core depend.mak
 
 gfx-bitmap.o: gfx-bitmap/gfx-bitmap.c gfx-bitmap/gfx-bitmap.h
 	$(CC) -c -o gfx-bitmap.o gfx-bitmap/gfx-bitmap.c

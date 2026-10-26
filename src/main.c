@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 		    {
 			GFXBitmap(&bitmap);
 			GFXEndFrame(FALSE);
-			GFXWaitKey();
+			GFXWaitKey(NULL);
 		    }
 		    break;
 

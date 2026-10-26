@@ -121,13 +121,13 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 {
     static const int max=GFX_HEIGHT/8-8;
     SDL_Event *e;
+    int is_text;
     int top;
     int cur;
     int done;
     int f;
     char match[MAX_MATCH + 1] = {0};
     size_t input_len = 0;
-    int key_handled;
 
     if (no==0)
     	return LIST_CANCEL;
@@ -205,164 +205,155 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 
 	GFXEndFrame(FALSE);
 
-	e=GFXWaitKey();
+	e=GFXWaitKey(&is_text);
 
-	key_handled = FALSE;
-
-	switch(e->key.keysym.sym)
-	{
-	    case SDLK_RETURN:
-		key_handled = TRUE;
-		done=TRUE;
-		break;
-
-	    case SDLK_ESCAPE:
-		key_handled = TRUE;
-		cur=-1;
-	    	done=TRUE;
-	    	break;
-
-	    case SDLK_UP:
-		key_handled = TRUE;
-
-		if (cur>0)
-		{
-		    cur--;
-
-		    if (cur<top)
-		    	top=cur;
-		}
-	    	break;
-
-	    case SDLK_DOWN:
-		key_handled = TRUE;
-
-		if (cur<no-1)
-		{
-		    cur++;
-
-		    if (cur>top+max-2)
-		    	top=cur-max+2;
-		}
-		break;
-
-	    case SDLK_PAGEUP:
-		key_handled = TRUE;
-
-		if (cur>0)
-		{
-		    cur-=(max-1);
-
-		    if (cur<0)
-		    	cur=0;
-
-		    if (cur<top)
-		    	top=cur;
-		}
-	    	break;
-
-	    case SDLK_PAGEDOWN:
-		key_handled = TRUE;
-
-		if (cur<no-1)
-		{
-		    cur+=(max-1);
-
-		    if (cur>=no)
-		    	cur=no-1;
-
-		    if (cur>top+max-2)
-		    	top=cur-max+2;
-		}
-		break;
-
-	    case SDLK_BACKSPACE:
-	    case SDLK_DELETE:
-		key_handled = TRUE;
-
-		if (input)
-		{
-		    if (input_len)
-		    {
-		    	input[--input_len] = 0;
-		    }
-		}
-		else
-		{
-		    match[0] = 0;
-		}
-		break;
-
-	    default:
-		break;
-	}
-
-	if (option)
+	if (!is_text)
 	{
 	    switch(e->key.keysym.sym)
 	    {
-		case SDLK_SPACE:
-		    option[cur]=!option[cur];
+		case SDLK_RETURN:
+		    done=TRUE;
 		    break;
 
-		case SDLK_i:
-		    for(f=0;f<no;f++)
-			option[f]=!option[f];
+		case SDLK_ESCAPE:
+		    cur=-1;
+		    done=TRUE;
 		    break;
 
-		case SDLK_s:
-		    for(f=0;f<no;f++)
-			option[f]=TRUE;
+		case SDLK_UP:
+		    if (cur>0)
+		    {
+			cur--;
+
+			if (cur<top)
+			    top=cur;
+		    }
 		    break;
 
-		case SDLK_c:
-		    for(f=0;f<no;f++)
-			option[f]=FALSE;
+		case SDLK_DOWN:
+		    if (cur<no-1)
+		    {
+			cur++;
+
+			if (cur>top+max-2)
+			    top=cur-max+2;
+		    }
+		    break;
+
+		case SDLK_PAGEUP:
+		    if (cur>0)
+		    {
+			cur-=(max-1);
+
+			if (cur<0)
+			    cur=0;
+
+			if (cur<top)
+			    top=cur;
+		    }
+		    break;
+
+		case SDLK_PAGEDOWN:
+		    if (cur<no-1)
+		    {
+			cur+=(max-1);
+
+			if (cur>=no)
+			    cur=no-1;
+
+			if (cur>top+max-2)
+			    top=cur-max+2;
+		    }
+		    break;
+
+		case SDLK_BACKSPACE:
+		case SDLK_DELETE:
+		    if (input)
+		    {
+			if (input_len)
+			{
+			    input[--input_len] = 0;
+			}
+		    }
+		    else
+		    {
+			match[0] = 0;
+		    }
 		    break;
 
 		default:
 		    break;
 	    }
 	}
-	else if (!key_handled)
+	else
 	{
-	    char c = SYMToChar(e->key.keysym.sym);
+	    char c = GFX_TEXT_ASCII(e);
 
-	    if (input)
+	    if (option)
 	    {
-	    	if (input_len < 25)
+		switch(toupper((unsigned char)c))
 		{
-		    input[input_len++] = c;
-		    input[input_len] = 0;
+		    case ' ':
+			option[cur]=!option[cur];
+			break;
+
+		    case 'I':
+			for(f=0;f<no;f++)
+			    option[f]=!option[f];
+			break;
+
+		    case 'S':
+			for(f=0;f<no;f++)
+			    option[f]=TRUE;
+			break;
+
+		    case 'C':
+			for(f=0;f<no;f++)
+			    option[f]=FALSE;
+			break;
+
+		    default:
+			break;
 		}
 	    }
 	    else
 	    {
-		size_t l = strlen(match);
-
-		if (c && l < MAX_MATCH)
+		if (input)
 		{
-		    int found = FALSE;
-
-		    match[l++] = c;
-		    match[l] = 0;
-
-		    for(f = 0; f < no && !found; f++)
+		    if (input_len < 25)
 		    {
-			if (StartsWith(list[f], match, l))
+			input[input_len++] = c;
+			input[input_len] = 0;
+		    }
+		}
+		else
+		{
+		    size_t l = strlen(match);
+
+		    if (c && l < MAX_MATCH)
+		    {
+			int found = FALSE;
+
+			match[l++] = c;
+			match[l] = 0;
+
+			for(f = 0; f < no && !found; f++)
 			{
-			    found = TRUE;
-
-			    cur = f;
-			    
-			    if (cur < top)
+			    if (StartsWith(list[f], match, l))
 			    {
-				top = cur;
-			    }
+				found = TRUE;
 
-			    if (cur > top + max - 2)
-			    {
-				top = cur - max + 2;
+				cur = f;
+				
+				if (cur < top)
+				{
+				    top = cur;
+				}
+
+				if (cur > top + max - 2)
+				{
+				    top = cur - max + 2;
+				}
 			    }
 			}
 		    }
@@ -478,23 +469,27 @@ int GUIMessage(GUIBoxType type, const char *title, const char *format,...)
 
 	while(TRUE)
 	{
-	    e=GFXWaitKey();
+	    int is_text;
 
-	    if (e->key.keysym.sym==SDLK_y)
+	    e=GFXWaitKey(&is_text);
+
+	    if (!is_text)
 	    {
-	    	ret=TRUE;
-		break;
-	    }
-	    else if (e->key.keysym.sym==SDLK_n)
-	    {
-	    	ret=FALSE;
-		break;
+		if (e->key.keysym.sym==SDLK_y)
+		{
+		    ret=TRUE;
+		    break;
+		}
+		else if (e->key.keysym.sym==SDLK_n)
+		{
+		    ret=FALSE;
+		    break;
+		}
 	    }
 	}
     }
     else
-	GFXWaitKey();
-
+	GFXWaitKey(NULL);
 
     free(line);
 
@@ -517,40 +512,48 @@ const char *GUIInputString(const char *prompt, const char *orig)
 
     while(!done)
     {
+	int is_text;
+
     	GFXRect(0,y_pos,GFX_WIDTH,8,BLACK,TRUE);
 	GFXPrint(0,y_pos,WHITE,"%s %s%c",prompt,buff,FONT_CURSOR);
 	GFXEndFrame(FALSE);
 
-	e=GFXWaitKey();
+	e=GFXWaitKey(&is_text);
 
-	switch(e->key.keysym.sym)
+	if (!is_text)
 	{
-	    case SDLK_RETURN:
-	    case SDLK_KP_ENTER:
-	    	done=TRUE;
-		break;
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_RETURN:
+		case SDLK_KP_ENTER:
+		    done=TRUE;
+		    break;
 
-	    case SDLK_ESCAPE:
-		buff[0]=0;
-		len=0;
-	    	break;
+		case SDLK_ESCAPE:
+		    buff[0]=0;
+		    len=0;
+		    break;
 
-	    case SDLK_BACKSPACE:
-	    case SDLK_DELETE:
-	    	if (len)
-		    buff[--len]=0;
+		case SDLK_BACKSPACE:
+		case SDLK_DELETE:
+		    if (len)
+			buff[--len]=0;
 
-		break;
+		    break;
 
-	    default:
-		c=SYMToChar(e->key.keysym.sym);
+		default:
+		    break;
+	    }
+	}
+	else
+	{
+	    c = GFX_TEXT_ASCII(e);
 
-	    	if (len<40 && c)
-		{
-		    buff[len++]=c;
-		    buff[len]=0;
-		}
-		break;
+	    if (len<40 && isprint(c))
+	    {
+		buff[len++]=c;
+		buff[len]=0;
+	    }
 	}
     }
 

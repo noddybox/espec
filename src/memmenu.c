@@ -469,6 +469,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
     while(!quit)
     {
 	SDL_Event *e;
+	int is_text;
 	Z80Word curr=0;
 	Z80Word next=0;
 	int f;
@@ -529,69 +530,80 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 
 	GFXEndFrame(FALSE);
 
-	e=GFXWaitKey();
+	e=GFXWaitKey(&is_text);
 
-	switch(e->key.keysym.sym)
+	if (!is_text)
 	{
-	    case SDLK_F1:
-		GUIMessage
-		    (eMessageBox, "DISASSEMBLY HELP","%s",
-		       "ESC         - Exit              \n"
-		       "H           - Disassembly/hex   \n"
-		       "Enter       - Enter address     \n"
-		       "Up          - Prev byte         \n"
-		       "Down        - Next op           \n"
-		       "Page Up     - Back 1 page       \n"
-		       "Page Down   - Forward 1 page    \n"
-		       "Left        - Forward 1024 bytes\n"
-		       "Right       - Back 1024 bytes   ");
-		break;
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_F1:
+		    GUIMessage
+			(eMessageBox, "DISASSEMBLY HELP","%s",
+			   "ESC         - Exit              \n"
+			   "H           - Disassembly/hex   \n"
+			   "Enter       - Enter address     \n"
+			   "Up          - Prev byte         \n"
+			   "Down        - Next op           \n"
+			   "Page Up     - Back 1 page       \n"
+			   "Page Down   - Forward 1 page    \n"
+			   "Left        - Forward 1024 bytes\n"
+			   "Right       - Back 1024 bytes   ");
+		    break;
 
-	    case SDLK_ESCAPE:
-	    	quit=TRUE;
-		break;
+		case SDLK_ESCAPE:
+		    quit=TRUE;
+		    break;
 
-	    case SDLK_h:
-		hexmode=!hexmode;
-	    	break;
+		case SDLK_RETURN:
+		case SDLK_KP_ENTER:
+		    EnterAddress(NULL,z80,&pc);
+		    break;
 
-	    case SDLK_RETURN:
-	    case SDLK_KP_ENTER:
-		EnterAddress(NULL,z80,&pc);
-	    	break;
+		case SDLK_UP:
+		    if (hexmode)
+			pc-=8;
+		    else
+			pc--;
+		    break;
 
-	    case SDLK_UP:
-		if (hexmode)
-		    pc-=8;
-		else
-		    pc--;
-	    	break;
+		case SDLK_DOWN:
+		    pc=next;
+		    break;
 
-	    case SDLK_DOWN:
-		pc=next;
-	    	break;
+		case SDLK_PAGEUP:
+		    if (hexmode)
+			pc-=21*8;
+		    else
+			pc-=21;
+		    break;
 
-	    case SDLK_PAGEUP:
-		if (hexmode)
-		    pc-=21*8;
-		else
-		    pc-=21;
-		break;
+		case SDLK_PAGEDOWN:
+		    pc=curr;
+		    break;
 
-	    case SDLK_PAGEDOWN:
-	    	pc=curr;
-		break;
+		case SDLK_LEFT:
+		    pc-=1024;
+		    break;
 
-	    case SDLK_LEFT:
-	    	pc-=1024;
-		break;
+		case SDLK_RIGHT:
+		    pc+=1024;
+		    break;
 
-	    case SDLK_RIGHT:
-	    	pc+=1024;
-		break;
+		default:
+		    break;
+	    }
+	}
+	else
+	{
+	    switch(toupper(GFX_TEXT_ASCII(e)))
+	    {
+		case 'H':
+		    hexmode=!hexmode;
+		    break;
 
-	    default:
-	    	break;
+		default:
+		    break;
+	    }
 	}
     }
 }
@@ -792,6 +804,7 @@ static void PlaybackTrace(Z80 *z80)
     while(!quit)
     {
 	SDL_Event *e;
+	int is_text;
 	size_t rd;
 	int f;
 
@@ -837,79 +850,94 @@ static void PlaybackTrace(Z80 *z80)
 
 	GFXEndFrame(FALSE);
 
-	e=GFXWaitKey();
+	e=GFXWaitKey(&is_text);
 
-	switch(e->key.keysym.sym)
+	if (!is_text)
 	{
-	    case SDLK_F1:
-		GUIMessage
-		    (eMessageBox,"PLAYBACK HELP","%s",
-		       "ESC       - Exit                     \n"
-		       "Enter     - Step number              \n"
-		       "P         - Search for PC            \n"
-		       "Up        - Prev step                \n"
-		       "Down      - Next step                \n"
-		       "Page Up   - Back 50 steps            \n"
-		       "Page Down - Forward 50 steps         \n"
-		       "Left      - Back 1000 steps          \n"
-		       "Right     - Forward 1000 steps       \n \n"
-		       "NOTE: Disassembly is as memory is NOW");
-		break;
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_F1:
+		    GUIMessage
+			(eMessageBox,"PLAYBACK HELP","%s",
+			   "ESC       - Exit                     \n"
+			   "Enter     - Step number              \n"
+			   "P         - Search for PC            \n"
+			   "Up        - Prev step                \n"
+			   "Down      - Next step                \n"
+			   "Page Up   - Back 50 steps            \n"
+			   "Page Down - Forward 50 steps         \n"
+			   "Left      - Back 1000 steps          \n"
+			   "Right     - Forward 1000 steps       \n \n"
+			   "NOTE: Disassembly is as memory is NOW");
+		    break;
 
-	    case SDLK_ESCAPE:
-	    	quit=TRUE;
-		break;
+		case SDLK_ESCAPE:
+		    quit=TRUE;
+		    break;
 
-	    case SDLK_RETURN:
-	    case SDLK_KP_ENTER:
-		EnterLong("Step number?",&pos);
-		pos--;
-		break;
+		case SDLK_RETURN:
+		case SDLK_KP_ENTER:
+		    EnterLong("Step number?",&pos);
+		    pos--;
+		    break;
 
-	    case SDLK_p:
-		if (EnterAddress("PC to search for?",z80,&pc))
-		{
-		    while((rd=fread(&t,sizeof t,1,fp))==1)
+		case SDLK_UP:
+		    pos--;
+		    break;
+
+		case SDLK_DOWN:
+		    pos++;
+		    break;
+
+		case SDLK_PAGEUP:
+		    pos-=50;
+		    break;
+
+		case SDLK_PAGEDOWN:
+		    pos+=50;
+		    break;
+
+		case SDLK_LEFT:
+		    pos-=1000;
+		    break;
+
+		case SDLK_RIGHT:
+		    pos+=1000;
+		    break;
+
+		default:
+		    break;
+	    }
+	}
+	else
+	{
+	    switch(toupper(GFX_TEXT_ASCII(e)))
+	    {
+		case '\n':
+		    break;
+
+		case 'P':
+		    if (EnterAddress("PC to search for?",z80,&pc))
 		    {
-			pos++;
-			if (t.s.PC==pc)
-			    break;
+			while((rd=fread(&t,sizeof t,1,fp))==1)
+			{
+			    pos++;
+			    if (t.s.PC==pc)
+				break;
+			}
+
+			if (rd!=1)
+			{
+			    GUIMessage(eMessageBox,
+			    		"NOTICE","Address not found");
+			    pos=prev_pos;
+			}
 		    }
+		    break;
 
-		    if (rd!=1)
-		    {
-		    	GUIMessage(eMessageBox,"NOTICE","Address not found");
-			pos=prev_pos;
-		    }
-		}
-	    	break;
-
-	    case SDLK_UP:
-		pos--;
-	    	break;
-
-	    case SDLK_DOWN:
-		pos++;
-	    	break;
-
-	    case SDLK_PAGEUP:
-		pos-=50;
-		break;
-
-	    case SDLK_PAGEDOWN:
-	    	pos+=50;
-		break;
-
-	    case SDLK_LEFT:
-	    	pos-=1000;
-		break;
-
-	    case SDLK_RIGHT:
-	    	pos+=1000;
-		break;
-
-	    default:
-	    	break;
+		default:
+		    break;
+	    }
 	}
 
 	/* Check position before next loop
@@ -1018,7 +1046,8 @@ static void DoMonitor(Z80 *z80)
     {
 	MemTrace mt[TRACEMEM_WIN];
 	const char *brkpoint;
-	SDL_Event *e;
+	SDL_Event *keyevent;
+	SDL_Event *textevent;
 	Z80State s;
 	int f;
 
@@ -1089,34 +1118,47 @@ static void DoMonitor(Z80 *z80)
 
 	if (running)
 	{
-	    e=GFXGetKey();
+	    keyevent = GFXGetKey();
+	    textevent = GFXGetTextKey();
 
-	    if (e && e->key.state!=SDL_PRESSED)
-	    	e=NULL;
+	    if (keyevent && keyevent->key.state != SDL_PRESSED)
+	    	keyevent = NULL;
 	}
 	else
-	    e=GFXWaitKey();
-
-	if (e)
 	{
-	    switch(e->key.keysym.sym)
+	    SDL_Event *e;
+	    int is_text;
+
+	    e = GFXWaitKey(&is_text);
+
+	    if (is_text)
+	    {
+	    	textevent = e;
+		keyevent = NULL;
+	    }
+	    else
+	    {
+	    	keyevent = e;
+		textevent = NULL;
+	    }
+	}
+
+	if (keyevent)
+	{
+	    switch(keyevent->key.keysym.sym)
 	    {
 		case SDLK_F1:
 		    GUIMessage
 			(eMessageBox,"PLAYBACK HELP","%s",
-			   "ESC   - Exit                    \n"
-			   "ENTER - Single step processor   \n"
-			   "R     - Run till break or stop  \n"
-			   "W     - Watch till break or stop\n"
-			   "T     - Add temp breakpoint     \n"
-			   "SPACE - Stop running            \n"
-			   "O     - Toggle overlay mode     \n"
-			   "5     - Add a new breakpoint    \n"
-			   "6     - Set active breakpoints  \n"
-			   "7     - Remove a breakpoint     \n"
-			   "8     - Clear all breakpoints   \n"
-			   "H     - Alter reg index display \n"
-			   "S     - Display current screen  ");
+			   "ESC   - Exit                     \n"
+			   "ENTER - Single step processor    \n"
+			   "R     - Run till break or stop   \n"
+			   "SPACE - Stop running             \n"
+			   "M     - Toggle CPU state/memory  \n"
+			   "5     - Add a new breakpoint     \n"
+			   "6     - Set active breakpoints   \n"
+			   "7     - Remove a breakpoint      \n"
+			   "8     - Clear all breakpoints    ");
 		    break;
 
 		case SDLK_RETURN:
@@ -1128,69 +1170,44 @@ static void DoMonitor(Z80 *z80)
 		    quit=TRUE;
 		    break;
 
-		case SDLK_r:
-		    running=TRUE;
-		    update=FALSE;
-		    GFXClear(BLACK);
-		    CentrePaper("MONITOR",0,WHITE,BLACK);
-		    CentrePaper("Press F1 for help",9,RED,BLACK);
-		    CentrePaper("Running...",27,RED,BLACK);
-		    GFXEndFrame(FALSE);
+		default:
+		    break;
+	    }
+	}
+
+	if (textevent)
+	{
+	    switch(toupper(GFX_TEXT_ASCII(keyevent)))
+	    {
+		case '\n':
 		    break;
 
-		case SDLK_w:
+		case 'R':
 		    running=TRUE;
 		    break;
 
 		case SDLK_SPACE:
 		    running=FALSE;
-		    update=TRUE;
 		    break;
 
-		case SDLK_o:
-		    if (update)
-		    {
-			overlay=!overlay;
-		    }
-		    break;
-
-		case SDLK_5:
-		    DoAddBreakpoint(z80);
-		    break;
-
-		case SDLK_6:
-		    DoActiveBreakpoint(z80);
-		    break;
-
-		case SDLK_7:
-		    DoRemoveBreakpoint(z80);
-		    break;
-
-		case SDLK_8:
-		    DoClearBreakpoint(z80);
-		    break;
-
-		case SDLK_s:
-		    if (update)
-		    {
-			SPECShowScreen();
-			GFXEndFrame(FALSE);
-			GFXWaitKey();
-		    }
-		    break;
-
-		case SDLK_h:
+		case 'M':
 		    regdisp=(regdisp+1)%4;
 		    break;
 
-		case SDLK_t:
-		    if (trigger!=-1)
-		    {
-		    	DeleteBreak(z80,trigger);
-			trigger=-1;
-		    }
+		case '5':
+		    DoAddBreakpoint(z80);
+		    break;
 
-		    trigger=DoAddBreakpoint(z80);
+		case '6':
+		    DoActiveBreakpoint(z80);
+		    break;
+
+		case '7':
+		    DoRemoveBreakpoint(z80);
+		    break;
+
+		case '8':
+		    DoClearBreakpoint(z80);
 		    break;
 
 		default:
@@ -1229,6 +1246,7 @@ static void DoMonitor(Z80 *z80)
 int MemoryMenu(Z80 *z80)
 {
     SDL_Event *e;
+    int is_text;
     int done=FALSE;
     int quit=FALSE;
     Z80State s;
@@ -1241,69 +1259,80 @@ int MemoryMenu(Z80 *z80)
 	DisplayZ80State(&s,GFX_HEIGHT-70,RED);
 	GFXEndFrame(FALSE);
 
-	e=GFXWaitKey();
+	e=GFXWaitKey(&is_text);
 
-	switch(e->key.keysym.sym)
+	if (!is_text)
 	{
-	    case SDLK_1:
-	    	DoDisassem(z80,&s);
-		break;
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_ESCAPE:
+		    done=TRUE;
+		    break;
 
-	    case SDLK_2:
-	    	DoDisassemFile(z80,&s);
-	    	break;
+		default:
+		    break;
+	    }
+	}
+	else
+	{
+	    switch(toupper(GFX_TEXT_ASCII(e)))
+	    {
+		case '1':
+		    DoDisassem(z80,&s);
+		    break;
 
-	    case SDLK_3:
-		if (!trace)
-		    EnableTrace(z80,&s);
-		else
+		case '2':
+		    DoDisassemFile(z80,&s);
+		    break;
+
+		case '3':
+		    if (!trace)
+			EnableTrace(z80,&s);
+		    else
+			DisableTrace(z80);
+		    break;
+
+		case '4':
 		    DisableTrace(z80);
-	    	break;
+		    PlaybackTrace(z80);
+		    break;
 
-	    case SDLK_4:
-		DisableTrace(z80);
-	    	PlaybackTrace(z80);
-		break;
+		case '5':
+		    DoAddBreakpoint(z80);
+		    break;
 
-	    case SDLK_5:
-		DoAddBreakpoint(z80);
-	    	break;
+		case '6':
+		    DoActiveBreakpoint(z80);
+		    break;
 
-	    case SDLK_6:
-		DoActiveBreakpoint(z80);
-	    	break;
+		case '7':
+		    DoRemoveBreakpoint(z80);
+		    break;
 
-	    case SDLK_7:
-		DoRemoveBreakpoint(z80);
-	    	break;
+		case '8':
+		    DoClearBreakpoint(z80);
+		    break;
 
-	    case SDLK_8:
-		DoClearBreakpoint(z80);
-	    	break;
+		case '9':
+		    DoMonitor(z80);
+		    break;
 
-	    case SDLK_9:
-		DoMonitor(z80);
-	    	break;
+		case 'R':
+		    if (GUIMessage(eYesNoBox,"RESET","Sure?"))
+		    {
+			Z80Reset(z80);
+			SPECReset(z80);
+		    }
+		    break;
 
-	    case SDLK_r:
-	    	if (GUIMessage(eYesNoBox,"RESET","Sure?"))
-		{
-		    Z80Reset(z80);
-		    SPECReset(z80);
-		}
-		break;
+		case 'X':
+		    done=TRUE;
+		    quit=TRUE;
+		    break;
 
-	    case SDLK_x:
-	    	done=TRUE;
-	    	quit=TRUE;
-		break;
-
-	    case SDLK_ESCAPE:
-	    	done=TRUE;
-		break;
-
-	    default:
-	    	break;
+		default:
+		    break;
+	    }
 	}
     }
 

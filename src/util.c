@@ -119,23 +119,10 @@ const char *Dirname(const char *path)
 
 void Debug(const char *format, ...)
 {
-    static FILE *fp=NULL;
     va_list ap;
 
-    if (!fp)
-    {
-	/*
-    	fp=fopen("debug.txt","w");
-	setbuf(fp,NULL);
-	*/
-	fp=stderr;
-    }
-
-    if (!fp)
-    	return;
-
     va_start(ap,format);
-    vfprintf(fp,format,ap);
+    vfprintf(stderr,format,ap);
     va_end(ap);
 }
 

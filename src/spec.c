@@ -35,6 +35,7 @@
 #include "exit.h"
 #include "tape.h"
 #include "audio.h"
+#include "joystick.h"
 #include "util.h"
 
 #ifndef TRUE
@@ -48,6 +49,8 @@
 #define HIBYTE(w)	((w)>>8)
 #define LOBYTE(w)	((w)&0xff)
 
+#define SETBIT(v,b)	(v)|=(1<<(b))
+#define CLRBIT(v,b)	(v)&=~(1<<(b))
 
 /* ---------------------------------------- STATICS
 */
@@ -131,6 +134,11 @@ static struct
     {0,     BVAL,BVAL,BVAL},        /* WHITE */
 
 };
+
+
+/* Joysticks
+*/
+static Z80Byte		kempston = 0x00;
 
 
 /* The keyboard
@@ -629,6 +637,70 @@ static int CheckTimers(Z80 *z80, Z80Val val)
     return TRUE;
 }
 
+static void HandleJoystick(JoystickButton button, int pressed)
+{
+    switch (button)
+    {
+    	case JOY_Right:
+	    if (pressed)
+	    {
+	    	SETBIT(kempston, 0);
+	    }
+	    else
+	    {
+	    	CLRBIT(kempston, 0);
+	    }
+	    break;
+
+    	case JOY_Left:
+	    if (pressed)
+	    {
+	    	SETBIT(kempston, 1);
+	    }
+	    else
+	    {
+	    	CLRBIT(kempston, 1);
+	    }
+	    break;
+
+    	case JOY_Up:
+	    if (pressed)
+	    {
+	    	SETBIT(kempston, 3);
+	    }
+	    else
+	    {
+	    	CLRBIT(kempston, 3);
+	    }
+	    break;
+
+    	case JOY_Down:
+	    if (pressed)
+	    {
+	    	SETBIT(kempston, 2);
+	    }
+	    else
+	    {
+	    	CLRBIT(kempston, 2);
+	    }
+	    break;
+
+    	case JOY_Button1:
+    	case JOY_Button2:
+    	case JOY_Button3:
+    	case JOY_Button4:
+	    if (pressed)
+	    {
+	    	SETBIT(kempston, 4);
+	    }
+	    else
+	    {
+	    	CLRBIT(kempston, 4);
+	    }
+	    break;
+    }
+}
+
 
 /* ---------------------------------------- EXPORTED INTERFACES
 */
@@ -660,6 +732,11 @@ void SPECInit(Z80 *z80)
     RomPatch();
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
+
+    if (IConfig(CONF_JOYSTICK))
+    {
+    	JOYRegister(HandleJoystick);
+    }
 
     SPECReset(z80);
 }
@@ -710,10 +787,8 @@ Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 
     switch(lo)
     {
-	case 0x1f:	/* TODO: Kempston joystick */
-	    break;
-
-	case 0x7f:	/* TODO: Fuller joystick */
+	case 0x1f:	/* Kempston joystick */
+	    b = kempston;
 	    break;
 
 	case 0xfb:	/* TODO: ZX Printer */

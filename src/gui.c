@@ -37,7 +37,6 @@
 #include "gui.h"
 #include "gfx.h"
 #include "exit.h"
-#include "symtochar.h"
 #include "util.h"
 
 

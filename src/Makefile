@@ -19,12 +19,8 @@
 # -------------------------------------------------------------------------
 # 
 
+CFLAGS	=	-g `sdl2-config --cflags` -Igfx-bitmap -DENABLE_DISASSEM
 
-# This CFLAGS assumes that gcc is being used.
-# Simply comment out if not, and replace as needed.
-# Other CFLAGS lines *are* required.
-#
-CFLAGS	=	-g -O2
 
 TARGET	=	espec
 
@@ -39,10 +35,10 @@ SOURCE	=	main.c		\
 		kbbmp.c		\
 		exit.c		\
 		tape.c		\
-		symtochar.c	\
 		font.c	        \
 		audio.c	        \
 		expr.c		\
+		joystick.c	\
 		z80.c		\
 		z80_decode.c	\
 		z80_dis.c
@@ -58,16 +54,14 @@ OBJECTS	=	main.o		\
 		kbbmp.o		\
 		exit.o		\
 		tape.o		\
-		symtochar.o	\
 		font.o	        \
 		audio.o	        \
 		expr.o		\
+		joystick.o	\
 		z80.o		\
 		z80_decode.o	\
 		z80_dis.o	\
 		gfx-bitmap.o
-
-CFLAGS +=	`sdl2-config --cflags` -Igfx-bitmap -DENABLE_DISASSEM
 
 LIBS	=	`sdl2-config --libs`
 

@@ -29,6 +29,7 @@
 #include <stdarg.h>
 
 #include "gfx.h"
+#include "joystick.h"
 #include "exit.h"
 #include "config.h"
 #include "util.h"
@@ -115,8 +116,19 @@ static void DoVLine(int x, int y1, int y2, Uint32 col)
 }
 
 
-static void BMPlot(int x, int y, uint8_t col)
+static void CheckJoystick(SDL_Event *e)
 {
+    switch (e->type)
+    {
+	case SDL_JOYAXISMOTION:
+	case SDL_JOYBUTTONDOWN:
+	case SDL_JOYBUTTONUP:
+	    JOYPump(e);
+	    break;
+
+	default:
+	    break;
+    }
 }
 
 
@@ -124,6 +136,7 @@ static void BMPlot(int x, int y, uint8_t col)
 */
 void GFXInit(void)
 {
+    Uint32 flags;
     int f;
 
     if (IConfig(CONF_FULLSCREEN))
@@ -141,15 +154,21 @@ void GFXInit(void)
 
     frame=1000/IConfig(CONF_FRAMES_PER_SEC);
 
+    flags = SDL_INIT_TIMER|SDL_INIT_VIDEO;
+
     if (IConfig(CONF_SOUND))
     {
-	if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_AUDIO))
-	    Exit("Failed to init SDL: %s\n",SDL_GetError());
+	flags |= SDL_INIT_AUDIO;
     }
-    else
+
+    if (IConfig(CONF_JOYSTICK))
     {
-	if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
-	    Exit("Failed to init SDL: %s\n",SDL_GetError());
+	flags |= SDL_INIT_JOYSTICK;
+    }
+
+    if (SDL_Init(flags))
+    {
+	Exit("Failed to init SDL: %s\n",SDL_GetError());
     }
 
 
@@ -239,6 +258,8 @@ SDL_Event *GFXGetKey(void)
 
     while(SDL_PollEvent(&e))
     {
+	CheckJoystick(&e);
+
     	if (e.type==SDL_KEYUP || e.type==SDL_KEYDOWN)
 	    return &e;
     }
@@ -253,6 +274,8 @@ SDL_Event *GFXGetTextKey(void)
 
     while(SDL_PollEvent(&e))
     {
+	CheckJoystick(&e);
+
 	if (e.type == SDL_TEXTINPUT)
 	    return &e;
     }
@@ -268,6 +291,7 @@ SDL_Event *GFXWaitKey(int *is_text)
     do
     {
     	SDL_WaitEvent(&e);
+	CheckJoystick(&e);
     } while (e.type != SDL_KEYDOWN && e.type != SDL_TEXTINPUT);
 
     if (is_text)

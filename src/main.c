@@ -38,6 +38,7 @@
 #include "tape.h"
 #include "util.h"
 #include "audio.h"
+#include "joystick.h"
 #include "gfx-bitmap.h"
 
 /* ---------------------------------------- MACROS
@@ -98,6 +99,11 @@ int main(int argc, char *argv[])
     }
 
     GFXInit();
+
+    if (IConfig(CONF_JOYSTICK))
+    {
+    	JOYInit();
+    }
 
     if (IConfig(CONF_SOUND))
     {
@@ -198,6 +204,7 @@ int main(int argc, char *argv[])
 				   "F3  - View Spectrum keyboad       \n"
 				   "F4  - View mounted tapes          \n"
 				   "F5  - Reset                       \n"
+				   "F6  - Select Joytick              \n"
 				   "F8  - Select tape file for loading\n"
 				   "F9  - Select tape file for saving \n"
 				   "F10 - Close all open tape files   \n"
@@ -248,6 +255,9 @@ int main(int argc, char *argv[])
 		    }
 		    break;
 
+		case SDLK_F6:
+		    JOYSelect();
+		    break;
 
 		case SDLK_F8:
 		    if (e->key.state==SDL_PRESSED)

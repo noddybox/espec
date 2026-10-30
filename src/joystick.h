@@ -20,23 +20,53 @@
 
     -------------------------------------------------------------------------
 
-    Convert an SDL keysym into a char
+    Joystick handling
 
 */
+#ifndef ESPEC_JOYSTICK_H
+#define ESPEC_JOYSTICK_H
 
-#ifndef ESPEC_SYMTOCHAR_H
-#define ESPEC_SYMTOCHAR_H
+#include <SDL.h>
 
-#include <SDL_keyboard.h>
-
-/* ---------------------------------------- INTERFACES
+/* Buttons
 */
+typedef enum
+{
+    JOY_Right,
+    JOY_Left,
+    JOY_Up,
+    JOY_Down,
+    JOY_Button1,
+    JOY_Button2,
+    JOY_Button3,
+    JOY_Button4,
+    JOY_NumButtons
+} JoystickButton;
 
-/* Convert a SDL keysym to a char.  Returns 0 if there is no mapping.
+/* Callback for joystick events
 */
-char		SYMToChar(SDL_Keycode keysym);
+typedef void (*JoystickCallback)(JoystickButton button, int pressed);
+
+
+/* Initialise after SDL has been initiliased
+*/
+void		JOYInit(void);
+
+/* Select a joystick
+*/
+void		JOYSelect(void);
+
+/* Pump joystick events
+*/
+void		JOYPump(SDL_Event *e);
+
+/* Get the state of a button
+*/
+int		JOYState(JoystickButton button);
+
+/* Register a callback for joystick events
+*/
+void		JOYRegister(JoystickCallback callback);
+
 
 #endif
-
-
-/* END OF FILE */

@@ -23,3 +23,6 @@ trace           0
 
 # Whether to enable sound (1) or disable it (0).  Defaults to 1.
 sound           1
+
+# Whether to enable joysticks (1) or disable them (0).  Defaults to 1.
+joystick        1

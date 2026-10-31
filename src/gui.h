@@ -79,7 +79,7 @@ void		GUIDisplayList(const char *title, int no, char * const list[]);
 
    path holds the new file entered.  Note that start_dir can be a path to a
    file - if chdir(start_dir) would not work, then it is tried with the
-   dirname(1) of start_dir.
+   Dirname() of start_dir.
 
    Also start_dir and path can be the same pointer:
 

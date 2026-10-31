@@ -616,7 +616,10 @@ int GUIFileSelect(const char *prompt, int load,
 
     getcwd(olddir,MAXPATHLEN);
 
-    chdir(start_dir);
+    if (chdir(start_dir) == -1)
+    {
+	chdir(Dirname(start_dir));
+    }
 
     while(!done)
     {

@@ -64,6 +64,3 @@ void		SPECReset(Z80 *z80);
 int		SPECAudioFrequency(void);
 
 #endif
-
-
-/* END OF FILE */

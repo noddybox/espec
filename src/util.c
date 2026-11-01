@@ -154,6 +154,3 @@ int FileExists(const char *path)
 
     return fp != NULL;
 }
-
-
-/* END OF FILE */

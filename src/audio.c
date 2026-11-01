@@ -63,6 +63,3 @@ void AUDIOQueue(Sint8 *buffer, size_t len)
 	SDL_QueueAudio(device, buffer, len);
     }
 }
-
-
-/* END OF FILE */

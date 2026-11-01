@@ -48,6 +48,3 @@ void		AUDIOQueue(Sint8 *buffer, size_t len);
 
 
 #endif
-
-
-/* END OF FILE */

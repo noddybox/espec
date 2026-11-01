@@ -164,6 +164,3 @@ void TAPEDisplayInfo(void)
                tape_in[0] ? Basename(tape_in):"None",
                tape_out[0] ? Basename(tape_out):"None");
 }
-
-
-/* END OF FILE */

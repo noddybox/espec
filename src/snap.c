@@ -201,6 +201,3 @@ int TAPSave(FILE *fp, Z80Byte id, Z80Word *addr, Z80Word *len, SNAP_Peek peek)
 
     return TRUE;
 }
-
-
-/* END OF FILE */

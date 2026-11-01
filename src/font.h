@@ -32,6 +32,3 @@ typedef unsigned char	FontChar[64];
 extern const FontChar font[128];
 
 #endif
-
-
-/* END OF FILE */

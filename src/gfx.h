@@ -167,6 +167,3 @@ void		GFXBitmap(const GFX_Bitmap *bitmap);
 
 
 #endif
-
-
-/* END OF FILE */

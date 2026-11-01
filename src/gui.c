@@ -736,6 +736,3 @@ int GUIFileSelect(const char *prompt, int load,
 
     return ret;
 }
-
-
-/* END OF FILE */

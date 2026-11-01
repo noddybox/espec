@@ -71,6 +71,3 @@ const char	*Dirname(const char *path);
 
 
 #endif
-
-
-/* END OF FILE */

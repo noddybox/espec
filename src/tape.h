@@ -73,6 +73,3 @@ void            TAPEDisplayInfo(void);
 
 
 #endif
-
-
-/* END OF FILE */

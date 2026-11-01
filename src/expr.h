@@ -55,5 +55,3 @@ const char	*ExprError(void);
 
 
 #endif
-
-/* END OF FILE */

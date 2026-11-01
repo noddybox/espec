@@ -1115,6 +1115,3 @@ int SPECAudioFrequency(void)
 
     return freq;
 }
-
-
-/* END OF FILE */

@@ -88,9 +88,9 @@ void		GFXStartFrame(void);
 void		GFXEndFrame(int delay);
 
 
-/* Set key repeat
+/* Enable/disable text input via flag, returning the previous setting.
 */
-void		GFXKeyRepeat(int repeat);
+int		GFXSetTextInput(int enable);
 
 
 /* Get next keyboard up/down event.  Returns NULL if no more keyboard events

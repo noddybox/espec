@@ -27,15 +27,6 @@
 #include "gui.h"
 #include "util.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-
 /* ---------------------------------------- STATICS
 */
 static SDL_Joystick	*joystick;

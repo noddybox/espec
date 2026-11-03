@@ -37,16 +37,6 @@
 #include "font.h"
 
 
-/* ---------------------------------------- MACROS
-*/
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 /* ---------------------------------------- STATICS
 */
 static SDL_Window       *window;
@@ -249,6 +239,23 @@ void GFXEndFrame(int delay)
 	if (diff<frame)
 	    SDL_Delay(frame-diff);
     }
+}
+
+
+int GFXSetTextInput(int enable)
+{
+    int state = SDL_IsTextInputActive();
+
+    if (enable)
+    {
+    	SDL_StartTextInput();
+    }
+    else
+    {
+    	SDL_StopTextInput();
+    }
+
+    return state;
 }
 
 

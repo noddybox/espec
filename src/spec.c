@@ -38,14 +38,6 @@
 #include "joystick.h"
 #include "util.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 #define HIBYTE(w)	((w)>>8)
 #define LOBYTE(w)	((w)&0xff)
 

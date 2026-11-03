@@ -34,17 +34,6 @@
 #include "config.h"
 
 
-/* ---------------------------------------- MACROS
-*/
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-
 /* ---------------------------------------- GLOBALS
 */
 static char tape_in[FILENAME_MAX]="";

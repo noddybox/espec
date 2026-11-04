@@ -1290,6 +1290,8 @@ int MemoryMenu(Z80 *z80)
 
     Z80GetState(z80,&s);
 
+    GFXSetTextInput(TRUE);
+
     while(!done)
     {
 	DisplayMenu();
@@ -1376,6 +1378,8 @@ int MemoryMenu(Z80 *z80)
 	    }
 	}
     }
+
+    GFXSetTextInput(FALSE);
 
     return quit;
 }

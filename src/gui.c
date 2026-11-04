@@ -119,9 +119,12 @@ static int DoList(const char *title, int no, char * const list[], int *option,
     int f;
     char match[MAX_MATCH + 1] = {0};
     size_t input_len = 0;
+    int text_input;
 
     if (no==0)
     	return LIST_CANCEL;
+
+    text_input = GFXSetTextInput(TRUE);
 
     if (input)
     {
@@ -359,6 +362,8 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 	    }
 	}
     }
+
+    GFXSetTextInput(text_input);
 
     if (input && input_len)
     {
@@ -605,6 +610,7 @@ int GUIFileSelect(const char *prompt, int load,
     char olddir[MAXPATHLEN+1];
     char pwd[MAXPATHLEN+1];
     char input[MAXPATHLEN + 1];
+    int state;
 
     getcwd(olddir,MAXPATHLEN);
 
@@ -612,6 +618,8 @@ int GUIFileSelect(const char *prompt, int load,
     {
 	chdir(Dirname(start_dir));
     }
+
+    state = GFXSetTextInput(TRUE);
 
     while(!done)
     {
@@ -725,6 +733,8 @@ int GUIFileSelect(const char *prompt, int load,
 	free(list);
 	free(de);
     }
+
+    GFXSetTextInput(state);
 
     return ret;
 }

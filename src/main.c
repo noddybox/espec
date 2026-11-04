@@ -104,6 +104,8 @@ int main(int argc, char *argv[])
 	}
     }
 
+    GFXSetTextInput(FALSE);
+
     SPECInit(z80);
 
     white=GFXRGB(255,255,255);

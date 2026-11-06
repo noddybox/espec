@@ -21,8 +21,9 @@ scale           1
 # Trace the state of the Z80 to stdout if 1.  Defaults to 0.
 trace           0
 
-# Whether to enable sound (1) or disable it (0).  Defaults to 1.
-sound           1
+# The volume of generated sound in the range 0 to 63.  If set to zero sound
+# is disabled.
+sound           16
 
 # Whether to enable joysticks (1) or disable them (0).  Defaults to 1.
 joystick        1

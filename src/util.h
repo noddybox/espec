@@ -118,4 +118,9 @@ int		StartsWith(const char *a, const char *b, size_t len);
 int		FileExists(const char *path);
 
 
+/* Returns an int, clamped to the passed range.
+*/
+int		Clamp(int value, int min, int max);
+
+
 #endif

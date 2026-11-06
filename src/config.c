@@ -35,7 +35,6 @@
 static char	rompath[FILENAME_MAX]="./spec48.rom";
 static char	tapedir[FILENAME_MAX]=".";
 static int	fullscreen=FALSE;
-static int	memsize=16;
 static int	frames=50;
 static int	scale=1;
 static int	trace=0;
@@ -139,18 +138,22 @@ void ConfigRead(void)
 
 int IConfig(IConfigVar v)
 {
-    static const int *vars[]=
-    		{
-		    &fullscreen,
-		    &memsize,
-		    &frames,
-		    &scale,
-		    &trace,
-		    &sound,
-		    &joystick
-		};
+    static const struct
+    {
+    	int	*ptr;
+	int	min;
+	int	max;
+    } vars[]=
+    {
+	{&fullscreen,	0,	1},
+	{&frames,	1,	100},
+	{&scale,	1,	10},
+	{&trace,	0,	1},
+	{&sound,	0,	63},
+	{&joystick,	0,	1}
+    };
 
-    return *vars[v];
+    return Clamp(*vars[v].ptr, vars[v].min, vars[v].max);
 }
 
 

@@ -232,7 +232,8 @@ static const MatrixMap keymap[]=
 #define AUDIO_SCALE	6		/* This is used as a shift value */
 #define AUDIO_CYCLES	(AUDIO_FRAMES * FRAME_CYCLES)
 
-static size_t audio_sample_sz;
+static int		volume;
+static size_t		audio_sample_sz;
 
 typedef struct SoundRecord
 {
@@ -243,9 +244,9 @@ typedef struct SoundRecord
 
 static struct
 {
-    SoundRecord	*head;
-    SoundRecord	*tail;
-    Sint8	last_level;
+    SoundRecord		*head;
+    SoundRecord		*tail;
+    Sint8		last_level;
 } sound;
 
 /* ---------------------------------------- DEBUG FUNCTIONS
@@ -571,7 +572,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
 
 static void CheckSound(Z80 *z80)
 {
-    if (IConfig(CONF_SOUND))
+    if (volume)
     {
     	if (Z80GetTimer(z80, AUDIO_TIMER) > AUDIO_CYCLES)
 	{
@@ -835,6 +836,8 @@ void SPECInit(Z80 *z80)
     	JOYRegister(HandleJoystick);
     }
 
+    volume = IConfig(CONF_SOUND);
+
     SPECReset(z80);
 }
 
@@ -923,7 +926,8 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
     {
 	case 0xfe:	/* ULA */
 	    border=val&0x07;
-	    AddSoundRecord(Z80GetTimer(z80, AUDIO_TIMER), val & 0x10 ? 64 : 0);
+	    AddSoundRecord(Z80GetTimer(z80, AUDIO_TIMER),
+	    		   val & 0x10 ? volume : 0);
 	    break;
 
 	case 0xfb:	/* TODO: ZX Printer */

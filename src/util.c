@@ -206,3 +206,19 @@ int FileExists(const char *path)
 
     return fp != NULL;
 }
+
+
+int Clamp(int value, int min, int max)
+{
+    if (value < min)
+    {
+    	value = min;
+    }
+
+    if (value > max)
+    {
+    	value = max;
+    }
+
+    return value;
+}

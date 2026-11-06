@@ -63,4 +63,11 @@ void		SPECReset(Z80 *z80);
 */
 int		SPECAudioFrequency(void);
 
+/* Interfaces for joystick setup
+*/
+void		SPECSetupJoystick(void);
+void		SPECClearJoystick(void);
+void		SPECSaveJoystick(void);
+void		SPECLoadJoystick(const char *path);
+
 #endif

@@ -91,6 +91,26 @@ const char *Basename(const char *path)
 }
 
 
+int CheckExtension(const char *path, const char *extension)
+{
+    const char *p;
+
+    if (!extension)
+    {
+    	return TRUE;
+    }
+
+    p = strrchr(path, '.');
+
+    if (!p)
+    {
+    	return FALSE;
+    }
+
+    return Compare(p + 1, extension);
+}
+
+
 const char *Dirname(const char *path)
 {
     static char dir[MAXPATHLEN+1];
@@ -117,6 +137,25 @@ const char *Dirname(const char *path)
 }
 
 
+const char *ReplaceExtension(const char *path, const char *extension)
+{
+    static char result[FILENAME_MAX];
+    char *p;
+
+    strcpy(result, path);
+
+    p = strrchr(result, '.');
+
+    if (p)
+    {
+    	*++p = 0;
+	strcat(result, extension);
+    }
+
+    return result;
+}
+
+
 void Debug(const char *format, ...)
 {
     va_list ap;
@@ -124,6 +163,19 @@ void Debug(const char *format, ...)
     va_start(ap,format);
     vfprintf(stderr,format,ap);
     va_end(ap);
+}
+
+
+int Compare(const char *a, const char *b)
+{
+    while(*a && *b &&
+    		tolower((unsigned char)*a) == tolower((unsigned char)*b))
+    {
+	a++;
+	b++;
+    }
+
+    return *a ==0 && *b == 0;
 }
 
 

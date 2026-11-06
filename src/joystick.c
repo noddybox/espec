@@ -93,7 +93,14 @@ void JOYSelect(void)
 	sprintf(list[f], "%-32.32s", name);
     }
 
-    select = GUIListSelect("SELECT A JOYSTICK", num, list);
+    select = GUIListSelect("SELECT A JOYSTICK", num, GUI_LIST_CAST(list));
+
+    for(int f = 0; f < num; f++)
+    {
+    	free(list[f]);
+    }
+
+    free(list);
 
     if (select == -1)
     {

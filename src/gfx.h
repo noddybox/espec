@@ -161,6 +161,12 @@ void		GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
 			      const char *format, ...);
 
 
+/* As above, but centres text using the supplied ink and paper colour.
+*/
+void		GFXPrintCentre(int y, Uint32 col, Uint32 paper,
+			       const char *format, ...);
+
+
 /* Draws a simply bitmap centred on the screen
 */
 void		GFXBitmap(const GFX_Bitmap *bitmap);

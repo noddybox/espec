@@ -32,6 +32,7 @@
 #include "util.h"
 #include "gui.h"
 #include "config.h"
+#include "spec.h"
 
 
 /* ---------------------------------------- GLOBALS
@@ -50,7 +51,7 @@ int TAPESelectInput(void)
 
     if (GUIFileSelect("TAPE TO LOAD",TRUE,
                       tape_in[0] ? Dirname(tape_in) : SConfig(CONF_TAPEDIR),
-                      path))
+                      path, "tap"))
     {
         TAPEMount(TAP_IN, path);
         return TRUE;
@@ -66,7 +67,7 @@ int TAPESelectOutput(void)
 
     if (GUIFileSelect("TAPE TO SAVE",FALSE,
                       tape_out[0] ? Dirname(tape_out) : SConfig(CONF_TAPEDIR),
-                      path))
+                      path, "tap"))
     {
 	if (FileExists(path))
 	{
@@ -94,6 +95,7 @@ void TAPEMount(TAPEMountType type, const char *path)
         case TAP_IN:
             strncpy(tape_in, path, FILENAME_MAX);
             in = fopen(tape_in, "rb");
+	    SPECLoadJoystick(tape_in);
             break;
 
         case TAP_OUT:

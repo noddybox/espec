@@ -107,8 +107,8 @@ static void Box(const char *title, int x, int y, int width, int height)
 }
 
 
-static int DoList(const char *title, int no, char * const list[], int *option,
-                  char *input, int display_only)
+static int DoList(const char *title, int no, const char * const list[],
+		  int *option, char *input, int display_only, int inital_select)
 {
     static const int max=GFX_HEIGHT/8-8;
     SDL_Event *e;
@@ -131,8 +131,14 @@ static int DoList(const char *title, int no, char * const list[], int *option,
     	*input = 0;
     }
 
-    top=0;
-    cur=0;
+    cur = (inital_select >=0 && inital_select < no) ? inital_select : 0;
+
+    top = 0;
+
+    if (cur > top + max - 2)
+    {
+	top = cur - max + 2;
+    }
 
     done=FALSE;
 
@@ -564,13 +570,20 @@ const char *GUIInputString(const char *prompt, const char *orig)
 }
 
 
-int GUIListSelect(const char *title, int no, char * const list[])
+int GUIListSelect(const char *title, int no, const char * const list[])
 {
-    return DoList(title, no, list, NULL, NULL, FALSE);
+    return DoList(title, no, list, NULL, NULL, FALSE, -1);
 }
 
 
-int GUIListOption(const char *title, int no, char * const list[], int option[])
+int GUIMenu(const char *title, int no, int selected, const char * const list[])
+{
+    return DoList(title, no, list, NULL, NULL, FALSE, selected);
+}
+
+
+int GUIListOption(const char *title, int no,
+		  const char * const list[], int option[])
 {
     int *o;
     int sel;
@@ -584,7 +597,7 @@ int GUIListOption(const char *title, int no, char * const list[], int option[])
     for(f=0;f<no;f++)
     	o[f]=option[f];
 
-    sel=DoList(title, no, list, o, NULL, FALSE);
+    sel=DoList(title, no, list, o, NULL, FALSE, -1);
 
     if (sel!=LIST_CANCEL)
     	for(f=0;f<no;f++)
@@ -596,14 +609,14 @@ int GUIListOption(const char *title, int no, char * const list[], int option[])
 }
 
 
-void GUIDisplayList(const char *title, int no, char * const list[])
+void GUIDisplayList(const char *title, int no, const char * const list[])
 {
-    DoList(title, no, list, NULL, NULL, TRUE);
+    DoList(title, no, list, NULL, NULL, TRUE, -1);
 }
 
 
 int GUIFileSelect(const char *prompt, int load,
-		  const char *start_dir, char path[])
+		  const char *start_dir, char path[], const char *extension)
 {
     int done=FALSE;
     int ret=FALSE;
@@ -657,7 +670,8 @@ int GUIFileSelect(const char *prompt, int load,
 		    fe[no].is_dir=TRUE;
 		    no++;
 		}
-		else if (S_ISREG(sbuf.st_mode) && de->d_name[0]!='.')
+		else if (S_ISREG(sbuf.st_mode) && de->d_name[0]!='.' &&
+			    CheckExtension(de->d_name, extension))
 		{
 		    strcpy(fe[no].name,de->d_name);
 		    fe[no].is_dir=FALSE;
@@ -683,7 +697,8 @@ int GUIFileSelect(const char *prompt, int load,
 		sprintf(list[f],"%-20.20s %9u",fe[f].name,fe[f].size);
 	}
 
-	sel=DoList(pwd, no,list, NULL, load ? NULL:input, FALSE);
+	sel=DoList(pwd, no, GUI_LIST_CAST(list), 
+		   NULL, load ? NULL:input, FALSE, -1);
 
 	if (sel==LIST_CANCEL)
 	{
@@ -700,6 +715,12 @@ int GUIFileSelect(const char *prompt, int load,
 		    strcat(path,"/");
 
 		strcat(path,input);
+
+		if (!CheckExtension(path, extension))
+		{
+		    strcat(path, ".");
+		    strcat(path, extension);
+		}
 
 		done=TRUE;
 		ret=TRUE;

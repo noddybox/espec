@@ -28,6 +28,16 @@
 #define ESPEC_GUI_H
 
 
+/* ---------------------------------------- MACROS
+*/
+
+/* C doesn't like passing char ** to the list routines, so cast to the
+   appropriate type.  Much rather it if C would allow a "char **list" for a
+   "const char * const list[]"
+*/
+#define GUI_LIST_CAST(p)	((const char * const *)(p))
+
+
 /* ---------------------------------------- INTERFACES
 */
 
@@ -55,7 +65,16 @@ const char	*GUIInputString(const char *prompt, const char *orig);
 /* Selects an entry from a list.  Returns the index selected, or
    -1 if cancelled.
 */
-int		GUIListSelect(const char *title, int no, char * const list[]);
+int		GUIListSelect(const char *title, int no,
+			      const char * const list[]);
+
+
+/* Selects an entry from a list as a menu.  Returns the index selected, or
+   -1 if cancelled.  The initial selection is the passed in selected if
+   valid.
+*/
+int		GUIMenu(const char *title, int no, int selected,
+			const char * const list[]);
 
 
 /* Allows options to be toggled in a list.  Returns FALSE for cancelled (in
@@ -63,12 +82,13 @@ int		GUIListSelect(const char *title, int no, char * const list[]);
    updated.
 */
 int		GUIListOption(const char *title,
-			      int no, char * const list[], int option[]);
+			      int no, const char * const list[], int option[]);
 
 
 /* Displays a list.
 */
-void		GUIDisplayList(const char *title, int no, char * const list[]);
+void		GUIDisplayList(const char *title, int no,
+			       const char * const list[]);
 
 
 /* Select a file from the given directory.
@@ -85,15 +105,22 @@ void		GUIDisplayList(const char *title, int no, char * const list[]);
 
 	char file[FILENAME_MAX]="/home/foobar/dir/file.tap";
 
-	if (GUI_Fsel("Select tape",TRUE,file,file))
+	if (GUI_Fsel("Select tape",TRUE,file,file,"tap"))
 	    ....
 
    Will work fine.
+
+   If extenstion is not NULL then only files with that extension (case
+   insensitive) will be listed.  Also the entered name with have that
+   appended (with the same case as the passed extension) if it's not in the
+   entered name.  The passed extension should not have a period,
+   e.g. "p", not ".p".
 */
 int		GUIFileSelect(const char *prompt,
 			      int load,
 			      const char *start_dir,
-			      char path[]);
+			      char path[],
+			      const char *extension);
 
 
 #endif

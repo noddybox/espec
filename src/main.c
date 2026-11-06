@@ -61,6 +61,106 @@ static void Usage(void)
 }
 
 
+static int Menu(const char *title, const char * const menu[], int selected)
+{
+    int no = 0;
+
+    while(menu[no])
+    {
+    	no++;
+    }
+
+    return GUIMenu(title, no, selected, menu);
+}
+
+
+static void JoystickMenu(void)
+{
+    static const char *menu[] = 
+    {
+	"Select Joytick",
+	"Map Keys to Joytick",
+	"Save Joystick Mappings",
+	"Load Joystick Mappings",
+	"Clear Joystick Key Mappings",
+	"Close Menu",
+	NULL
+    };
+
+    int selected = -1;
+
+    while(TRUE)
+    {
+	switch((selected = Menu("JOYSTICK MENU", menu, selected)))
+	{
+	    case 0:
+		JOYSelect();
+		break;
+
+	    case 1:
+		SPECSetupJoystick();
+		break;
+
+	    case 2:
+		SPECSaveJoystick();
+		break;
+
+	    case 3:
+		SPECLoadJoystick(NULL);
+		break;
+
+	    case 4:
+		SPECClearJoystick();
+		break;
+
+	    default:
+		return;
+	}
+    }
+}
+
+static void TapeMenu(void)
+{
+    static const char *menu[] = 
+    {
+	"View mounted tapes",
+	"Select tape file for loading",
+	"Select tape file for saving",
+	"Close all open tape files",
+	"Close Menu",
+	NULL
+    };
+
+    int selected = -1;
+
+    while(TRUE)
+    {
+	switch((selected = Menu("TAPE MENU", menu, selected)))
+	{
+	    case 0:
+		TAPEDisplayInfo();
+		break;
+
+	    case 1:
+		TAPESelectInput();
+		break;
+
+	    case 2:
+		TAPESelectOutput();
+		break;
+
+	    case 3:
+		TAPEUnmount(TAP_IN);
+		TAPEUnmount(TAP_OUT);
+		break;
+
+	    default:
+		return;
+	}
+    }
+}
+
+
 /* ---------------------------------------- MAIN
 */
 int main(int argc, char *argv[])
@@ -195,12 +295,10 @@ int main(int argc, char *argv[])
 				   "F1  - Help                        \n"
 				   "F2  - About                       \n"
 				   "F3  - View Spectrum keyboad       \n"
-				   "F4  - View mounted tapes          \n"
+				   "F4  - Close open TAP file for load\n"
 				   "F5  - Reset                       \n"
-				   "F6  - Select Joytick              \n"
-				   "F8  - Select tape file for loading\n"
-				   "F9  - Select tape file for saving \n"
-				   "F10 - Close all open tape files   \n"
+				   "F6  - Joystick Menu               \n"
+				   "F7  - Tape Menu                   \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
 		    break;
@@ -237,7 +335,7 @@ int main(int argc, char *argv[])
 		    break;
 
 		case SDLK_F4:
-                    TAPEDisplayInfo();
+		    TAPEUnmount(TAP_IN);
 		    break;
 
 		case SDLK_F5:
@@ -249,29 +347,11 @@ int main(int argc, char *argv[])
 		    break;
 
 		case SDLK_F6:
-		    JOYSelect();
+		    JoystickMenu();
 		    break;
 
-		case SDLK_F8:
-		    if (e->key.state==SDL_PRESSED)
-		    {
-                        TAPESelectInput();
-		    }
-		    break;
-
-		case SDLK_F9:
-		    if (e->key.state==SDL_PRESSED)
-		    {
-                        TAPESelectOutput();
-		    }
-		    break;
-
-		case SDLK_F10:
-		    if (e->key.state==SDL_PRESSED)
-		    {
-			TAPEUnmount(TAP_IN);
-			TAPEUnmount(TAP_OUT);
-		    }
+		case SDLK_F7:
+		    TapeMenu();
 		    break;
 
 		case SDLK_F11:

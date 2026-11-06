@@ -70,11 +70,25 @@ char		*SafeStrCopy(char *destination,
 const char	*Basename(const char *path);
 
 
+/* Check the extension of a file, case insensitive.  The passed extension
+   should not be preceeded with a period.  If the passed extension is NULL
+   then TRUE is always returned.
+*/
+int		CheckExtension(const char *path, const char *extension);
+
+
 /* Returns the directory portion of path.  Note returned pointer is internal
    static storage.  If there are no directory seperators in path, "." is
    returned.
 */
 const char	*Dirname(const char *path);
+
+
+/* Replace the extension on the passed filename with the passed extension.
+   Note returned pointer is internal static storage.
+   returned.
+*/
+const char	*ReplaceExtension(const char *path, const char *extension);
 
 
 /* Writes the passed text to debug, which is currently just stderr.
@@ -83,6 +97,12 @@ const char	*Dirname(const char *path);
    removed).
 */
 void		Debug(const char *format,...);
+
+
+/* See if the passed strings match, case insensitive.  Returns TRUE if they
+    match, otherwise FALSE.
+*/
+int		Compare(const char *a, const char *b);
 
 
 /* See if the passed strings match, case insensitive, up to the passed length.

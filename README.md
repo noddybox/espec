@@ -37,25 +37,80 @@ F2 - Display a message about the emulator.
 
 F3 - Display the Spectrum keyboard for reference.
 
-F4 - View any mounted tape files.
+F4 - Eject the selected TAP file for loading.
 
 F5 - Reset the Spectrum.
 
-F8 - Select the TAP file used to loading.
+F6 - Joystick menu
 
-F9 - Select the TAP file used for saving.
-
-F10 - Close any open tape files.
+F7 - Tape file menu
 
 F11 - Display the Memory Menu.
 
 F12 - Display an overlay of the current state of the Z80 CPU while the system
 is running.
 
-## TAP Files
+## Tape Menu
 
 The emulator only supports the use of TAP files, which are simple binary
-representation of the contents of a tape.
+representation of the contents of a tape.  If a TAP file isn't mounted and
+you load or save then a file selector is displayed to select the tape.
+
+### View mounted tapes
+
+View the currently open TAP files.
+
+### Select tape file for loading
+
+Select the TAP file to use for loading.  If one isn't defined when a LOAD is
+attempted a file selector will be displayed to pick the TAP file.
+
+### Select tape file for saving
+
+Select the TAP file to use for saving.  If one isn't defined when a SAVE is
+attempted a file selector will be displayed to pick the TAP file.
+
+### Close all open tape files
+
+Close both the load and save TAP files.
+
+### Close Menu
+
+Close the menu.
+
+## Joystick Menu
+
+A Kempston joystick is automatically emulated if a joystick is availale.
+In addition the joystick can be mapped to keys on the Spectrum keyboard.
+
+When a TAP file is opened for loading the emulator will look for the same name
+ending with a joy48 extension (containing joystick mappings) and if the file
+is present it will automatically be loaded and applied.
+
+### Select Joytick,
+
+Select the joystick to use from the connected joysticks.
+
+### Map Keys to Joytick
+
+Allows you to map joystick directions and buttons to keys on the Spectrum
+keyboard.  Follow the on-screen prompts.
+
+### Save Joystick Mappings
+
+Save the current joystick to keyboard mappings.
+
+### Load Joystick Mappings
+
+Load the joystick to keyboard mappings from a saved file.
+
+### Clear Joystick Key Mappings
+
+Clear the joystick to key mappings.
+
+### Close Menu
+
+Close the menu.
 
 ## Memory Menu
 

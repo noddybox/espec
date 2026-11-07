@@ -693,25 +693,29 @@ static int CheckTimers(Z80 *z80, Z80Val val)
     return TRUE;
 }
 
-static const char *LastJoystick(void)
+
+static const char *JoystickMapping(JoystickButton button)
 {
-    static const char *name[] =
+    const Joykey *joy = joystick + button;
+
+    if (joy->active)
     {
-    	"Right",
-    	"Left",
-    	"Up",
-    	"Down",
-    	"X",
-    	"Y",
-    	"A",
-    	"B",
-    	"Right Shoulder",
-    	"Left Shoulder",
-    };
+	int f;
 
-    return name[last_joystick];
+	for(f = 0; keymap[f].key != SDLK_UNKNOWN; f++)
+	{
+	    if (keymap[f].m1 == joy->row && keymap[f].b1 == joy->bit &&
+	    	keymap[f].display)
+	    {
+	    	return keymap[f].display;
+	    }
+	}
+
+	return "Unknown!";
+    }
+
+    return "No mapping";
 }
-
 
 static void HandleJoystick(JoystickButton button, int pressed)
 {
@@ -1280,7 +1284,7 @@ void SPECSetupJoystick(void)
 	} while(last_joystick == JOY_NumButtons);
 
 	GFXPrintPaper(10, 60, white, black,
-				"Joystick: %-20.20s", LastJoystick());
+			    "Joystick: %-20.20s", JOYButtonName(last_joystick));
 	GFXPrintPaper(10, GFX_HEIGHT - 20, green, black,
 						"%s", "PRESS KEY     ");
 	GFXEndFrame(FALSE);
@@ -1379,4 +1383,30 @@ void SPECLoadJoystick(const char *path)
 	    LoadJoystick(joykey_file);
 	}
     }
+}
+
+
+void SPECDisplayJoytick(void)
+{
+    char msg[1024] = {0};
+    JoystickButton button;
+
+    button = JOY_FIRST_BUTTON;
+
+    while (button < JOY_NumButtons)
+    {
+    	char s[80];
+
+	snprintf(s, sizeof s, "%-15s: %-15s", JOYButtonName(button),
+					      JoystickMapping(button));
+
+	strcat(msg, s);
+
+	if (++button != JOY_NumButtons)
+	{
+	    strcat(msg, "\n");
+	}
+    }
+
+    GUIMessage(eMessageBox, "JOYSTICK MAPPINGS", "%s", msg);
 }

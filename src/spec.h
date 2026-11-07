@@ -69,5 +69,6 @@ void		SPECSetupJoystick(void);
 void		SPECClearJoystick(void);
 void		SPECSaveJoystick(void);
 void		SPECLoadJoystick(const char *path);
+void		SPECDisplayJoytick(void);
 
 #endif

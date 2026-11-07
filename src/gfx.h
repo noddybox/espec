@@ -58,6 +58,14 @@
 #define GFX_TEXT_ASCII(ev)	((unsigned char)((ev)->text.text[0] & 0x7f))
 
 
+/* ---------------------------------------- TYPES
+*/
+
+/* Callback for redraw events
+*/
+typedef void (*RedrawCallback)(void);
+
+
 /* ---------------------------------------- INTERFACES
 */
 
@@ -170,6 +178,13 @@ void		GFXPrintCentre(int y, Uint32 col, Uint32 paper,
 /* Draws a simply bitmap centred on the screen
 */
 void		GFXBitmap(const GFX_Bitmap *bitmap);
+
+
+/* Register a callback to be called when the screen is about to be updated.
+   The callbacks will be called in the order of registration BEFORE the
+   screen is repainted, so that information can be overlaid if so wished.
+*/
+void		GFXRegisterRedrawCallback(RedrawCallback callback);
 
 
 #endif

@@ -83,6 +83,7 @@ static void JoystickMenu(void)
 	"Save Joystick Mappings",
 	"Load Joystick Mappings",
 	"Clear Joystick Key Mappings",
+	"Display Joystick Mappings",
 	"Close Menu",
 	NULL
     };
@@ -111,6 +112,10 @@ static void JoystickMenu(void)
 
 	    case 4:
 		SPECClearJoystick();
+		break;
+
+	    case 5:
+		SPECDisplayJoytick();
 		break;
 
 	    default:
@@ -190,6 +195,7 @@ int main(int argc, char *argv[])
     }
 
     GFXInit();
+    GUIInit();
 
     if (IConfig(CONF_JOYSTICK))
     {

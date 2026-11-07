@@ -176,6 +176,30 @@ void JOYPump(SDL_Event *e)
 	    }
 	    break;
 
+	case SDL_CONTROLLERDEVICEADDED:
+	    if (!joystick)
+	    {
+		if (SDL_IsGameController(e->cdevice.which))
+		{
+		    joystick = SDL_GameControllerOpen(e->cdevice.which);
+
+		    if (joystick)
+		    {
+			GUIToast("Attached inserted joystick");
+		    }
+		}
+	    }
+	    break;
+
+	case SDL_CONTROLLERDEVICEREMOVED:
+	    if (joystick)
+	    {
+		SDL_GameControllerClose(joystick);
+		joystick = NULL;
+		GUIToast("Joystick removed");
+	    }
+	    break;
+
 	default:
 	    break;
     }
@@ -195,4 +219,23 @@ void JOYRegister(JoystickCallback callback)
 int JOYConnected(void)
 {
     return joystick != NULL;
+}
+
+const char *JOYButtonName(JoystickButton button)
+{
+    static const char *name[] =
+    {
+    	"Left",
+    	"Right",
+    	"Up",
+    	"Down",
+    	"X",
+    	"Y",
+    	"A",
+    	"B",
+    	"Left Shoulder",
+    	"Right Shoulder",
+    };
+
+    return name[button];
 }

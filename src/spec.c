@@ -701,10 +701,12 @@ static const char *LastJoystick(void)
     	"Left",
     	"Up",
     	"Down",
-    	"Button 1",
-    	"Button 2",
-    	"Button 3",
-    	"Button 4",
+    	"X",
+    	"Y",
+    	"A",
+    	"B",
+    	"Right Shoulder",
+    	"Left Shoulder",
     };
 
     return name[last_joystick];
@@ -768,10 +770,12 @@ static void HandleJoystick(JoystickButton button, int pressed)
 		}
 		break;
 
-	    case JOY_Button1:
-	    case JOY_Button2:
-	    case JOY_Button3:
-	    case JOY_Button4:
+	    case JOY_Button_A:
+	    case JOY_Button_B:
+	    case JOY_Button_X:
+	    case JOY_Button_Y:
+	    case JOY_Right_Shoulder:
+	    case JOY_Left_Shoulder:
 		if (pressed)
 		{
 		    SETBIT(kempston, 4);
@@ -1226,12 +1230,16 @@ void SPECSetupJoystick(void)
     Uint32 green;
     int f;
 
+    if (!JOYConnected())
+    {
+	GUIMessage(eMessageBox, "ERROR","No joystick connected");
+	return;
+    }
+
     white = GFXRGB(255, 255, 255);
     black = GFXRGB(0, 0, 0);
     red = GFXRGB(255, 0, 0);
     green = GFXRGB(0, 255, 0);
-
-    ClearKeys();
 
     defining_joykeys = TRUE;
 

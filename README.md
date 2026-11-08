@@ -108,6 +108,12 @@ Load the joystick to keyboard mappings from a saved file.
 
 Clear the joystick to key mappings.
 
+### Display Joystick Mappings
+
+Display the current joystick to key mappings.
+
+Clear the joystick to key mappings.
+
 ### Close Menu
 
 Close the menu.

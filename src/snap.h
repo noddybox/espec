@@ -52,22 +52,4 @@ int	TAPSave(FILE *fp, Z80Byte id, Z80Word *addr,
 		Z80Word *len, SNAP_Peek peek);
 
 
-/* Copies a string.  The result must be freed.
-*/
-char		*StrCopy(const char *source);
-
-
-/* Returns the filename portion of path.  Note returned pointer is pointing
-   inside of path.
-*/
-const char	*Basename(const char *path);
-
-
-/* Returns the directory portion of path.  Note returned pointer is internal
-   static storage.  If there are no directory seperators in path, "." is
-   returned.
-*/
-const char	*Dirname(const char *path);
-
-
 #endif

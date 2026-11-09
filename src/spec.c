@@ -1393,7 +1393,7 @@ void SPECDisplayJoytick(void)
 
     button = JOY_FIRST_BUTTON;
 
-    while (button < JOY_NumButtons)
+    while (button <= JOY_LAST_BUTTON)
     {
     	char s[80];
 

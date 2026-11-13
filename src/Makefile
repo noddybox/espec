@@ -39,6 +39,7 @@ SOURCE	=	main.c		\
 		audio.c	        \
 		expr.c		\
 		joystick.c	\
+		file.c		\
 		z80.c		\
 		z80_decode.c	\
 		z80_dis.c
@@ -58,6 +59,7 @@ OBJECTS	=	main.o		\
 		audio.o	        \
 		expr.o		\
 		joystick.o	\
+		file.o		\
 		z80.o		\
 		z80_decode.o	\
 		z80_dis.o	\

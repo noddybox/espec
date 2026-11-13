@@ -189,6 +189,20 @@ Allows you to monitor the running system, single stepping, running (and
 optionally watching) the system, and doing so till a breakpoint is hit.  Press
 F1 for details of the available key commands.
 
+#### L - Display defined labels
+
+Show the labels, and values for them, the disassembler and the breakpoint
+expression parser understands.
+
+#### B - Save breakpoints
+
+Save the current breakpoints and their active status to a file.
+
+#### O - Load breakpoints
+
+Load the current breakpoints and their active status from a file.  You are
+given the option to add the breakpoints to the current ones, or replace them.
+
 #### R - Reset
 
 Reset the running system.

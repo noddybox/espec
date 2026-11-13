@@ -37,8 +37,8 @@
 
 /* ---------------------------------------- GLOBALS
 */
-static char tape_in[FILENAME_MAX]="";
-static char tape_out[FILENAME_MAX]="";
+static char tape_in[MAX_PATH_BUFF]="";
+static char tape_out[MAX_PATH_BUFF]="";
 static FILE *in;
 static FILE *out;
 
@@ -47,7 +47,7 @@ static FILE *out;
 
 int TAPESelectInput(void)
 {
-    char path[FILENAME_MAX];
+    char path[MAX_PATH_BUFF];
 
     if (GUIFileSelect("TAPE TO LOAD",TRUE,
                       tape_in[0] ? Dirname(tape_in) : SConfig(CONF_TAPEDIR),
@@ -63,7 +63,7 @@ int TAPESelectInput(void)
 
 int TAPESelectOutput(void)
 {
-    char path[FILENAME_MAX];
+    char path[MAX_PATH_BUFF];
 
     if (GUIFileSelect("TAPE TO SAVE",FALSE,
                       tape_out[0] ? Dirname(tape_out) : SConfig(CONF_TAPEDIR),
@@ -93,13 +93,13 @@ void TAPEMount(TAPEMountType type, const char *path)
     switch(type)
     {
         case TAP_IN:
-            strncpy(tape_in, path, FILENAME_MAX);
+            strncpy(tape_in, path, MAX_PATH_BUFF);
             in = fopen(tape_in, "rb");
 	    SPECLoadJoystick(tape_in);
             break;
 
         case TAP_OUT:
-            strncpy(tape_out, path, FILENAME_MAX);
+            strncpy(tape_out, path, MAX_PATH_BUFF);
             out = fopen(tape_out, "wb");
             break;
     }

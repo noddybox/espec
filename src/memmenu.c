@@ -604,7 +604,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 
 static void DoDisassemFile(Z80 *z80, const Z80State *s)
 {
-    static char fname[FILENAME_MAX]="";
+    static char fname[MAX_PATH_BUFF]="";
     FILE *fp;
     Z80Word start;
     Z80Word len;

@@ -107,7 +107,7 @@ void		GUIDisplayList(const char *title, int no,
 
    Also start_dir and path can be the same pointer:
 
-	char file[FILENAME_MAX]="/home/foobar/dir/file.tap";
+	char file[MAX_PATH_BUFF]="/home/foobar/dir/file.tap";
 
 	if (GUI_Fsel("Select tape",TRUE,file,file,"tap"))
 	    ....

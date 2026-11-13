@@ -142,7 +142,7 @@ typedef struct
 static Joykey		joystick[JOY_NumButtons] = {{0}};
 
 static int		defining_joykeys = FALSE;
-static char 		joykey_file[FILENAME_MAX];
+static char 		joykey_file[MAX_PATH_BUFF];
 static const char	*joyfile_ext = "joy48";
 static JoystickButton	last_joystick;
 

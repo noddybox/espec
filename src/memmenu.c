@@ -34,6 +34,7 @@
 #include "gui.h"
 #include "util.h"
 #include "expr.h"
+#include "file.h"
 
 #include <SDL.h>
 
@@ -83,6 +84,9 @@ static Breakpoint	bpoint={0,NULL,NULL};
 static const char	*raised=NULL;
 static int		lodged=FALSE;
 
+static char		bpoint_file[MAX_PATH_BUFF] = ".";
+static const char	*bpoint_ext = "brk";
+static const char	*bpoint_magic = "!BRKPT";
 
 /* ---------------------------------------- PROTOS
 */
@@ -352,6 +356,8 @@ static void DisplayMenu(void)
 	"9   - Monitor               ",
 	"L   - Display defined labels",
 	"R   - Reset                 ",
+	"B   - Save breakpoints      ",
+	"O   - Load breakpoints      ",
 	"X   - Exit (without confirm)",
     	"ESC - Return                ",
 	NULL
@@ -1280,6 +1286,98 @@ static void DoDisplayLabels(void)
 }
 
 
+static void DoSaveBreakpoints(void)
+{
+    if (bpoint.no == 0)
+    {
+	GUIMessage(eMessageBox,"ERROR","No breakpoints to save");
+	return;
+    }
+
+    if (GUIFileSelect("SELECT BREAKPOINTS TO SAVE", FALSE, bpoint_file,
+		      bpoint_file, bpoint_ext))
+    {
+    	void *fp;
+	int f;
+
+	fp = FILEOpen(bpoint_file, TRUE, bpoint_magic);
+
+	if (!fp)
+	{
+	    return;
+	}
+
+	FILEWriteNumber(fp, bpoint.no);
+
+	for(f = 0; f < bpoint.no; f++)
+	{
+	    FILEWriteNumber(fp, bpoint.active[f]);
+	    FILEWriteString(fp, bpoint.expr[f]);
+	}
+
+	FILEClose(fp);
+    }
+}
+
+
+static void DoLoadBreakpoints(Z80 *z80)
+{
+    if (GUIFileSelect("SELECT BREAKPOINTS TO LOAD", FALSE, bpoint_file,
+		      bpoint_file, bpoint_ext))
+    {
+	void *fp;
+	int start = 0;
+	long no;
+	int f;
+
+	fp = FILEOpen(bpoint_file, FALSE, bpoint_magic);
+
+	if (!fp)
+	{
+	    return;
+	}
+
+	if (bpoint.no)
+	{
+	    if (GUIMessage(eYesNoBox, "BREAKPOINTS", "Add to breakpoints?"))
+	    {
+		start = bpoint.no;
+	    }
+	    else
+	    {
+		for (f = 0; f < bpoint.no; f++)
+		{
+		    free(bpoint.expr[f]);
+		}
+
+		free(bpoint.expr);
+		free(bpoint.active);
+
+		bpoint.expr = NULL;
+		bpoint.active = NULL;
+		bpoint.no = 0;
+	    }
+	}
+
+	no = FILEReadNumber(fp);
+
+	bpoint.no += no;
+	bpoint.expr = Realloc(bpoint.expr, bpoint.no * sizeof *bpoint.expr);
+	bpoint.active = Realloc(bpoint.active, bpoint.no *
+						    sizeof *bpoint.active);
+
+	for(f = 0; f < no; f++)
+	{
+	    bpoint.active[start + f] = FILEReadNumber(fp);
+	    bpoint.expr[start + f] = FILEReadString(fp);
+	}
+
+	FILEClose(fp);
+	SetCallback(z80);
+    }
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 int MemoryMenu(Z80 *z80)
@@ -1373,6 +1471,14 @@ int MemoryMenu(Z80 *z80)
 
 		case 'L':
 		    DoDisplayLabels();
+		    break;
+
+		case 'B':
+		    DoSaveBreakpoints();
+		    break;
+
+		case 'O':
+		    DoLoadBreakpoints(z80);
 		    break;
 
 		default:

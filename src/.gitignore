@@ -1,4 +1,5 @@
 espec
 *.o
+*.brk
 core
 depend.mak

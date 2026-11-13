@@ -43,7 +43,7 @@
 
 /* ---------------------------------------- MACROS
 */
-#define ESPEC_VERSION "V1.4-dev"
+#define ESPEC_VERSION "V1.4"
 
 /* ---------------------------------------- STATICS
 */

@@ -129,8 +129,8 @@ register names and can use different bases.  For instance `pc` will enter the
 address as the current contents of the Program Counter.  By default numbers
 are decimal.  To use hex number prefix the value with `0x`.
 
-If the value is prefixed with '!' then the byte at the specified address is
-read and used.  If the value is prefixed with '@' then the word at the
+If the value is prefixed with `#` then the byte at the specified address is
+read and used.  If the value is prefixed with `@` then the word at the
 specified address is read and used.
 
 ### Main Menu
@@ -170,6 +170,9 @@ if the HL register pair holds the value 0x1234.
 
 If there is no equality check then the value is taken as a value to stop at
 when the Program Counter equals that value.
+
+Note that the `#` and `@` can be used for breakpoints, so `#0x1234==1` would
+work.
 
 #### 6 - Set active breakpoints
 

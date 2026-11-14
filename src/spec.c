@@ -802,6 +802,9 @@ static void HandleJoystick(JoystickButton button, int pressed)
 		    CLRBIT(kempston, 4);
 		}
 		break;
+
+	    default:
+	    	break;
 	}
 
 	Joykey *joy = joystick + button;

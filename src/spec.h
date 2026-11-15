@@ -66,6 +66,7 @@ int		SPECAudioFrequency(void);
 /* Interfaces for joystick setup
 */
 void		SPECSetupJoystick(void);
+void		SPECSetupPredefinedJoystick(void);
 void		SPECClearJoystick(void);
 void		SPECSaveJoystick(void);
 void		SPECLoadJoystick(const char *path);

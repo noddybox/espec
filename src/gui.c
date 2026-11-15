@@ -656,9 +656,46 @@ int GUIListSelect(const char *title, int no, const char * const list[])
 }
 
 
-int GUIMenu(const char *title, int no, int selected, const char * const list[])
+const GUIMenuItem *GUIMenu(const char *title, int selected,
+			   const GUIMenuItem list[])
 {
-    return DoList(title, no, list, NULL, NULL, FALSE, selected);
+    char **opts;
+    int current_selection = -1;
+    int selected_option;
+    int no;
+    int f;
+
+    for (no = 0; list[no].item; no++)
+    {
+    	if (list[no].value == selected)
+	{
+	    current_selection = no;
+	}
+    }
+
+    opts = Malloc(sizeof *opts * no);
+
+    for (f = 0; f < no; f++)
+    {
+    	opts[f] = StrCopy(list[f].item);
+    }
+
+    selected_option = DoList(title, no, GUI_LIST_CAST(opts),
+			     NULL, NULL, FALSE, current_selection);
+
+    for (f = 0; f < no; f++)
+    {
+    	free(opts[f]);
+    }
+
+    free(opts);
+
+    if (selected_option == -1)
+    {
+    	return NULL;
+    }
+
+    return list + selected_option;
 }
 
 

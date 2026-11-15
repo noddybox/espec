@@ -61,107 +61,132 @@ static void Usage(void)
 }
 
 
-static int Menu(const char *title, const char * const menu[], int selected)
-{
-    int no = 0;
-
-    while(menu[no])
-    {
-    	no++;
-    }
-
-    return GUIMenu(title, no, selected, menu);
-}
-
-
 static void JoystickMenu(void)
 {
-    static const char *menu[] = 
+    enum opts
     {
-	"Select Joytick",
-	"Map Keys to Joytick",
-	"Save Joystick Mappings",
-	"Load Joystick Mappings",
-	"Clear Joystick Key Mappings",
-	"Display Joystick Mappings",
-	"Close Menu",
-	NULL
+    	SELECT,
+    	MAP_KEYS,
+    	MAP_PREDEFINED,
+	SAVE,
+	LOAD,
+	CLEAR,
+	DISPLAY,
+	CLOSE
     };
 
+    static const GUIMenuItem menu[] = 
+    {
+	{SELECT,	"Select Joytick",		NULL},
+	{MAP_KEYS,	"Map Keys to Joytick",		NULL},
+	{MAP_PREDEFINED,"Select predefined Mapping",	NULL},
+	{SAVE,		"Save Joystick Mappings",	NULL},
+	{LOAD,		"Load Joystick Mappings",	NULL},
+	{CLEAR,		"Clear Joystick Key Mappings",	NULL},
+	{DISPLAY,	"Display Joystick Mappings",	NULL},
+	{CLOSE,		"Close Menu",			NULL},
+	{0,		NULL,				NULL}
+    };
+
+    const GUIMenuItem *item;
     int selected = -1;
 
-    while(TRUE)
+    item = GUIMenu("JOYSTICK MENU", selected, menu);
+
+    while(item)
     {
-	switch((selected = Menu("JOYSTICK MENU", menu, selected)))
+	switch (item->value)
 	{
-	    case 0:
+	    case SELECT:
 		JOYSelect();
 		break;
 
-	    case 1:
+	    case MAP_KEYS:
 		SPECSetupJoystick();
 		break;
 
-	    case 2:
+	    case MAP_PREDEFINED:
+		SPECSetupPredefinedJoystick();
+		break;
+
+	    case SAVE:
 		SPECSaveJoystick();
 		break;
 
-	    case 3:
+	    case LOAD:
 		SPECLoadJoystick(NULL);
 		break;
 
-	    case 4:
+	    case CLEAR:
 		SPECClearJoystick();
 		break;
 
-	    case 5:
+	    case DISPLAY:
 		SPECDisplayJoytick();
 		break;
 
-	    default:
+	    case CLOSE:
 		return;
 	}
+
+	selected = item->value;
+	item = GUIMenu("JOYSTICK MENU", selected, menu);
     }
 }
 
 static void TapeMenu(void)
 {
-    static const char *menu[] = 
+    enum opts
     {
-	"View mounted tapes",
-	"Select tape file for loading",
-	"Select tape file for saving",
-	"Close all open tape files",
-	"Close Menu",
-	NULL
+    	VIEW,
+    	LOADING,
+    	SAVING,
+	CLOSE_ALL,
+	CLOSE
     };
 
+    static const GUIMenuItem menu[] = 
+    {
+	{VIEW,		"View mounted tapes",			NULL},
+	{LOADING,	"Select tape file for loading",		NULL},
+	{SAVING,	"Select tape file for saving",		NULL},
+	{CLOSE_ALL,	"Close all open tape files",		NULL},
+	{CLOSE,		"Close Menu",				NULL},
+	{0,		NULL,					NULL}
+    };
+
+    const GUIMenuItem *item;
     int selected = -1;
 
-    while(TRUE)
+    item = GUIMenu("TAPE MENU", selected, menu);
+
+    while(item)
     {
-	switch((selected = Menu("TAPE MENU", menu, selected)))
+	switch (item->value)
 	{
-	    case 0:
+	    case VIEW:
 		TAPEDisplayInfo();
 		break;
 
-	    case 1:
+	    case LOADING:
 		TAPESelectInput();
 		break;
 
-	    case 2:
+	    case SAVING:
 		TAPESelectOutput();
 		break;
 
-	    case 3:
+	    case CLOSE_ALL:
 		TAPEUnmount(TAP_IN);
 		TAPEUnmount(TAP_OUT);
 		break;
 
-	    default:
-		return;
+	    case CLOSE:
+	    	return;
 	}
+
+	selected = item->value;
+	item = GUIMenu("TAPE MENU", selected, menu);
     }
 }
 
@@ -196,11 +221,7 @@ int main(int argc, char *argv[])
 
     GFXInit();
     GUIInit();
-
-    if (IConfig(CONF_JOYSTICK))
-    {
-    	JOYInit();
-    }
+    JOYInit();
 
     if (IConfig(CONF_SOUND))
     {

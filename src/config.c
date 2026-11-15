@@ -39,7 +39,10 @@ static int	frames=50;
 static int	scale=1;
 static int	trace=0;
 static int	sound=1;
-static int	joystick=1;
+static int	kempston_joystick=1;
+static int	fuller_joystick=1;
+static int	amx_mouse=0;
+static int	kempston_mouse=0;
 
 static const struct
 {
@@ -47,15 +50,18 @@ static const struct
     void	*var;
     int		is_int;
 } config[]= {
-		{"rompath",	rompath,	FALSE},
-		{"tapedir",	tapedir,	FALSE},
-		{"fullscreen",	&fullscreen,	TRUE},
-		{"frames",	&frames,	TRUE},
-		{"scale",	&scale,		TRUE},
-		{"trace",	&trace,		TRUE},
-		{"sound",	&sound,		TRUE},
-		{"joystick",	&joystick,	TRUE},
-		{NULL,		NULL,		FALSE}
+		{"rompath",		rompath,		FALSE},
+		{"tapedir",		tapedir,		FALSE},
+		{"fullscreen",		&fullscreen,		TRUE},
+		{"frames",		&frames,		TRUE},
+		{"scale",		&scale,			TRUE},
+		{"trace",		&trace,			TRUE},
+		{"sound",		&sound,			TRUE},
+		{"kempston_joystick",	&kempston_joystick,	TRUE},
+		{"fuller_joystick",	&fuller_joystick,	TRUE},
+		{"amx_mouse",		&amx_mouse,		TRUE},
+		{"kempston_mouse",	&kempston_mouse,	TRUE},
+		{NULL,			NULL,			FALSE}
 	    };
 
 
@@ -140,30 +146,62 @@ int IConfig(IConfigVar v)
 {
     static const struct
     {
-    	int	*ptr;
-	int	min;
-	int	max;
+	IConfigVar	var;
+    	int		*ptr;
+	int		min;
+	int		max;
     } vars[]=
     {
-	{&fullscreen,	0,	1},
-	{&frames,	1,	100},
-	{&scale,	1,	10},
-	{&trace,	0,	1},
-	{&sound,	0,	63},
-	{&joystick,	0,	1}
+	{CONF_FULLSCREEN,		&fullscreen,		0,	1},
+	{CONF_FRAMES_PER_SEC,		&frames,		1,	100},
+	{CONF_SCALE,			&scale,			1,	10},
+	{CONF_TRACE,			&trace,			0,	1},
+	{CONF_SOUND,			&sound,			0,	63},
+	{CONF_KEMPSTON_JOYSTICK,	&kempston_joystick,	0,	1},
+	{CONF_FULLER_JOYSTICK,		&fuller_joystick,	0,	1},
+	{CONF_AMX_MOUSE,		&amx_mouse,		0,	1},
+	{CONF_KEMPSTON_MOUSE,		&kempston_mouse,	0,	1},
+	{0,				NULL,			0,	0}
     };
 
-    return Clamp(*vars[v].ptr, vars[v].min, vars[v].max);
+    int f;
+
+    for(f = 0; vars[f].ptr; f++)
+    {
+    	if (vars[f].var == v)
+	{
+	    return Clamp(*vars[f].ptr, vars[f].min, vars[f].max);
+	}
+    }
+
+    return 0;
 }
 
 
 const char *SConfig(SConfigVar v)
 {
-    static const char *vars[]=
-    		{
-		    rompath,
-		    tapedir
-		};
+    static const struct
+    {
+	SConfigVar	var;
+    	const char	*ptr;
+	int		min;
+	int		max;
+    } vars[]=
+    {
+	{CONF_ROMFILE,		rompath},
+	{CONF_TAPEDIR,		tapedir},
+	{0,			NULL}
+    };
 
-    return vars[v];
+    int f;
+
+    for(f = 0; vars[f].ptr; f++)
+    {
+    	if (vars[f].var == v)
+	{
+	    return vars[f].ptr;
+	}
+    }
+
+    return NULL;
 }

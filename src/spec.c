@@ -36,6 +36,7 @@
 #include "tape.h"
 #include "audio.h"
 #include "joystick.h"
+#include "mouse.h"
 #include "file.h"
 #include "util.h"
 
@@ -821,6 +822,16 @@ static void HandleJoystick(JoystickButton button, int pressed)
 }
 
 
+static void HandleMouseButton(MouseButton button, int pressed)
+{
+}
+
+
+static void HandleMouseMove(int x, int y, int dx, int dy)
+{
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 void SPECInit(Z80 *z80)
@@ -852,10 +863,8 @@ void SPECInit(Z80 *z80)
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
 
-    if (IConfig(CONF_JOYSTICK))
-    {
-    	JOYRegister(HandleJoystick);
-    }
+    JOYRegister(HandleJoystick);
+    MOUSERegister(HandleMouseButton, HandleMouseMove);
 
     volume = IConfig(CONF_SOUND);
 
@@ -908,8 +917,15 @@ Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 
     switch(lo)
     {
-	case 0x1f:	/* Kempston joystick */
-	    b = kempston;
+	case 0x1f:	/* Kempston joystick and AMX mouse*/
+	    if (IConfig(CONF_AMX_MOUSE))
+	    {
+	    }
+
+	    if (IConfig(CONF_KEMPSTON_JOYSTICK))
+	    {
+		b = kempston;
+	    }
 	    break;
 
 	case 0xfb:	/* TODO: ZX Printer */
@@ -1330,9 +1346,77 @@ void SPECSetupJoystick(void)
 	GFXPrintPaper(10, 70, white, black, "Key: %-20.20s", map->display);
 	GFXEndFrame(FALSE);
 
-	joystick[button].active = 1;
+	joystick[button].active = TRUE;
 	joystick[button].row = map->m1;
 	joystick[button].bit = map->b1;
+    }
+}
+
+
+void SPECSetupPredefinedJoystick(void)
+{
+    typedef struct
+    {
+	JoystickButton	button;
+    	SDL_Keycode	key;
+    } Keymapping;
+
+    static const Keymapping cursor[] =
+    {
+    	{JOY_Up,		SDLK_7},
+    	{JOY_Down,		SDLK_6},
+    	{JOY_Left,		SDLK_5},
+    	{JOY_Right,		SDLK_8},
+    	{JOY_Button_A,		SDLK_0},
+    	{JOY_Button_B,		SDLK_0},
+    	{JOY_Button_X,		SDLK_0},
+    	{JOY_Button_Y,		SDLK_0},
+	{JOY_NumButtons,	SDLK_UNKNOWN}
+    };
+
+    static const Keymapping qaop[] =
+    {
+    	{JOY_Up,		SDLK_q},
+    	{JOY_Down,		SDLK_a},
+    	{JOY_Left,		SDLK_o},
+    	{JOY_Right,		SDLK_p},
+    	{JOY_Button_A,		SDLK_SPACE},
+    	{JOY_Button_B,		SDLK_SPACE},
+    	{JOY_Button_X,		SDLK_SPACE},
+    	{JOY_Button_Y,		SDLK_SPACE},
+	{JOY_NumButtons,	SDLK_UNKNOWN}
+    };
+
+    static const GUIMenuItem menu[] =
+    {
+    	{0,	"Cursor Keys, 0 for fire",	cursor},
+    	{1,	"QAOP with SPACE for fire",	qaop},
+	{0,	NULL,				NULL}
+    };
+
+    const GUIMenuItem *item;
+
+    item = GUIMenu("SELECT PREDEFINED MAPPING", -1, menu);
+
+    if (item)
+    {
+    	const Keymapping *map = item->client_data;
+	int f;
+
+	SPECClearJoystick();
+
+	for(f = 0; map[f].key != SDLK_UNKNOWN; f++)
+	{
+	    for(int n = 0; keymap[n].key != SDLK_UNKNOWN; n++)
+	    {
+		if (keymap[n].key == map[f].key && keymap[n].display)
+		{
+		    joystick[map[f].button].active = TRUE;
+		    joystick[map[f].button].row = keymap[n].m1;
+		    joystick[map[f].button].bit = keymap[n].b1;
+		}
+	    }
+	}
     }
 }
 

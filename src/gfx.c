@@ -30,6 +30,7 @@
 
 #include "gfx.h"
 #include "joystick.h"
+#include "mouse.h"
 #include "exit.h"
 #include "config.h"
 #include "util.h"
@@ -124,6 +125,22 @@ static void CheckJoystick(SDL_Event *e)
 }
 
 
+static void CheckMouse(SDL_Event *e)
+{
+    switch (e->type)
+    {
+	case SDL_MOUSEMOTION:
+	case SDL_MOUSEBUTTONDOWN:
+	case SDL_MOUSEBUTTONUP:
+	    MOUSEPump(e);
+	    break;
+
+	default:
+	    break;
+    }
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 void GFXInit(void)
@@ -146,16 +163,11 @@ void GFXInit(void)
 
     frame=1000/IConfig(CONF_FRAMES_PER_SEC);
 
-    flags = SDL_INIT_TIMER|SDL_INIT_VIDEO;
+    flags = SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER;
 
     if (IConfig(CONF_SOUND))
     {
 	flags |= SDL_INIT_AUDIO;
-    }
-
-    if (IConfig(CONF_JOYSTICK))
-    {
-	flags |= SDL_INIT_GAMECONTROLLER;
     }
 
     if (SDL_Init(flags))

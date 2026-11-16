@@ -32,6 +32,8 @@
 
 /* ---------------------------------------- CONFIG
 */
+static char	config_path[MAX_PATH_BUFF];
+
 static char	rompath[MAX_PATH_BUFF]="./spec48.rom";
 static char	tapedir[MAX_PATH_BUFF]=".";
 static int	fullscreen=FALSE;
@@ -64,9 +66,111 @@ static const struct
 		{NULL,			NULL,			FALSE}
 	    };
 
+static struct
+{
+    int		*ptr;
+    int		min;
+    int		max;
+} iconfig[CONF_NUM_INT];
+
+static char *sconfig[CONF_NUM_STRING];
+
+static const struct
+{
+    IConfigVar	var;
+    int		*ptr;
+    int		min;
+    int		max;
+} iconfig_setup[] =
+{
+    {CONF_FULLSCREEN,		&fullscreen,		0,	1},
+    {CONF_FRAMES_PER_SEC,	&frames,		1,	100},
+    {CONF_SCALE,		&scale,			1,	10},
+    {CONF_TRACE,		&trace,			0,	1},
+    {CONF_SOUND,		&sound,			0,	63},
+    {CONF_KEMPSTON_JOYSTICK,	&kempston_joystick,	0,	1},
+    {CONF_FULLER_JOYSTICK,	&fuller_joystick,	0,	1},
+    {CONF_AMX_MOUSE,		&amx_mouse,		0,	1},
+    {CONF_KEMPSTON_MOUSE,	&kempston_mouse,	0,	1},
+    {0,				NULL,			0,	0}
+};
+
+static const struct
+{
+    SConfigVar	var;
+    char	*ptr;
+} sconfig_setup[] =
+{
+    {CONF_ROMFILE,	rompath},
+    {CONF_TAPEDIR,	tapedir},
+    {0,			NULL}
+};
+
+static const struct
+{
+    IConfigVar	var;
+    const char	*description;
+} iconfig_description [] =
+{
+    {CONF_FULLSCREEN,		"Full screen"},
+    {CONF_FRAMES_PER_SEC,	"Frames per second"},
+    {CONF_SCALE,		"Frames per second"},
+    {CONF_TRACE,		"Frames per second"},
+    {CONF_SOUND,		"Frames per second"},
+    {CONF_KEMPSTON_JOYSTICK,	"Kempston Joystick"},
+    {CONF_FULLER_JOYSTICK,	"Fuller Joystick"},
+    {CONF_AMX_MOUSE,		"AMX Mouse"},
+    {CONF_KEMPSTON_MOUSE,	"Kempston Mouse"},
+    {0,				NULL}
+};
+
+static const struct
+{
+    SConfigVar	var;
+    const char	*description;
+} sconfig_description [] =
+{
+    {CONF_ROMFILE,		"Path to ROM image"},
+    {CONF_TAPEDIR,		"Initial tape directory"},
+    {0,				NULL}
+};
+
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static void SetupLookupTables(void)
+{
+    int f;
+
+    for(f = 0; iconfig_setup[f].ptr; f++)
+    {
+    	iconfig[iconfig_setup[f].var].ptr = iconfig_setup[f].ptr;
+    	iconfig[iconfig_setup[f].var].min = iconfig_setup[f].min;
+    	iconfig[iconfig_setup[f].var].max = iconfig_setup[f].max;
+    }
+
+    for(f = 0; sconfig_setup[f].ptr; f++)
+    {
+    	sconfig[sconfig_setup[f].var] = sconfig_setup[f].ptr;
+    }
+
+    for(f = 0; f < CONF_NUM_INT; f++)
+    {
+    	if (!iconfig[f].ptr)
+	{
+	    Exit("Error in config int setup tables\n");
+	}
+    }
+
+    for(f = 0; f < CONF_NUM_STRING; f++)
+    {
+    	if (!sconfig[f])
+	{
+	    Exit("Error in config string setup tables\n");
+	}
+    }
+}
+
 static void Parse(FILE *fp)
 {
     char buff[1024];
@@ -127,81 +231,94 @@ static void Parse(FILE *fp)
 void ConfigRead(void)
 {
     FILE *fp;
-    char path[MAX_PATH_BUFF]={0};
+    const char *home = getenv("HOME");
 
-    if (getenv("HOME"))
-    	strcpy(path,getenv("HOME"));
+    strcpy(config_path, home ? home : ".");
+    strcat(config_path, "/.espec");
 
-    strcat(path,"/.espec");
-
-    if ((fp=fopen(path,"r")))
+    if ((fp = fopen(config_path,"r")))
     {
     	Parse(fp);
 	fclose(fp);
     }
+
+    SetupLookupTables();
 }
 
 
 int IConfig(IConfigVar v)
 {
-    static const struct
-    {
-	IConfigVar	var;
-    	int		*ptr;
-	int		min;
-	int		max;
-    } vars[]=
-    {
-	{CONF_FULLSCREEN,		&fullscreen,		0,	1},
-	{CONF_FRAMES_PER_SEC,		&frames,		1,	100},
-	{CONF_SCALE,			&scale,			1,	10},
-	{CONF_TRACE,			&trace,			0,	1},
-	{CONF_SOUND,			&sound,			0,	63},
-	{CONF_KEMPSTON_JOYSTICK,	&kempston_joystick,	0,	1},
-	{CONF_FULLER_JOYSTICK,		&fuller_joystick,	0,	1},
-	{CONF_AMX_MOUSE,		&amx_mouse,		0,	1},
-	{CONF_KEMPSTON_MOUSE,		&kempston_mouse,	0,	1},
-	{0,				NULL,			0,	0}
-    };
-
-    int f;
-
-    for(f = 0; vars[f].ptr; f++)
-    {
-    	if (vars[f].var == v)
-	{
-	    return Clamp(*vars[f].ptr, vars[f].min, vars[f].max);
-	}
-    }
-
-    return 0;
+    return Clamp(*iconfig[v].ptr, iconfig[v].min, iconfig[v].max);
 }
 
 
 const char *SConfig(SConfigVar v)
 {
-    static const struct
-    {
-	SConfigVar	var;
-    	const char	*ptr;
-	int		min;
-	int		max;
-    } vars[]=
-    {
-	{CONF_ROMFILE,		rompath},
-	{CONF_TAPEDIR,		tapedir},
-	{0,			NULL}
-    };
+    return sconfig[v];
+}
 
-    int f;
 
-    for(f = 0; vars[f].ptr; f++)
+void IConfigSet(IConfigVar v, int value)
+{
+    *iconfig[v].ptr = value;
+}
+
+
+void SConfigSet(SConfigVar v, const char *value)
+{
+    SafeStrCopy(sconfig[v], value, MAX_PATH_BUFF);
+}
+
+const char *IConfigDescription(IConfigVar var)
+{
+    for(int f = 0; iconfig_description[f].description; f++)
     {
-    	if (vars[f].var == v)
+    	if (iconfig_description[f].var == var)
 	{
-	    return vars[f].ptr;
+	    return iconfig_description[f].description;
 	}
     }
 
-    return NULL;
+    return "Unknown";
+}
+
+const char *SConfigDescription(SConfigVar var)
+{
+    for(int f = 0; sconfig_description[f].description; f++)
+    {
+    	if (sconfig_description[f].var == var)
+	{
+	    return sconfig_description[f].description;
+	}
+    }
+
+    return "Unknown";
+}
+
+void ConfigSave(void)
+{
+    FILE *fp;
+
+    if ((fp = fopen(config_path, "w")))
+    {
+	for(int f = 0; config[f].name; f++)
+	{
+	    fprintf(fp, "%-20s", config[f].name);
+
+	    if (config[f].is_int)
+	    {
+	    	int *p = config[f].var;
+
+		fprintf(fp, "%d\n", *p);
+	    }
+	    else
+	    {
+	    	char *p = config[f].var;
+
+		fprintf(fp, "%s\n", p);
+	    }
+	}
+
+	fclose(fp);
+    }
 }

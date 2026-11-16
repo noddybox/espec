@@ -1,29 +1,38 @@
 # This file is read from $HOME/.espec
 
 # Path to the Spectrum 48K ROM.  Defaults to ./spec48.rom
-rompath         /path/to/spec48.rom
+rompath			/path/to/spec48.rom
 
 # Path where TAP files are located for loading.  Defaults to the current
 # directory
-tapedir         /path/to/tap_files
+tapedir			/path/to/tap_files
 
 # 1 for fullscreen, 0 for windowed.  Defaults to windowed
-fullscreen      0
+fullscreen		0
 
 # The number of frames per second.  50 is the default.  Note a PAL emulation
 # is done, so setting this to 60 won't suddenly make the Spectrum NTSC.  It'll
 # just make the PAL Spectrum run quicker.
-frames          50
+frames			50
 
 # An integer scale ratio.  Defaults to 1.
-scale           1
+scale			1
 
 # Trace the state of the Z80 to stdout if 1.  Defaults to 0.
-trace           0
+trace			0
 
 # The volume of generated sound in the range 0 to 63.  If set to zero sound
 # is disabled.
-sound           16
+sound			16
 
-# Whether to enable joysticks (1) or disable them (0).  Defaults to 1.
-joystick        1
+# Whether to enable Kempston joysticks (1) or disable them (0).  Defaults to 1.
+kempston_joystick	1
+
+# Whether to enable Fuller joysticks (1) or disable them (0).  Defaults to 1.
+fuller_joystick		1
+
+# Whether to enable AMX mouse (1) or disable it (0).  Defaults to 0.
+amx_mouse		0
+
+# Whether to enable Kempston mouse (1) or disable it (0).  Defaults to 0.
+kempston_mouse		0

@@ -40,7 +40,8 @@ typedef enum
     CONF_KEMPSTON_JOYSTICK,
     CONF_FULLER_JOYSTICK,
     CONF_AMX_MOUSE,
-    CONF_KEMPSTON_MOUSE
+    CONF_KEMPSTON_MOUSE,
+    CONF_NUM_INT
 } IConfigVar;
 
 
@@ -49,7 +50,8 @@ typedef enum
 typedef enum
 {
     CONF_ROMFILE,
-    CONF_TAPEDIR
+    CONF_TAPEDIR,
+    CONF_NUM_STRING
 } SConfigVar;
 
 
@@ -66,6 +68,31 @@ int		IConfig(IConfigVar v);
 /* Get string setting
 */
 const char	*SConfig(SConfigVar v);
+
+
+/* Set integer setting
+*/
+void		IConfigSet(IConfigVar v, int value);
+
+
+/* Set string setting
+*/
+void		SConfigSet(SConfigVar v, const char *value);
+
+
+/* Description of integer config item
+*/
+const char	*IConfigDescription(IConfigVar var);
+
+
+/* Description of string config item
+*/
+const char	*SConfigDescription(SConfigVar var);
+
+
+/* Save config
+*/
+void		ConfigSave(void);
 
 
 #endif

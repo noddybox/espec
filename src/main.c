@@ -190,6 +190,51 @@ static void TapeMenu(void)
     }
 }
 
+static void ConfigureDevices(void)
+{
+    enum constants
+    {
+    	NUM = 4
+    };
+
+    static IConfigVar config[NUM] =
+    {
+    	CONF_KEMPSTON_JOYSTICK,
+    	CONF_FULLER_JOYSTICK,
+    	CONF_AMX_MOUSE,
+    	CONF_KEMPSTON_MOUSE
+    };
+
+    const char * const items[NUM] =
+    {
+    	IConfigDescription(CONF_KEMPSTON_JOYSTICK),
+    	IConfigDescription(CONF_FULLER_JOYSTICK),
+    	IConfigDescription(CONF_AMX_MOUSE),
+    	IConfigDescription(CONF_KEMPSTON_MOUSE)
+    };
+
+    int options[NUM] =
+    {
+    	IConfig(CONF_KEMPSTON_JOYSTICK),
+    	IConfig(CONF_FULLER_JOYSTICK),
+    	IConfig(CONF_AMX_MOUSE),
+    	IConfig(CONF_KEMPSTON_MOUSE)
+    };
+
+    if (GUIListOption("SELECT DEVICES", NUM, items, options))
+    {
+    	for(int f = 0; f < NUM; f++)
+	{
+	    IConfigSet(config[f], options[f]);
+	}
+
+	if (GUIMessage(eYesNoBox, "SAVE CONFIG", "Save configuration"))
+	{
+	    ConfigSave();
+	}
+    }
+}
+
 
 /* ---------------------------------------- MAIN
 */
@@ -326,6 +371,7 @@ int main(int argc, char *argv[])
 				   "F5  - Reset                       \n"
 				   "F6  - Joystick Menu               \n"
 				   "F7  - Tape Menu                   \n"
+				   "F8  - Configure attached devices  \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
 		    break;
@@ -379,6 +425,10 @@ int main(int argc, char *argv[])
 
 		case SDLK_F7:
 		    TapeMenu();
+		    break;
+
+		case SDLK_F8:
+		    ConfigureDevices();
 		    break;
 
 		case SDLK_F11:

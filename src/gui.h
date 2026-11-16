@@ -47,13 +47,13 @@ typedef struct
     const void	*client_data;
 } GUIMenuItem;
 
-
-/* ---------------------------------------- INTERFACES
-*/
-
 /* Message types
 */
 typedef enum {eMessageBox, eYesNoBox} GUIBoxType;
+
+
+/* ---------------------------------------- INTERFACES
+*/
 
 /* Call to do any initialisation.  Should be called after GFXInit()
 */

@@ -45,6 +45,8 @@ F6 - Joystick menu
 
 F7 - Tape file menu
 
+F8 - Select devices
+
 F11 - Display the Memory Menu.
 
 F12 - Display an overlay of the current state of the Z80 CPU while the system

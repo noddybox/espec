@@ -219,3 +219,9 @@ Exits the emulator without prompting you first.
 #### ESCAPE - Return
 
 Return to the running system.
+
+## ROM
+
+The original ZX Spectrum ROM can be found in the ROM directory.  Amstrad have
+kindly given their permission for the redistribution of their copyrighted
+material but retain that copyright.

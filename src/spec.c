@@ -1398,10 +1398,24 @@ void SPECSetupPredefinedJoystick(void)
 	{JOY_NumButtons,	SDLK_UNKNOWN}
     };
 
+    static const Keymapping iface2[] =
+    {
+    	{JOY_Up,		SDLK_9},
+    	{JOY_Down,		SDLK_8},
+    	{JOY_Left,		SDLK_6},
+    	{JOY_Right,		SDLK_7},
+    	{JOY_Button_A,		SDLK_0},
+    	{JOY_Button_B,		SDLK_0},
+    	{JOY_Button_X,		SDLK_0},
+    	{JOY_Button_Y,		SDLK_0},
+	{JOY_NumButtons,	SDLK_UNKNOWN}
+    };
+
     static const GUIMenuItem menu[] =
     {
     	{0,	"Cursor Keys, 0 for fire",	cursor},
     	{1,	"QAOP with SPACE for fire",	qaop},
+    	{2,	"Interface 2",			iface2},
 	{0,	NULL,				NULL}
     };
 

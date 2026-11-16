@@ -45,6 +45,7 @@ static int	kempston_joystick=1;
 static int	fuller_joystick=1;
 static int	amx_mouse=0;
 static int	kempston_mouse=0;
+static int	zx_printer=0;
 
 static const struct
 {
@@ -63,6 +64,7 @@ static const struct
 		{"fuller_joystick",	&fuller_joystick,	TRUE},
 		{"amx_mouse",		&amx_mouse,		TRUE},
 		{"kempston_mouse",	&kempston_mouse,	TRUE},
+		{"zx_printer",		&zx_printer,		TRUE},
 		{NULL,			NULL,			FALSE}
 	    };
 
@@ -92,6 +94,7 @@ static const struct
     {CONF_FULLER_JOYSTICK,	&fuller_joystick,	0,	1},
     {CONF_AMX_MOUSE,		&amx_mouse,		0,	1},
     {CONF_KEMPSTON_MOUSE,	&kempston_mouse,	0,	1},
+    {CONF_ZX_PRINTER,		&zx_printer,		0,	1},
     {0,				NULL,			0,	0}
 };
 
@@ -121,6 +124,7 @@ static const struct
     {CONF_FULLER_JOYSTICK,	"Fuller Joystick"},
     {CONF_AMX_MOUSE,		"AMX Mouse"},
     {CONF_KEMPSTON_MOUSE,	"Kempston Mouse"},
+    {CONF_ZX_PRINTER,		"ZX Printer"},
     {0,				NULL}
 };
 

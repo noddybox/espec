@@ -41,6 +41,7 @@ typedef enum
     CONF_FULLER_JOYSTICK,
     CONF_AMX_MOUSE,
     CONF_KEMPSTON_MOUSE,
+    CONF_ZX_PRINTER,
     CONF_NUM_INT
 } IConfigVar;
 

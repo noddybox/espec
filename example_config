@@ -36,3 +36,6 @@ amx_mouse		0
 
 # Whether to enable Kempston mouse (1) or disable it (0).  Defaults to 0.
 kempston_mouse		0
+
+# Whether to enable the ZX Printer (1) or disable it (0).  Defaults to 0.
+zx_printer		0

@@ -194,7 +194,7 @@ static void ConfigureDevices(void)
 {
     enum constants
     {
-    	NUM = 4
+    	NUM = 5
     };
 
     static IConfigVar config[NUM] =
@@ -202,7 +202,8 @@ static void ConfigureDevices(void)
     	CONF_KEMPSTON_JOYSTICK,
     	CONF_FULLER_JOYSTICK,
     	CONF_AMX_MOUSE,
-    	CONF_KEMPSTON_MOUSE
+    	CONF_KEMPSTON_MOUSE,
+	CONF_ZX_PRINTER
     };
 
     const char * const items[NUM] =
@@ -210,7 +211,8 @@ static void ConfigureDevices(void)
     	IConfigDescription(CONF_KEMPSTON_JOYSTICK),
     	IConfigDescription(CONF_FULLER_JOYSTICK),
     	IConfigDescription(CONF_AMX_MOUSE),
-    	IConfigDescription(CONF_KEMPSTON_MOUSE)
+    	IConfigDescription(CONF_KEMPSTON_MOUSE),
+    	IConfigDescription(CONF_ZX_PRINTER)
     };
 
     int options[NUM] =
@@ -218,7 +220,8 @@ static void ConfigureDevices(void)
     	IConfig(CONF_KEMPSTON_JOYSTICK),
     	IConfig(CONF_FULLER_JOYSTICK),
     	IConfig(CONF_AMX_MOUSE),
-    	IConfig(CONF_KEMPSTON_MOUSE)
+    	IConfig(CONF_KEMPSTON_MOUSE),
+	IConfig(CONF_ZX_PRINTER)
     };
 
     if (GUIListOption("SELECT DEVICES", NUM, items, options))

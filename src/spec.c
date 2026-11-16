@@ -133,6 +133,7 @@ static struct
 /* Joysticks
 */
 static Z80Byte		kempston = 0x00;
+static Z80Byte		fuller = 0xff;
 
 typedef struct
 {
@@ -748,10 +749,12 @@ static void HandleJoystick(JoystickButton button, int pressed)
 		if (pressed)
 		{
 		    SETBIT(kempston, 0);
+		    CLRBIT(fuller, 3);
 		}
 		else
 		{
 		    CLRBIT(kempston, 0);
+		    SETBIT(fuller, 3);
 		}
 		break;
 
@@ -759,10 +762,12 @@ static void HandleJoystick(JoystickButton button, int pressed)
 		if (pressed)
 		{
 		    SETBIT(kempston, 1);
+		    CLRBIT(fuller, 2);
 		}
 		else
 		{
 		    CLRBIT(kempston, 1);
+		    SETBIT(fuller, 2);
 		}
 		break;
 
@@ -770,10 +775,12 @@ static void HandleJoystick(JoystickButton button, int pressed)
 		if (pressed)
 		{
 		    SETBIT(kempston, 3);
+		    CLRBIT(fuller, 0);
 		}
 		else
 		{
 		    CLRBIT(kempston, 3);
+		    SETBIT(fuller, 0);
 		}
 		break;
 
@@ -781,10 +788,12 @@ static void HandleJoystick(JoystickButton button, int pressed)
 		if (pressed)
 		{
 		    SETBIT(kempston, 2);
+		    CLRBIT(fuller, 1);
 		}
 		else
 		{
 		    CLRBIT(kempston, 2);
+		    SETBIT(fuller, 1);
 		}
 		break;
 
@@ -797,10 +806,12 @@ static void HandleJoystick(JoystickButton button, int pressed)
 		if (pressed)
 		{
 		    SETBIT(kempston, 4);
+		    CLRBIT(fuller, 7);
 		}
 		else
 		{
 		    CLRBIT(kempston, 4);
+		    SETBIT(fuller, 7);
 		}
 		break;
 
@@ -920,6 +931,11 @@ Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
     if (lo == 0x1f && IConfig(CONF_KEMPSTON_JOYSTICK))
     {
 	value = kempston;
+    }
+
+    if (lo == 0x7f && IConfig(CONF_FULLER_JOYSTICK))
+    {
+	value = fuller;
     }
 
     if (lo == 0xfb && IConfig(CONF_ZX_PRINTER))

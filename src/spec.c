@@ -913,48 +913,40 @@ void SPECKeyEvent(SDL_Event *e)
 
 Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 {
-    Z80Byte lo=port&0xff;
-    Z80Byte hi=port>>8;
-    Z80Byte b=0xff;
-    int f;
+    Z80Byte lo = port&0xff;
+    Z80Byte hi = port>>8;
+    Z80Byte value = 0xff;
 
-    switch(lo)
+    if (lo == 0x1f && IConfig(CONF_KEMPSTON_JOYSTICK))
     {
-	case 0x1f:	/* Kempston joystick and AMX mouse*/
-	    if (IConfig(CONF_AMX_MOUSE))
-	    {
-	    }
-
-	    if (IConfig(CONF_KEMPSTON_JOYSTICK))
-	    {
-		b = kempston;
-	    }
-	    break;
-
-	case 0xfb:	/* TODO: ZX Printer */
-	    break;
-
-	default:	/* ULA */
-	    if (!(lo&1))
-	    {
-		/* Key matrix
-		*/
-		b=0xff;
-
-		for(f=0;f<8;f++)
-		    if (!(hi&(1<<f)))
-			b&=matrix[f];
-
-		b|=0xa0;
-
-		/* TODO: Emulation of contention? */
-	    }
-	    else
-	    	b=0xff;
-	    break;
+	value = kempston;
     }
 
-    return b;
+    if (lo == 0xfb && IConfig(CONF_ZX_PRINTER))
+    {
+	/* TODO: ZX Printer */
+    }
+
+    if (!(lo&1))	/* ULA */
+    {
+	/* Key matrix
+	*/
+	value=0xff;
+
+	for(int f=0; f<8; f++)
+	{
+	    if (!(hi&(1<<f)))
+	    {
+		value&=matrix[f];
+	    }
+	}
+
+	value|=0xa0;
+
+	/* TODO: Emulation of contention? */
+    }
+
+    return value;
 }
 
 

@@ -175,7 +175,7 @@ void		GFXPrintCentre(int y, Uint32 col, Uint32 paper,
 			       const char *format, ...);
 
 
-/* Draws a simply bitmap centred on the screen
+/* Draws a simple bitmap centred on the screen
 */
 void		GFXBitmap(const GFX_Bitmap *bitmap);
 

@@ -375,6 +375,7 @@ int main(int argc, char *argv[])
 				   "F6  - Joystick Menu               \n"
 				   "F7  - Tape Menu                   \n"
 				   "F8  - Configure attached devices  \n"
+				   "F9  - View ZX Printer output      \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
 		    break;
@@ -432,6 +433,10 @@ int main(int argc, char *argv[])
 
 		case SDLK_F8:
 		    ConfigureDevices();
+		    break;
+
+		case SDLK_F9:
+		    SPECDisplayPrinterOutput();
 		    break;
 
 		case SDLK_F11:

@@ -46,6 +46,8 @@
 #define SETBIT(v,b)	(v)|=(1<<(b))
 #define CLRBIT(v,b)	(v)&=~(1<<(b))
 
+#define YESNO(x)	((x) ? 'Y':'N')
+
 /* ---------------------------------------- STATICS
 */
 static const int	ROMLEN=0x4000;
@@ -151,6 +153,27 @@ static const char	*joyfile_magic = "!JOY48";
 static JoystickButton	last_joystick;
 
 
+/* ZX Printer
+*/
+static struct
+{
+    int			x;
+    int			y;
+    unsigned char	*bitmap;
+    int			power;
+    int			stylus;
+    int			ready;
+    int			slow;
+} printer;
+
+static const int	PRINTER_WIDTH = SCR_W;
+static const int	PRINTER_PITCH = PRINTER_WIDTH / 8;
+
+static const Z80Val	PRINTER_FAST_CYCLES = 70;
+static const Z80Val	PRINTER_SLOW_CYCLES = 140;
+static const int	PRINTER_MARGIN = 24;
+
+
 /* The keyboard
 */
 static Z80Byte		matrix[8];
@@ -229,6 +252,7 @@ static const MatrixMap keymap[]=
 */
 #define SCANLINE_TIMER	eZ80_Timer_1
 #define AUDIO_TIMER	eZ80_Timer_2
+#define PRINTER_TIMER	eZ80_Timer_3
 
 /* Sound emulation
 */
@@ -585,6 +609,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
     return TRUE;
 }
 
+
 static void CheckSound(Z80 *z80)
 {
     if (volume)
@@ -701,10 +726,80 @@ static void CheckScanlines(Z80 *z80)
 }
 
 
+static void BurnPrinter(void)
+{
+    if (printer.x < PRINTER_WIDTH)
+    {
+	unsigned char *ptr = printer.bitmap +
+			     printer.y * PRINTER_PITCH + 
+			     printer.x / 8;
+	int bit = 0x80 >> (printer.x % 8);
+
+	*ptr |= bit;
+    }
+}
+
+
+static void AdvancePrinter(void)
+{
+    if (printer.stylus)
+    {
+    	BurnPrinter();
+    }
+
+    printer.x++;
+
+    if (printer.x == PRINTER_WIDTH + PRINTER_MARGIN)
+    {
+	printer.x = 0;
+	printer.y++;
+	printer.bitmap = Realloc(printer.bitmap,
+				 (printer.y + 1) * PRINTER_PITCH);
+	memset(printer.bitmap + printer.y * PRINTER_PITCH, 0, PRINTER_PITCH);
+    }
+}
+
+
+static void CheckPrinter(Z80 *z80)
+{
+    Z80Val val;
+    Z80Val period;
+
+    val = Z80GetTimer(z80, PRINTER_TIMER);
+    period = printer.slow ? PRINTER_SLOW_CYCLES : PRINTER_FAST_CYCLES;
+
+    if (val > period)
+    {
+	Z80SetTimer(z80, PRINTER_TIMER, val - period);
+
+    	if (printer.power)
+	{
+	    printer.ready = !printer.ready;
+
+	    if (printer.ready)
+	    {
+		AdvancePrinter();
+	    }
+	}
+    }
+}
+
+
 static int CheckTimers(Z80 *z80, Z80Val val)
 {
     CheckSound(z80);
     CheckScanlines(z80);
+
+    if (IConfig(CONF_ZX_PRINTER))
+    {
+    	CheckPrinter(z80);
+    }
+    else
+    {
+    	printer.power = FALSE;
+    	printer.ready = FALSE;
+    }
+
     return TRUE;
 }
 
@@ -882,6 +977,9 @@ void SPECInit(Z80 *z80)
 
     volume = IConfig(CONF_SOUND);
 
+    printer.bitmap = Malloc(PRINTER_PITCH);
+    memset(printer.bitmap, 0, PRINTER_PITCH);
+
     SPECReset(z80);
 }
 
@@ -928,22 +1026,43 @@ Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
     Z80Byte hi = port>>8;
     Z80Byte value = 0xff;
 
+    /* Kempston joystick
+    */
     if (lo == 0x1f && IConfig(CONF_KEMPSTON_JOYSTICK))
     {
 	value = kempston;
     }
 
+    /* Fuller joystick
+    */
     if (lo == 0x7f && IConfig(CONF_FULLER_JOYSTICK))
     {
 	value = fuller;
     }
 
-    if (lo == 0xfb && IConfig(CONF_ZX_PRINTER))
+    /* ZX Printer
+    */
+    if (!(lo & 0x04) && IConfig(CONF_ZX_PRINTER))
     {
-	/* TODO: ZX Printer */
+	value = 0x3e;
+
+	if (printer.power)
+	{
+	    if (printer.ready && printer.x < PRINTER_WIDTH)
+	    {
+	    	value |= 0x01;
+	    }
+
+	    if (printer.x == 0)
+	    {
+		value |= 0x80;
+	    }
+	}
     }
 
-    if (!(lo&1))	/* ULA */
+    /* ULA
+    */
+    if (!(lo & 0x01))
     {
 	/* Key matrix
 	*/
@@ -970,19 +1089,25 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
 {
     Z80Byte lo=port&0xff;
 
-    switch(lo)
+    if (!(lo & 0x01))					/* ULA */
     {
-	case 0xfe:	/* ULA */
-	    border=val&0x07;
-	    AddSoundRecord(Z80GetTimer(z80, AUDIO_TIMER),
-	    		   val & 0x10 ? volume : 0);
-	    break;
+	border=val&0x07;
+	AddSoundRecord(Z80GetTimer(z80, AUDIO_TIMER), val & 0x10 ? volume : 0);
+    }
 
-	case 0xfb:	/* TODO: ZX Printer */
-	    break;
+    if (!(lo & 0x04) && IConfig(CONF_ZX_PRINTER))	/* ZX Printer */
+    {
+	int last_power = printer.power;
 
-	default:
-	    break;
+	printer.power = !(val & 0x04);
+	printer.slow = (val & 0x02);
+	printer.stylus = (val & 0x80);
+	printer.ready = FALSE;
+
+	if (!last_power && printer.power)
+	{
+	    printer.x = 0;
+	}
     }
 }
 
@@ -1531,4 +1656,12 @@ void SPECDisplayJoytick(void)
     }
 
     GUIMessage(eMessageBox, "JOYSTICK MAPPINGS", "%s", msg);
+}
+
+
+void SPECDisplayPrinterOutput(void)
+{
+    GUIMonoBitmap(PRINTER_WIDTH, printer.y,
+    		  GFXRGB(255, 255, 255), GFXRGB(0, 0, 0),
+		  printer.bitmap);
 }

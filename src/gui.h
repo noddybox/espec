@@ -27,6 +27,8 @@
 #ifndef ESPEC_GUI_H
 #define ESPEC_GUI_H
 
+#include "gfx.h"
+
 
 /* ---------------------------------------- MACROS
 */
@@ -113,8 +115,7 @@ void		GUIDisplayList(const char *title, int no,
    Returns TRUE for selected, FALSE for cancelled.
 
    path holds the new file entered.  Note that start_dir can be a path to a
-   file - if chdir(start_dir) would not work, then it is tried with the
-   Dirname() of start_dir.
+   file - if it's not a directory then it tried with Dirname(start_dir).
 
    Also start_dir and path can be the same pointer:
 
@@ -140,6 +141,15 @@ int		GUIFileSelect(const char *prompt,
 /* Display a simple one-line message that will disappear after a few seconds
 */
 void		GUIToast(const char *message);
+
+
+/* Draws a mono bitmap centred on the screen.  The bitmap can be bigger than
+   the display box and scrolled with the cursor keys.
+   Bit 0 indicates white, bit 1 indicates black.
+*/
+void		GUIMonoBitmap(int width, int height,
+			      Uint32 white, Uint32 black,
+			      const unsigned char *bitmap);
 
 
 #endif

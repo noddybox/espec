@@ -72,4 +72,8 @@ void		SPECSaveJoystick(void);
 void		SPECLoadJoystick(const char *path);
 void		SPECDisplayJoytick(void);
 
+/* Interfaces for printer
+*/
+void		SPECDisplayPrinterOutput(void);
+
 #endif

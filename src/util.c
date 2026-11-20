@@ -27,6 +27,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+
+#include <unistd.h>
+#include <sys/stat.h>
 #include <sys/param.h>
 
 #include "util.h"
@@ -195,16 +198,7 @@ int StartsWith(const char *a, const char *b, size_t len)
 
 int FileExists(const char *path)
 {
-    FILE *fp;
-
-    fp = fopen(path, "rb");
-
-    if (fp)
-    {
-    	fclose(fp);
-    }
-
-    return fp != NULL;
+    return access(path, R_OK) == 0;
 }
 
 
@@ -221,4 +215,29 @@ int Clamp(int value, int min, int max)
     }
 
     return value;
+}
+
+
+int IsDirectory(const char *path)
+{
+    struct stat st;
+
+    if (stat(path, &st) == -1)
+    {
+    	return FALSE;
+    }
+
+    return S_ISDIR(st.st_mode);
+}
+
+
+void Realpath(char *path)
+{
+    char *result;
+
+    if ((result = realpath(path, NULL)))
+    {
+    	strcpy(path, result);
+	free(result);
+    }
 }

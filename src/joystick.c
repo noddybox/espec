@@ -237,6 +237,7 @@ const char *JOYButtonName(JoystickButton button)
     	"B",
     	"Left Shoulder",
     	"Right Shoulder",
+    	"Start",
     };
 
     return name[button];

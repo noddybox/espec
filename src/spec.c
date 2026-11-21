@@ -1467,6 +1467,7 @@ void SPECSetupPredefinedJoystick(void)
     	{JOY_Button_B,		SDLK_0},
     	{JOY_Button_X,		SDLK_0},
     	{JOY_Button_Y,		SDLK_0},
+    	{JOY_Start,		SDLK_RETURN},
 	{JOY_NumButtons,	SDLK_UNKNOWN}
     };
 
@@ -1480,6 +1481,7 @@ void SPECSetupPredefinedJoystick(void)
     	{JOY_Button_B,		SDLK_SPACE},
     	{JOY_Button_X,		SDLK_SPACE},
     	{JOY_Button_Y,		SDLK_SPACE},
+    	{JOY_Start,		SDLK_RETURN},
 	{JOY_NumButtons,	SDLK_UNKNOWN}
     };
 

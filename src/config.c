@@ -40,7 +40,7 @@ static int	fullscreen=FALSE;
 static int	frames=50;
 static int	scale=1;
 static int	trace=0;
-static int	sound=1;
+static int	volume=0;
 static int	kempston_joystick=1;
 static int	fuller_joystick=1;
 static int	amx_mouse=0;
@@ -59,7 +59,7 @@ static const struct
 		{"frames",		&frames,		TRUE},
 		{"scale",		&scale,			TRUE},
 		{"trace",		&trace,			TRUE},
-		{"sound",		&sound,			TRUE},
+		{"volume",		&volume,		TRUE},
 		{"kempston_joystick",	&kempston_joystick,	TRUE},
 		{"fuller_joystick",	&fuller_joystick,	TRUE},
 		{"amx_mouse",		&amx_mouse,		TRUE},
@@ -89,7 +89,7 @@ static const struct
     {CONF_FRAMES_PER_SEC,	&frames,		1,	100},
     {CONF_SCALE,		&scale,			1,	10},
     {CONF_TRACE,		&trace,			0,	1},
-    {CONF_SOUND,		&sound,			0,	63},
+    {CONF_VOLUME,		&volume,		0,	63},
     {CONF_KEMPSTON_JOYSTICK,	&kempston_joystick,	0,	1},
     {CONF_FULLER_JOYSTICK,	&fuller_joystick,	0,	1},
     {CONF_AMX_MOUSE,		&amx_mouse,		0,	1},
@@ -117,9 +117,9 @@ static const struct
 {
     {CONF_FULLSCREEN,		"Full screen"},
     {CONF_FRAMES_PER_SEC,	"Frames per second"},
-    {CONF_SCALE,		"Frames per second"},
-    {CONF_TRACE,		"Frames per second"},
-    {CONF_SOUND,		"Frames per second"},
+    {CONF_SCALE,		"Display scale"},
+    {CONF_TRACE,		"Trace Z80"},
+    {CONF_VOLUME,		"Sound Volume"},
     {CONF_KEMPSTON_JOYSTICK,	"Kempston Joystick"},
     {CONF_FULLER_JOYSTICK,	"Fuller Joystick"},
     {CONF_AMX_MOUSE,		"AMX Mouse"},

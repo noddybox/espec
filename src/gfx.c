@@ -163,12 +163,8 @@ void GFXInit(void)
 
     frame=1000/IConfig(CONF_FRAMES_PER_SEC);
 
-    flags = SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER;
-
-    if (IConfig(CONF_SOUND))
-    {
-	flags |= SDL_INIT_AUDIO;
-    }
+    flags = SDL_INIT_TIMER|SDL_INIT_VIDEO|
+	    SDL_INIT_GAMECONTROLLER|SDL_INIT_AUDIO;
 
     if (SDL_Init(flags))
     {

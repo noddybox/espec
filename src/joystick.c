@@ -59,6 +59,8 @@ static JoystickButton MapButton(SDL_GameControllerButton button)
 	    return JOY_Left_Shoulder;
 	case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
 	    return JOY_Right_Shoulder;
+	case SDL_CONTROLLER_BUTTON_START:
+	    return JOY_Start;
     	default:
 	    return JOY_NumButtons;
     }

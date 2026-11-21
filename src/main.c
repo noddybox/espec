@@ -271,12 +271,9 @@ int main(int argc, char *argv[])
     GUIInit();
     JOYInit();
 
-    if (IConfig(CONF_SOUND))
+    if (!AUDIOInit(SPECAudioFrequency()))
     {
-    	if (!AUDIOInit(SPECAudioFrequency()))
-	{
-	    fprintf(stderr, "warning: couldn't initialise audio\n");
-	}
+	fprintf(stderr, "warning: couldn't initialise audio\n");
     }
 
     GFXSetTextInput(FALSE);
@@ -376,6 +373,7 @@ int main(int argc, char *argv[])
 				   "F7  - Tape Menu                   \n"
 				   "F8  - Configure attached devices  \n"
 				   "F9  - View ZX Printer output      \n"
+				   "F10 - Set volume                  \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
 		    break;
@@ -437,6 +435,11 @@ int main(int argc, char *argv[])
 
 		case SDLK_F9:
 		    SPECDisplayPrinterOutput();
+		    break;
+
+		case SDLK_F10:
+		    IConfigSet(CONF_VOLUME,
+			       GUIBar("Volume", IConfig(CONF_VOLUME), 0, 63));
 		    break;
 
 		case SDLK_F11:

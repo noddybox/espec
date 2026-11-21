@@ -132,6 +132,12 @@ static void HandleToast(void)
 }
 
 
+static void HandleUpdate(void)
+{
+    HandleToast();
+}
+
+
 static void Trim(char *p,size_t len)
 {
     if (strlen(p)>len)
@@ -474,7 +480,7 @@ static int CmpFile(const void *va,const void *vb)
 */
 void GUIInit(void)
 {
-    GFXRegisterRedrawCallback(HandleToast);
+    GFXRegisterRedrawCallback(HandleUpdate);
 }
 
 
@@ -1098,4 +1104,73 @@ void GUIMonoBitmap(int width, int height,
     }
 
     GFXSetTextInput(text_input);
+}
+
+
+int GUIBar(const char *title, int value, int min_value, int max_value)
+{
+    int text_input;
+    int done = FALSE;
+    int old_value = value;
+    int size = max_value - min_value;
+
+    text_input = GFXSetTextInput(FALSE);
+
+    while(!done)
+    {
+	SDL_Event *e;
+	int is_text;
+
+	GFXRect(0, GFX_HEIGHT - 10, size, 10, BLACK, TRUE);
+	GFXRect(0, GFX_HEIGHT - 10, value - min_value, 10, GREEN, TRUE);
+	GFXPrintPaper(0, GFX_HEIGHT - 20, BLACK, WHITE, "%s", title);
+
+	GFXEndFrame(FALSE);
+
+	e = GFXWaitKey(&is_text);
+
+	if (!is_text)
+	{
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_ESCAPE:
+		    value = old_value;
+		    done = TRUE;
+		    break;
+
+		case SDLK_F1:
+		    GUIMessage(eMessageBox,
+			       "HELP",
+			       "Escape       - Cancel             \n"
+			       "Cursor Keys  - Change value       \n"
+			       "Return       - Accept value       ");
+		    break;
+
+		case SDLK_RIGHT:
+		    if (value < max_value)
+		    {
+		    	value++;
+		    }
+		    break;
+
+		case SDLK_LEFT:
+		    if (value > min_value)
+		    {
+		    	value--;
+		    }
+		    break;
+
+		case SDLK_RETURN:
+		    done = TRUE;
+		    break;
+
+	    	default:
+		    break;
+	    }
+	}
+    }
+
+    GFXSetTextInput(text_input);
+
+    return value;
 }

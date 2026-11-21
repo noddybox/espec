@@ -55,6 +55,10 @@ F7 - Tape file menu
 
 F8 - Select devices
 
+F9 - View ZX Printer output
+
+F10 - Set volume
+
 F11 - Display the Memory Menu.
 
 F12 - Display an overlay of the current state of the Z80 CPU while the system

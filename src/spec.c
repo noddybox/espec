@@ -254,7 +254,6 @@ static const MatrixMap keymap[]=
 #define AUDIO_SCALE	6		/* This is used as a shift value */
 #define AUDIO_CYCLES	(AUDIO_FRAMES * FRAME_CYCLES)
 
-static int		volume;
 static size_t		audio_sample_sz;
 
 typedef struct SoundRecord
@@ -606,59 +605,56 @@ static int EDCallback(Z80 *z80, Z80Val data)
 
 static void CheckSound(Z80 *z80)
 {
-    if (volume)
+    if (Z80GetTimer(z80, AUDIO_TIMER) > AUDIO_CYCLES)
     {
-    	if (Z80GetTimer(z80, AUDIO_TIMER) > AUDIO_CYCLES)
+	static Sint8 *sample;
+	SoundRecord *current = sound.head;
+	int offset = 0;
+
+	sample = Malloc(audio_sample_sz);
+
+	memset(sample, 0, audio_sample_sz);
+
+	if (current)
 	{
-	    static Sint8 *sample;
-	    SoundRecord *current = sound.head;
-	    int offset = 0;
+	    int f;
+	    int first_offset = current->cycle >> AUDIO_SCALE;
 
-	    sample = Malloc(audio_sample_sz);
-
-	    memset(sample, 0, audio_sample_sz);
-
-	    if (current)
+	    for(f = 0; f < first_offset; f++)
 	    {
-		int f;
-		int first_offset = current->cycle >> AUDIO_SCALE;
-
-		for(f = 0; f < first_offset; f++)
-		{
-		    sample[f] = sound.last_level;
-		}
-
-		while(current)
-		{
-		    int next_offset;
-
-		    if (current->next)
-		    {
-			next_offset = current->cycle >> AUDIO_SCALE;
-		    }
-		    else
-		    {
-			next_offset = audio_sample_sz;
-		    }
-
-		    for(f = offset; f < next_offset; f++)
-		    {
-			sample[f] = current->level;
-		    }
-
-		    offset = next_offset;
-		    sound.last_level = current->level;
-		    current = current->next;
-		}
+		sample[f] = sound.last_level;
 	    }
 
-	    AUDIOQueue(sample, audio_sample_sz);
+	    while(current)
+	    {
+		int next_offset;
 
-	    ClearSoundRecord();
+		if (current->next)
+		{
+		    next_offset = current->cycle >> AUDIO_SCALE;
+		}
+		else
+		{
+		    next_offset = audio_sample_sz;
+		}
 
-	    Z80SetTimer(z80, AUDIO_TIMER, 0);
-	    free(sample);
+		for(f = offset; f < next_offset; f++)
+		{
+		    sample[f] = current->level;
+		}
+
+		offset = next_offset;
+		sound.last_level = current->level;
+		current = current->next;
+	    }
 	}
+
+	AUDIOQueue(sample, audio_sample_sz);
+
+	ClearSoundRecord();
+
+	Z80SetTimer(z80, AUDIO_TIMER, 0);
+	free(sample);
     }
 }
 
@@ -936,8 +932,6 @@ void SPECInit(Z80 *z80)
     JOYRegister(HandleJoystick);
     MOUSERegister(HandleMouseButton, HandleMouseMove);
 
-    volume = IConfig(CONF_SOUND);
-
     printer.bitmap = Malloc(PRINTER_PITCH);
     memset(printer.bitmap, 0, PRINTER_PITCH);
 
@@ -1052,7 +1046,8 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
     if (!(lo & 0x01))					/* ULA */
     {
 	border=val&0x07;
-	AddSoundRecord(Z80GetTimer(z80, AUDIO_TIMER), val & 0x10 ? volume : 0);
+	AddSoundRecord(Z80GetTimer(z80, AUDIO_TIMER),
+			val & 0x10 ? IConfig(CONF_VOLUME) : 0);
     }
 
     if (!(lo & 0x04) && IConfig(CONF_ZX_PRINTER))	/* ZX Printer */

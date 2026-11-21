@@ -21,9 +21,8 @@ scale			1
 # Trace the state of the Z80 to stdout if 1.  Defaults to 0.
 trace			0
 
-# The volume of generated sound in the range 0 to 63.  If set to zero sound
-# is disabled.
-sound			16
+# The volume of generated sound in the range 0 to 63.
+volume			16
 
 # Whether to enable Kempston joysticks (1) or disable them (0).  Defaults to 1.
 kempston_joystick	1

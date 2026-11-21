@@ -97,7 +97,9 @@ const char	*Dirname(const char *path);
 const char	*ReplaceExtension(const char *path, const char *extension);
 
 
-/* Writes the passed text to debug, which is currently just stderr.
+/* Writes the passed text to debug, which is ./debug.txt or stderr if it
+   can't be opened.
+
    Note this is interface is not able to be switched on/off, so debug is only
    used in a transient way (once the bug is fixed, calls to this should be
    removed).

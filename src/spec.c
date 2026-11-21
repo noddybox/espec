@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <SDL.h>
+
 #include "spec.h"
 #include "snap.h"
 #include "gfx.h"
@@ -161,18 +161,12 @@ static struct
     int			y;
     unsigned char	*bitmap;
     int			power;
-    int			stylus;
-    int			ready;
-    int			slow;
+    int			start_line;
 } printer;
 
+static const int	PRINTER_START_X = -2;
 static const int	PRINTER_WIDTH = SCR_W;
 static const int	PRINTER_PITCH = PRINTER_WIDTH / 8;
-
-static const Z80Val	PRINTER_FAST_CYCLES = 70;
-static const Z80Val	PRINTER_SLOW_CYCLES = 140;
-static const int	PRINTER_MARGIN = 24;
-
 
 /* The keyboard
 */
@@ -726,61 +720,39 @@ static void CheckScanlines(Z80 *z80)
 }
 
 
-static void BurnPrinter(void)
+static void PrinterOutput(int burn)
 {
-    if (printer.x < PRINTER_WIDTH)
+    if (printer.x >= 0 && printer.x < PRINTER_WIDTH)
     {
-	unsigned char *ptr = printer.bitmap +
-			     printer.y * PRINTER_PITCH + 
-			     printer.x / 8;
-	int bit = 0x80 >> (printer.x % 8);
+	if (burn)
+	{
+	    unsigned char *ptr = printer.bitmap +
+				 printer.y * PRINTER_PITCH + 
+				 printer.x / 8;
+	    int bit = 0x80 >> (printer.x % 8);
 
-	*ptr |= bit;
+	    *ptr |= bit;
+	}
     }
 }
-
 
 static void AdvancePrinter(void)
 {
-    if (printer.stylus)
-    {
-    	BurnPrinter();
-    }
-
     printer.x++;
 
-    if (printer.x == PRINTER_WIDTH + PRINTER_MARGIN)
+    if (printer.x > 0 && printer.x < PRINTER_WIDTH)
     {
-	printer.x = 0;
+    	printer.start_line = FALSE;
+    }
+    else if (printer.x == PRINTER_WIDTH)
+    {
+	printer.start_line = TRUE;
+	printer.x = PRINTER_START_X;
 	printer.y++;
 	printer.bitmap = Realloc(printer.bitmap,
 				 (printer.y + 1) * PRINTER_PITCH);
-	memset(printer.bitmap + printer.y * PRINTER_PITCH, 0, PRINTER_PITCH);
-    }
-}
-
-
-static void CheckPrinter(Z80 *z80)
-{
-    Z80Val val;
-    Z80Val period;
-
-    val = Z80GetTimer(z80, PRINTER_TIMER);
-    period = printer.slow ? PRINTER_SLOW_CYCLES : PRINTER_FAST_CYCLES;
-
-    if (val > period)
-    {
-	Z80SetTimer(z80, PRINTER_TIMER, val - period);
-
-    	if (printer.power)
-	{
-	    printer.ready = !printer.ready;
-
-	    if (printer.ready)
-	    {
-		AdvancePrinter();
-	    }
-	}
+	memset(printer.bitmap + printer.y * PRINTER_PITCH,
+		    0, PRINTER_PITCH);
     }
 }
 
@@ -789,17 +761,6 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 {
     CheckSound(z80);
     CheckScanlines(z80);
-
-    if (IConfig(CONF_ZX_PRINTER))
-    {
-    	CheckPrinter(z80);
-    }
-    else
-    {
-    	printer.power = FALSE;
-    	printer.ready = FALSE;
-    }
-
     return TRUE;
 }
 
@@ -1048,15 +1009,14 @@ Z80Byte SPECReadPort(Z80 *z80, Z80Word port)
 
 	if (printer.power)
 	{
-	    if (printer.ready && printer.x < PRINTER_WIDTH)
-	    {
-	    	value |= 0x01;
-	    }
+	    value |= 0x01;
 
-	    if (printer.x == 0)
+	    if (printer.start_line)
 	    {
 		value |= 0x80;
 	    }
+
+	    AdvancePrinter();
 	}
     }
 
@@ -1100,13 +1060,18 @@ void SPECWritePort(Z80 *z80, Z80Word port, Z80Byte val)
 	int last_power = printer.power;
 
 	printer.power = !(val & 0x04);
-	printer.slow = (val & 0x02);
-	printer.stylus = (val & 0x80);
-	printer.ready = FALSE;
 
-	if (!last_power && printer.power)
+	if (printer.power)
 	{
-	    printer.x = 0;
+	    if (!last_power)
+	    {
+		printer.x = PRINTER_START_X;
+		printer.start_line = TRUE;
+	    }
+	    else
+	    {
+		PrinterOutput(val & 0x80);
+	    }
 	}
     }
 }

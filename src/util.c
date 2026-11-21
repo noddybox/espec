@@ -161,10 +161,25 @@ const char *ReplaceExtension(const char *path, const char *extension)
 
 void Debug(const char *format, ...)
 {
+    static FILE *fp;
     va_list ap;
 
-    va_start(ap,format);
-    vfprintf(stderr,format,ap);
+    if (!fp)
+    {
+    	fp = fopen("./debug.txt", "w");
+
+	if (!fp)
+	{
+	    fp = stderr;
+	}
+	else
+	{
+	    setbuf(fp, NULL);
+	}
+    }
+
+    va_start(ap, format);
+    vfprintf(fp, format, ap);
     va_end(ap);
 }
 

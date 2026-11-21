@@ -421,6 +421,10 @@ void DisplayZ80State(Z80State *s, int y, Uint32 col)
     GFXPrintPaper(0,y,col,BLACK,
     		  "IFF1=%2.2x  IFF2=%2.2x",
 		  s->IFF1,s->IFF2);
+    y+=8;
+    GFXPrintPaper(0,y,col,BLACK,
+    		  "IRQ:%c NMI:%c",s->irq ? FONT_TICK : ' ',
+		  		  s->nmi ? FONT_TICK : ' ' );
 }
 
 
@@ -1066,7 +1070,7 @@ static void DoMonitor(Z80 *z80)
 
 	    Z80GetState(z80,&s);
 
-	    DisplayZ80State(&s,136,WHITE);
+	    DisplayZ80State(&s,128,WHITE);
 
 	    GetMemTrace(z80,mt,s.SP-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
 	    DisplayTraceMem(0,192,"MEM (SP)",mt,s.SP);

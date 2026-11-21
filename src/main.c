@@ -56,7 +56,7 @@ static Uint32	grey;
 */
 static void Usage(void)
 {
-    fprintf(stderr,"usage: espec [-m] [-l tape_file] [-s tape_file]\n");
+    fprintf(stderr,"usage: espec [-m] [-i tape_file] [-o tape_file]\n");
     exit(EXIT_FAILURE);
 }
 
@@ -302,8 +302,8 @@ int main(int argc, char *argv[])
 		inital_menu=TRUE;
 		break;
 
-	    case 'l':
-	    	if (f>argc-2)
+	    case 'i':
+	    	if (f > argc-2)
 		{
 		    Usage();
 		}
@@ -311,8 +311,8 @@ int main(int argc, char *argv[])
                 TAPEMount(TAP_IN, argv[++f]);
 		break;
 
-	    case 's':
-	    	if (f>argc-2)
+	    case 'o':
+	    	if (f > argc-2)
 		{
 		    Usage();
 		}

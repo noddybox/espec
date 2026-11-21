@@ -19,6 +19,14 @@ You will only need these if you touch the image files under the `gfx` directory.
 To run it simply run the generated `espec` executable.  It reads configuration
 from `$HOME/.espec`, an example of which can be found in `example_config`.
 
+Optionally the following switches can be given.
+
+|**Switch**|**Description**|
+|-|-|
+|`-i file`|Open file as an input tape file.|
+|`-o file`|Open file as an output tape file.|
+|`-m`|Open the memory menu.|
+
 In use the keyboard is as the Spectrum, with the left hand side shift, control
 and alt keys acting as Caps Shift, and the right hand shift, control and alt
 keys acting as Symbol Shift.  The backspace and delete key is mapped to the

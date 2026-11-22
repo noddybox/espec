@@ -1113,6 +1113,7 @@ int GUIBar(const char *title, int value, int min_value, int max_value)
     int done = FALSE;
     int old_value = value;
     int size = max_value - min_value;
+    double scale = (double)GFX_WIDTH / (double)size;
 
     text_input = GFXSetTextInput(FALSE);
 
@@ -1121,9 +1122,9 @@ int GUIBar(const char *title, int value, int min_value, int max_value)
 	SDL_Event *e;
 	int is_text;
 
-	GFXRect(0, GFX_HEIGHT - 10, size, 10, BLACK, TRUE);
-	GFXRect(0, GFX_HEIGHT - 10, value - min_value, 10, GREEN, TRUE);
-	GFXPrintPaper(0, GFX_HEIGHT - 20, BLACK, WHITE, "%s", title);
+	GFXRect(0, GFX_HEIGHT - 10, GFX_WIDTH, 10, BLACK, TRUE);
+	GFXRect(0, GFX_HEIGHT - 10, (value - min_value) * scale, 10, GREEN, TRUE);
+	GFXPrintPaper(0, GFX_HEIGHT - 20, BLACK, WHITE, "%s: %d ", title, value);
 
 	GFXEndFrame(FALSE);
 

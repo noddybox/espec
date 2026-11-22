@@ -152,8 +152,7 @@ void		GUIMonoBitmap(int width, int height,
 			      const unsigned char *bitmap);
 
 /* Draw a bar at the bottom of the screen that can be increased or descreased
-   with the cursor keys.  It is assumed that the difference between the min
-   and max value will fit the width of the screen.
+   with the cursor keys.
 */
 int		GUIBar(const char *title, int value,
 		       int min_value, int max_value);

@@ -1258,6 +1258,11 @@ const Z80Label *SPECGetLabel(void)
 	    {0x5cb4,	"P_RAMT"},
 	    {0x5cb5,	"P_RAMT+1"},
 
+	    {0x4000,	"SCREEN"},
+	    {0x1800,	"SCREEN_LEN"},
+	    {0x5800,	"ATTR"},
+	    {0x0300,	"ATTR_LEN"},
+
 	    {0x0c0a,	"PRINT_STRING"},
 	    {0,		NULL}
 	};

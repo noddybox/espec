@@ -597,12 +597,16 @@ const char *GUIInputString(const char *prompt, const char *orig)
     static char buff[41];
     size_t len;
     int done=FALSE;
-    char c;
+    int cancelled=FALSE;
+    unsigned char c;
     SDL_Event *e;
+    int state;
 
     buff[0]=0;
     strncat(buff,orig,40);
     len=strlen(buff);
+
+    state = GFXSetTextInput(TRUE);
 
     while(!done)
     {
@@ -624,8 +628,8 @@ const char *GUIInputString(const char *prompt, const char *orig)
 		    break;
 
 		case SDLK_ESCAPE:
-		    buff[0]=0;
-		    len=0;
+		    done = TRUE;
+		    cancelled = TRUE;
 		    break;
 
 		case SDLK_BACKSPACE:
@@ -651,7 +655,9 @@ const char *GUIInputString(const char *prompt, const char *orig)
 	}
     }
 
-    return buff;
+    GFXSetTextInput(state);
+
+    return cancelled ? NULL : buff;
 }
 
 

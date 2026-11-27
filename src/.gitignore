@@ -2,6 +2,7 @@ espec
 *.o
 *.brk
 *.pbm
+*.bin
 core
 depend.mak
 debug.txt

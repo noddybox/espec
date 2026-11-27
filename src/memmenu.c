@@ -428,14 +428,20 @@ void DisplayZ80State(Z80State *s, int y, Uint32 col)
 }
 
 
-static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
+static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w, int seed)
 {
     const char *p;
     long l;
+    char buff[80] = {0};
 
-    p=GUIInputString(prompt ? prompt : "Address?","");
+    if (seed)
+    {
+    	snprintf(buff, sizeof buff, "0x%4.4x", *w);
+    }
 
-    if (*p)
+    p=GUIInputString(prompt ? prompt : "Address?", buff);
+
+    if (p && *p)
     {
 	if (ExprEval(p,&l,Expand,z80))
 	{
@@ -452,14 +458,19 @@ static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
 }
 
 
-static void EnterLong(const char *prompt, long *l)
+static int EnterLong(const char *prompt, long *l)
 {
     const char *p;
 
     p=GUIInputString(prompt ? prompt : "Value?","");
 
-    if (*p)
+    if (p && *p)
+    {
     	*l=strtol(p,NULL,0);
+	return TRUE;
+    }
+
+    return FALSE;
 }
 
 
@@ -540,17 +551,38 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 	    switch(e->key.keysym.sym)
 	    {
 		case SDLK_F1:
-		    GUIMessage
-			(eMessageBox, "DISASSEMBLY HELP","%s",
-			   "ESC         - Exit              \n"
-			   "H           - Disassembly/hex   \n"
-			   "Enter       - Enter address     \n"
-			   "Up          - Prev byte         \n"
-			   "Down        - Next op           \n"
-			   "Page Up     - Back 1 page       \n"
-			   "Page Down   - Forward 1 page    \n"
-			   "Left        - Forward 1024 bytes\n"
-			   "Right       - Back 1024 bytes   ");
+		    if (hexmode)
+		    {
+			GUIMessage(eMessageBox, "HEX MODE HELP","%s",
+				    "ESC         - Exit              \n"
+				    "H           - Switch disassembly\n"
+				    "I           - Enter bytes       \n"
+				    "L           - Load from file    \n"
+				    "S           - Save to file      \n"
+				    "Enter       - Enter address     \n"
+				    "Up          - Prev byte         \n"
+				    "Down        - Next op           \n"
+				    "Page Up     - Back 1 page       \n"
+				    "Page Down   - Forward 1 page    \n"
+				    "Left        - Back 1 byte       \n"
+				    "Right       - Forward 1 bytes   ");
+		    }
+		    else
+		    {
+			GUIMessage(eMessageBox, "DISASSEMBLY HELP","%s",
+				    "ESC         - Exit              \n"
+				    "H           - Switch hex mode   \n"
+				    "I           - Enter bytes       \n"
+				    "L           - Load from file    \n"
+				    "S           - Save to file      \n"
+				    "Enter       - Enter address     \n"
+				    "Up          - Prev byte         \n"
+				    "Down        - Next op           \n"
+				    "Page Up     - Back 1 page       \n"
+				    "Page Down   - Forward 1 page    \n"
+				    "Left        - Forward 1024 bytes\n"
+				    "Right       - Back 1024 bytes   ");
+		    }
 		    break;
 
 		case SDLK_ESCAPE:
@@ -559,7 +591,7 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 
 		case SDLK_RETURN:
 		case SDLK_KP_ENTER:
-		    EnterAddress(NULL,z80,&pc);
+		    EnterAddress(NULL,z80,&pc,FALSE);
 		    break;
 
 		case SDLK_UP:
@@ -585,11 +617,25 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 		    break;
 
 		case SDLK_LEFT:
-		    pc-=1024;
+		    if (hexmode)
+		    {
+		    	pc--;
+		    }
+		    else
+		    {
+			pc -= 1024;
+		    }
 		    break;
 
 		case SDLK_RIGHT:
-		    pc+=1024;
+		    if (hexmode)
+		    {
+		    	pc++;
+		    }
+		    else
+		    {
+			pc += 1024;
+		    }
 		    break;
 
 		default:
@@ -604,6 +650,116 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 		    hexmode=!hexmode;
 		    break;
 
+		case 'I':
+		{
+		    char prompt[32];
+		    const char *input;
+		    char *copy = NULL;
+
+		    snprintf(prompt, sizeof prompt, "0x%4.4x:",
+		    			(unsigned int)pc);
+
+		    input = GUIInputString(prompt, "");
+
+		    if (input)
+		    {
+			copy = StrCopy(input);
+		    }
+
+		    if (copy)
+		    {
+			Z80Word poke = pc;
+			char *save;
+		    	char *p;
+
+			p = strtok_r(copy, ",", &save);
+
+			while(p)
+			{
+			    long val;
+
+			    if (ExprEval(p, &val, Expand, z80))
+			    {
+			    	SPECPoke(z80, poke, (Z80Byte)val);
+			    }
+			    else
+			    {
+			    	GUIMessage(eMessageBox, "ERROR",
+					    "Invalid expression: %s", p);
+			    }
+
+			    poke++;
+			    p = strtok_r(NULL, ",", &save);
+			}
+		    }
+
+		    free(copy);
+		    break;
+		}
+
+		case 'L':
+		{
+		    static char fname[MAX_PATH_BUFF]=".";
+		    FILE *fp;
+		    Z80Word start = pc;
+
+		    if (EnterAddress("Load to address?", z80, &start, TRUE) &&
+			GUIFileSelect("SELECT FILE", TRUE, fname, fname, NULL))
+		    {
+			if (!(fp=fopen(fname,"rb")))
+			{
+			    GUIMessage(eMessageBox,"ERROR",
+			    		"Couldn't open file:\n%s", fname);
+			}
+			else
+			{
+			    int c;
+
+			    c = fgetc(fp);
+
+			    while(c != EOF)
+			    {
+				SPECPoke(z80, start++, (Z80Byte)c);
+				c = fgetc(fp);
+			    }
+
+			    fclose(fp);
+			}
+		    }
+
+		    break;
+		}
+
+		case 'S':
+		{
+		    static char fname[MAX_PATH_BUFF]=".";
+		    FILE *fp;
+		    Z80Word start = pc;
+		    Z80Word len;
+
+		    if (EnterAddress("Save from address?", z80, &start, TRUE) &&
+			EnterAddress("How many bytes?", z80, &len, FALSE) &&
+			GUIFileSelect("SELECT FILE", FALSE, fname, fname, NULL))
+		    {
+			if (!(fp=fopen(fname,"wb")))
+			{
+			    GUIMessage(eMessageBox,"ERROR",
+			    		"Couldn't create file:\n%s", fname);
+			}
+			else
+			{
+			    while(len--)
+			    {
+			    	fputc(SPECPeek(z80, start++), fp);
+			    }
+
+			    fclose(fp);
+			}
+		    }
+
+		    break;
+		}
+
 		default:
 		    break;
 	    }
@@ -614,41 +770,36 @@ static void DoDisassem(Z80 *z80, const Z80State *s)
 
 static void DoDisassemFile(Z80 *z80, const Z80State *s)
 {
-    static char fname[MAX_PATH_BUFF]="";
+    static char fname[MAX_PATH_BUFF]=".";
     FILE *fp;
     Z80Word start;
     Z80Word len;
     Z80Word prev;
     const char *p;
 
-    EnterAddress("Disassemble from?",z80,&start);
-    EnterAddress("For how many bytes?",z80,&len);
-
-    p=GUIInputString("To file?",fname);
-
-    if (!strlen(p))
-    	return;
-
-    strcpy(fname,p);
-
-    if (!(fp=fopen(fname,"w")))
+    if (EnterAddress("Disassemble from?",z80,&start,FALSE) &&
+	EnterAddress("For how many bytes?",z80,&len,FALSE) &&
+	GUIFileSelect("SELECT FILE", FALSE, fname, fname, NULL))
     {
-    	GUIMessage(eMessageBox,"ERROR","Couldn't create file:\n%s",fname);
-	return;
-    }
+	if (!(fp=fopen(fname,"w")))
+	{
+	    GUIMessage(eMessageBox,"ERROR","Couldn't create file:\n%s",fname);
+	    return;
+	}
 
-    prev=len;
-
-    while(len<=prev)
-    {
-    	Z80Word orig=start;
-
-	fprintf(fp,"%4.4x: %s\n",orig,Z80Disassemble(z80,&start));
 	prev=len;
-	len-=(start-orig);
-    }
 
-    fclose(fp);
+	while(len<=prev)
+	{
+	    Z80Word orig=start;
+
+	    fprintf(fp,"%4.4x: %s\n",orig,Z80Disassemble(z80,&start));
+	    prev=len;
+	    len-=(start-orig);
+	}
+
+	fclose(fp);
+    }
 }
 
 
@@ -880,8 +1031,10 @@ static void PlaybackTrace(Z80 *z80)
 
 		case SDLK_RETURN:
 		case SDLK_KP_ENTER:
-		    EnterLong("Step number?",&pos);
-		    pos--;
+		    if (EnterLong("Step number?",&pos))
+		    {
+			pos--;
+		    }
 		    break;
 
 		case SDLK_UP:
@@ -920,7 +1073,7 @@ static void PlaybackTrace(Z80 *z80)
 		    break;
 
 		case 'P':
-		    if (EnterAddress("PC to search for?",z80,&pc))
+		    if (EnterAddress("PC to search for?",z80,&pc,FALSE))
 		    {
 			while((rd=fread(&t,sizeof t,1,fp))==1)
 			{
